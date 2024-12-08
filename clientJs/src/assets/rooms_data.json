@@ -1,0 +1,152 @@
+[
+    {
+        "room": 408,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 37,
+        "total_inactive_pc": 3,
+        "total_major_issues": 3,
+        "total_minor_issues": 5,
+        "total_reports": 8
+    },
+    {
+        "room": 210,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 310,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 510,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 430,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 480,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 780,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 880,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 470,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 460,
+        "building_code": "MB",
+        "total_pc": 40,
+        "total_active_pc": 38,
+        "total_inactive_pc": 2,
+        "total_major_issues": 7,
+        "total_minor_issues": 9,
+        "total_reports": 16
+    },
+    {
+        "room": 419,
+        "building_code": "MB",
+        "total_pc": 38,
+        "total_active_pc": 36,
+        "total_inactive_pc": 2,
+        "total_major_issues": 2,
+        "total_minor_issues": 1,
+        "total_reports": 3
+    },
+    {
+        "room": 515,
+        "building_code": "ANB",
+        "total_pc": 39,
+        "total_active_pc": 35,
+        "total_inactive_pc": 4,
+        "total_major_issues": 0,
+        "total_minor_issues": 0,
+        "total_reports": 0
+    },
+    {
+        "room": 610,
+        "building_code": "ANB",
+        "total_pc": 40,
+        "total_active_pc": 39,
+        "total_inactive_pc": 1,
+        "total_major_issues": 1,
+        "total_minor_issues": 3,
+        "total_reports": 4
+    },
+    {
+        "room": 612,
+        "building_code": "ANB",
+        "total_pc": 35,
+        "total_active_pc": 35,
+        "total_inactive_pc": 0,
+        "total_major_issues": 3,
+        "total_minor_issues": 7,
+        "total_reports": 10
+    },
+    {
+        "room": 704,
+        "building_code": "MND",
+        "total_pc": 30,
+        "total_active_pc": 28,
+        "total_inactive_pc": 2,
+        "total_major_issues": 0,
+        "total_minor_issues": 2,
+        "total_reports": 2
+    }
+]
