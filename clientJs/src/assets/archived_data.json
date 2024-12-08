@@ -1,0 +1,263 @@
+{
+    "columns": [
+        "report_id",
+        "room",
+        "computer_id",
+        "status",
+        "date_submitted",
+        "date_archived",
+        "submittee",
+        "components",
+        "comment",
+        "building"
+    ],
+    "rows": [
+        {
+            "report_id": 2023556,
+            "room": 409,
+            "computer_id": 202420,
+            "status": 1,
+            "date_submitted": "10/26/24",
+            "date_archived": "10/26/24",
+            "submittee": "2022-106672",
+            "components": {
+                "mouse": 1,
+                "keyboard": 3,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "The computer is not working!",
+            "building": "MB"
+        },
+        {
+            "report_id": 2023557,
+            "room": 409,
+            "computer_id": 202421,
+            "status": 0,
+            "date_submitted": "10/27/24",
+            "date_archived": "10/27/24",
+            "submittee": "2022-106673",
+            "components": {
+                "mouse": 2,
+                "keyboard": 0,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Mouse is not moving.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023558,
+            "room": 410,
+            "computer_id": 202422,
+            "status": 1,
+            "date_submitted": "10/28/24",
+            "date_archived": "10/28/24",
+            "submittee": "2022-106674",
+            "components": {
+                "mouse": 0,
+                "keyboard": 0,
+                "system_unit": 0,
+                "software": 1,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Software needs an update.",
+            "building": "MB"
+        },
+        {
+            "report_id": 2023559,
+            "room": 411,
+            "computer_id": 202423,
+            "status": 0,
+            "date_submitted": "10/29/24",
+            "date_archived": "10/29/24",
+            "submittee": "2022-106675",
+            "components": {
+                "mouse": 1,
+                "keyboard": 1,
+                "system_unit": 1,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Minor issues with mouse, keyboard, and system unit.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023560,
+            "room": 412,
+            "computer_id": 202424,
+            "status": 1,
+            "date_submitted": "10/30/24",
+            "date_archived": "10/30/24",
+            "submittee": "2022-106676",
+            "components": {
+                "mouse": 0,
+                "keyboard": 0,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 1,
+                "other": 0
+            },
+            "comment": "Internet connectivity was restored.",
+            "building": "MB"
+        },
+        {
+            "report_id": 2023561,
+            "room": 413,
+            "computer_id": 202425,
+            "status": 0,
+            "date_submitted": "10/31/24",
+            "date_archived": "10/31/24",
+            "submittee": "2022-106677",
+            "components": {
+                "mouse": 3,
+                "keyboard": 3,
+                "system_unit": 2,
+                "software": 0,
+                "internet": 0,
+                "other": 1
+            },
+            "comment": "Severe hardware issues across components.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023562,
+            "room": 414,
+            "computer_id": 202426,
+            "status": 1,
+            "date_submitted": "11/01/24",
+            "date_archived": "11/01/24",
+            "submittee": "2022-106678",
+            "components": {
+                "mouse": 0,
+                "keyboard": 0,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "No issues, periodic check completed.",
+            "building": "MB"
+        },
+        {
+            "report_id": 2023563,
+            "room": 415,
+            "computer_id": 202427,
+            "status": 0,
+            "date_submitted": "11/02/24",
+            "date_archived": "11/02/24",
+            "submittee": "2022-106679",
+            "components": {
+                "mouse": 0,
+                "keyboard": 0,
+                "system_unit": 0,
+                "software": 3,
+                "internet": 0,
+                "other": 2
+            },
+            "comment": "Critical software failure and major 'other' issues.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023564,
+            "room": 416,
+            "computer_id": 202428,
+            "status": 1,
+            "date_submitted": "11/03/24",
+            "date_archived": "11/03/24",
+            "submittee": "2022-106680",
+            "components": {
+                "mouse": 0,
+                "keyboard": 0,
+                "system_unit": 1,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "System unit showed minor issues but resolved.",
+            "building": "MB"
+        },
+        {
+            "report_id": 2023565,
+            "room": 417,
+            "computer_id": 202429,
+            "status": 1,
+            "date_submitted": "11/04/24",
+            "date_archived": "11/04/24",
+            "submittee": "2022-106681",
+            "components": {
+                "mouse": 0,
+                "keyboard": 1,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Keyboard had minor issue, resolved.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023565,
+            "room": 417,
+            "computer_id": 202429,
+            "status": 1,
+            "date_submitted": "11/04/24",
+            "date_archived": "11/04/24",
+            "submittee": "2022-106681",
+            "components": {
+                "mouse": 0,
+                "keyboard": 1,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Keyboard had minor issue, resolved.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023565,
+            "room": 417,
+            "computer_id": 202429,
+            "status": 1,
+            "date_submitted": "11/04/24",
+            "date_archived": "11/04/24",
+            "submittee": "2022-106681",
+            "components": {
+                "mouse": 0,
+                "keyboard": 1,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Keyboard had minor issue, resolved.",
+            "building": "ANB"
+        },
+        {
+            "report_id": 2023565,
+            "room": 417,
+            "computer_id": 202429,
+            "status": 1,
+            "date_submitted": "11/04/24",
+            "date_archived": "11/04/24",
+            "submittee": "2022-106681",
+            "components": {
+                "mouse": 0,
+                "keyboard": 1,
+                "system_unit": 0,
+                "software": 0,
+                "internet": 0,
+                "other": 0
+            },
+            "comment": "Keyboard had minor issue, resolved.",
+            "building": "ANB"
+        }
+    ]
+}

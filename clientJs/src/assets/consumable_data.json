@@ -1,0 +1,20 @@
+{
+    "columns": [
+        "reference_id",
+        "stock_count"
+    ],
+    "rows": [
+        {
+            "reference_id": 3,
+            "stock_count": 193
+        },
+        {
+            "reference_id": 4,
+            "stock_count": 206
+        },
+        {
+            "reference_id": 5,
+            "stock_count": 415
+        }
+    ]
+}

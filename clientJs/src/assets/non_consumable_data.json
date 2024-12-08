@@ -1,0 +1,95 @@
+{
+    "columns": [
+        "component_id",
+        "reference_id",
+        "location",
+        "specs",
+        "flagged"
+    ],
+    "rows": [
+        {
+            "component_id": "SYU-012",
+            "reference_id": 1,
+            "location": "storage 1",
+            "specs": "System unit with Intel i7 processor, 16GB RAM, 512GB SSD, running Windows 10 Pro",
+            "flagged": 0
+        },
+        {
+            "component_id": "SYU-045",
+            "reference_id": 1,
+            "location": "storage 1",
+            "specs": "System unit with AMD Ryzen 5 processor, 8GB RAM, 1TB HDD, running Ubuntu Linux",
+            "flagged": 0
+        },
+        {
+            "component_id": "MON-122",
+            "reference_id": 2,
+            "location": "storage 2",
+            "specs": "27-inch LED monitor, Full HD resolution, HDMI and VGA ports",
+            "flagged": 0
+        },
+        {
+            "component_id": "SYU-105",
+            "reference_id": 1,
+            "location": "storage 1",
+            "specs": "System unit with Intel i9 processor, 32GB RAM, 1TB SSD, running Windows 11",
+            "flagged": 0
+        },
+        {
+            "component_id": "MON-049",
+            "reference_id": 2,
+            "location": "storage 2",
+            "specs": "24-inch LCD monitor, 4K resolution, HDMI port only",
+            "flagged": 0
+        },
+        {
+            "component_id": "MON-014",
+            "reference_id": 2,
+            "location": "storage 2",
+            "specs": "17-inch CRT monitor, VGA input, outdated model, flagged for disposal",
+            "flagged": 1
+        },
+        {
+            "component_id": "SYU-121",
+            "reference_id": 1,
+            "location": "storage 1",
+            "specs": "System unit with Intel i5 processor, 8GB RAM, 256GB SSD, running Windows 10 Home",
+            "flagged": 0
+        },
+        {
+            "component_id": "SYU-056",
+            "reference_id": 1,
+            "location": "storage 3",
+            "specs": "System unit with Intel Xeon processor, 64GB RAM, 2TB SSD, running Windows Server 2019",
+            "flagged": 0
+        },
+        {
+            "component_id": "MON-209",
+            "reference_id": 2,
+            "location": "storage 3",
+            "specs": "32-inch curved monitor, 1440p resolution, DisplayPort and HDMI inputs",
+            "flagged": 0
+        },
+        {
+            "component_id": "SYU-089",
+            "reference_id": 1,
+            "location": "storage 4",
+            "specs": "System unit with AMD Ryzen 7 processor, 16GB RAM, 1TB SSD, running Linux Mint",
+            "flagged": 0
+        },
+        {
+            "component_id": "MON-181",
+            "reference_id": 2,
+            "location": "storage 4",
+            "specs": "22-inch LED monitor, Full HD resolution, DVI and HDMI inputs",
+            "flagged": 1
+        },
+        {
+            "component_id": "SYU-022",
+            "reference_id": 1,
+            "location": "storage 5",
+            "specs": "System unit with Intel Core i3 processor, 4GB RAM, 500GB HDD, running Windows 7",
+            "flagged": 0
+        }
+    ]
+}
