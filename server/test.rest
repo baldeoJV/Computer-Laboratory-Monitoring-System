@@ -1,0 +1,17 @@
+### Test GET /tshirt
+GET http://localhost:8080/tshirt
+Content-Type: application/json
+
+### Test POST /tshirt/:id
+POST http://localhost:8080/tshirt/232
+Content-Type: application/json
+
+{
+  "logo": "Nike"
+}
+
+### Test POST with Missing Logo
+POST http://localhost:8080/tshirt/456
+Content-Type: application/json
+
+{}

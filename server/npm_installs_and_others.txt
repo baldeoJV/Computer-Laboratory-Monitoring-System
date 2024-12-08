@@ -1,0 +1,9 @@
+npm i -D nodemon
+npm install "express@>=5.0.0-beta.1" --sav
+npm i dotenv
+npm install mysql2
+
+package.json > "scripts" > "test"
+    change "test": ... to "dev": "npx nodemon app.js"
+
+npm run dev (keeps the app.js in progress while editing)
