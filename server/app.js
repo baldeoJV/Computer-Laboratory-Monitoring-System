@@ -15,6 +15,8 @@ app.get("/:table", async (req, res) => {
 app.get("/laboratories", async (req, res) => {
     const get_room = await getRoom()
 
+    console.log("Table: ")
+
     res.send(get_room)
 })
 
