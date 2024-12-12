@@ -1,14 +1,14 @@
 import express from 'express'
 
-import { getRoom, createRoom, getComputer, createComputer, getRoomComputer } from './be_comlab.js'
+import { getRoom, createRoom, getComputer, createComputer, getRoomComputer, getNonConsumableComponent, createNonConsumableComponent } from './be_comlab.js'
 
 const app = express()
 
 app.use(express.json())
 
-//[GET]
+//[LABORATORIES TABLE RELATED QUERY]
 
-//getRoom
+//get room
 app.get("/laboratories", async (req, res) => {
     const get_room = await getRoom()
 
@@ -24,68 +24,25 @@ app.get("/laboratories/:room_id", async (req, res) => {
     res.send(get_room ? get_room : `Room id: ${room_id} doesn't exist`)
 })
 
-//get room code of a room (tentative)
-app.get("/laboratories/:room_id/room_code", async (req, res) => {
-    
-    const room_id = req.params.room_id
-    const get_room = await getRoom(room_id)
-
-    // Check if room exists
-    if (!get_room) {
-        return res.status(404).send(`Room ID: ${room_id} doesn't exist.`);
-    }
-
-    const {room_code} = get_room
-    res.send(`Room ID: ${room_id} \n Room Code: ${room_code}`)
-    
-})
-
-//get computer
-app.get("/computer", async (req, res) => {
-    const get_computer = await getComputer()
-
-    res.send(get_computer)
-})
-
-//get computer in a specific room
-app.get("/computer/:room", async (req, res) => {
-    const room = req.params.room
-
-    //check if the format of the room is correct
-    const format = /^\d+[a-zA-Z]+$/;
-
-    if (!format.test(room)) {
-        return res.status(400).send("Invalid room. Perhaps you forgot to include the building code (e.g. '510MB')");
-    }
-
-    const result = room.match(/(\d+)([a-zA-Z]+)/); //split the numbers and letters
-
-    const room_number = result[1]; // first three numbers
-    const building_code = result[2];   // letters
-
-    const get_computer = await getRoomComputer(room_number, building_code)
-
-    if (!get_computer.length) {
-        // No records found
-        return res.status(404).send(`Room ${room} doesn't have computers.`);
-    }
-
-    res.send(get_computer)
-})
-
-
-
-//[POST]
-
 //create room
-app.post("/laboratories", async (req, res) => {
+app.post("/create/room", async (req, res) => {
     const {room, building_code} = req.body
     const create_room = await createRoom(room, building_code)
     res.status(201).send(create_room)
 })
 
+
+//[COMPUTERS TABLE RELATED QUERY]
+
+//get all computers
+app.get("/rooms/all_computers", async (req, res) => {
+    const get_computer = await getComputer()
+
+    res.send(get_computer)
+})
+
 //create computer
-app.post("/computer", async (req, res) => {
+app.post("/create/computer", async (req, res) => {
     const {room, building_code, system_unit, monitor} = req.body
 
     try{    
@@ -103,8 +60,58 @@ app.post("/computer", async (req, res) => {
     }
 })
 
+//get all computers in specific rooms based in req.body (array format)
+app.post("/rooms/computers", async (req, res) => {
+    const { rooms } = req.body;
+
+    //check if the input is an array
+    if (!Array.isArray(rooms)) {
+        return res.status(400).send("Invalid array format.");
+    }
+    
+    try {
+        const results = await Promise.all(
+            rooms.map(async ({ roomnum, building_code }) => {
+                const roomData = await getRoomComputer(roomnum, building_code);
+                return roomData;
+            })
+        );
+
+        if (results.flat().length === 0) {
+            return res.status(404).send("No computers in the given room/s.");
+        }
+
+        res.status(200).json(results.flat());// .flat() make 2d array into 1d
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching room data.");
+    }
+});
 
 
+//[NON-CONSUMABLE-COMPONENT TABLE RELATED QUERY]
+
+//get non consumable component
+app.get("/non_consum_comp", async (req, res) => {
+    const get_non_consumable_component = await getNonConsumableComponent()
+
+    res.send(get_non_consumable_component)
+})
+
+//create non_consumable_component
+app.post("/create/non_consum_comp", async (req, res) => {
+    const {component_id, reference_id, location, specs} = req.body
+
+    try{    
+        const create_non_consumable_component = await createNonConsumableComponent(component_id, reference_id, location, specs)
+        res.status(201).send(create_non_consumable_component)
+    }catch(error) {
+        // Check for duplication error (probably in 'system_unit' and 'monitor' column)
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Component id '${component_id}' already exist`);
+        }
+    }
+})
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
