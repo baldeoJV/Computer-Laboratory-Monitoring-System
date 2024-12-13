@@ -1,10 +1,22 @@
 import express from 'express'
 
-import { getRoom, createRoom, getComputer, createComputer, getRoomComputer, getNonConsumableComponent, createNonConsumableComponent } from './be_comlab.js'
+import { getRoom, createRoom,
+    getComputer, createComputer, getRoomComputer,
+    getNonConsumableComponent, createNonConsumableComponent,
+    getReport, createReport } from './be_comlab.js'
 
 const app = express()
 
 app.use(express.json())
+
+// Function to format date
+function formatDate(dateString) { 
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
 
 //[LABORATORIES TABLE RELATED QUERY]
 
@@ -120,4 +132,32 @@ app.use((err, req, res, next) => {
 
 app.listen(8080, () =>{
     console.log('Server is running on port 8080')
+})
+
+//[REPORT TABLE RELATED QUERY]
+
+//get reports
+app.get('/report', async (req, res) => {
+    const get_report = await getReport()
+
+    //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
+    const formatted_report = get_report.map(report => ({
+        ...report, date_submitted: formatDate(report.date_submitted) 
+    }))
+    res.send(formatted_report)
+})
+
+// create report
+app.post("/create/report", async (req, res) => {
+    const {room, building_code, computer_id, components, report_comment, reported_condition, submittee} = req.body
+
+    try{    
+        const create_report = await createReport(room, building_code, computer_id, components, report_comment, reported_condition, submittee)
+        res.status(201).send(create_report)
+    }catch(error) {
+        // Check if 'computer_id' doesn't exist
+        if (error.code === "ER_NO_REFERENCED_ROW_2") {
+            return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
+        }
+    }
 })
