@@ -55,6 +55,21 @@ export async function getReport(report_id=''){
   return report_id ? rows[0] : rows
 }
 
+// display buildings (building_reference)
+export async function getBuilding(building_code=''){
+  const [rows] = await pool.query(
+    building_code ? `SELECT * FROM building_reference WHERE building_code = ?` :
+    `SELECT * FROM building_reference`, [building_code])
+  return building_code ? rows[0] : rows
+}
+
+// display number of reports based in their status
+export async function getReportCount(){
+  const [rows] = await pool.query(`SELECT count(*) as number_of_reports FROM reports`)
+  return rows
+}
+
+
 
 //[CREATE QUERY]
 
@@ -104,6 +119,18 @@ export async function createReport(room, building_code, computer_id, components,
   //check if successfully created a room
   const id = result.insertId
   return getReport(id)
+}
+
+// create building
+export async function createBuilding(building_code, building_name){
+  const [result] = await pool.query(`
+    INSERT INTO building_reference(building_code, building_name) 
+    VALUES (? ,?)`,
+    [building_code, building_name])
+
+  //check if successfully created a room
+  const id = building_code
+  return getBuilding(id)
 }
 
 

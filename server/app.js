@@ -3,7 +3,8 @@ import express from 'express'
 import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getNonConsumableComponent, createNonConsumableComponent,
-    getReport, createReport } from './be_comlab.js'
+    getReport, createReport, getReportCount,
+    getBuilding, createBuilding } from './be_comlab.js'
 
 const app = express()
 
@@ -18,9 +19,44 @@ function formatDate(dateString) {
     return `${year}-${month}-${day}`
 }
 
+// [DASHBOARD RELATED QUERY]
+
+// fetch data for dashboard
+app.get("/dashboard", async (req, res) => {
+    try {
+        // Fetch all required data
+        const rooms = await getRoom()   //select all rooms
+        const computers = await getComputer()   //select all computers
+        const reports = await getReport()   //select all reports
+        const buildings = await getBuilding()   //select all buildings
+        const pending_report_count = await getReportCount()    //get the count of pending reports
+
+
+        //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
+        const formatted_report = reports.map(report => ({
+            ...report, date_submitted: formatDate(report.date_submitted) 
+        }))
+
+        // Store all data in a dictionary
+        const dashboard_dictionary = {
+            rooms,
+            computers,
+            formatted_report,
+            buildings,
+            pending_report_count
+        };
+
+        // Respond with the dictionary
+        res.status(200).json(dashboard_dictionary);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching data.");
+    }
+});
+
 //[LABORATORIES TABLE RELATED QUERY]
 
-//get room
+//get all rooms
 app.get("/laboratories", async (req, res) => {
     const get_room = await getRoom()
 
@@ -125,18 +161,10 @@ app.post("/create/non_consum_comp", async (req, res) => {
     }
 })
 
-app.use((err, req, res, next) => {
-    console.error(err.stack)
-    res.status(500).send('Something broke!')
-})
-
-app.listen(8080, () =>{
-    console.log('Server is running on port 8080')
-})
 
 //[REPORT TABLE RELATED QUERY]
 
-//get reports
+// get reports
 app.get('/report', async (req, res) => {
     const get_report = await getReport()
 
@@ -160,4 +188,48 @@ app.post("/create/report", async (req, res) => {
             return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
         }
     }
+})
+
+// get number of report based in status
+app.get('/report_count/:status', async (req, res) => {
+    const report_status = req.params.status
+    const get_report = await getReportCount(report_status)
+
+    res.send(get_report)
+})
+
+
+// [REFERENCES TABLE RELATED QUERY]
+
+// get building
+app.get("/building", async (req, res) => {
+    const get_building = await getBuilding()
+
+    res.send(get_building)
+})
+
+// create building
+app.post("/create/building", async (req, res) => {
+    const {building_code, building_name} = req.body
+
+    try{    
+        const create_building = await createBuilding(building_code, building_name)
+        res.status(201).send(create_building)
+    }catch(error) {
+        // Check for duplication error.
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Building code '${building_code}' already exist`);
+        }
+    }
+})
+
+
+
+app.use((err, req, res, next) => {
+    console.error(err.stack)
+    res.status(500).send('Something broke!')
+})
+
+app.listen(8080, () =>{
+    console.log('Server is running on port 8080')
 })

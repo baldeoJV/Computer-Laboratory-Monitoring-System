@@ -7,3 +7,6 @@ package.json > "scripts" > "test"
     change "test": ... to "dev": "npx nodemon app.js"
 
 npm run dev (keeps the app.js in progress while editing)
+
+extensions:
+thunder client (for tesing express)
