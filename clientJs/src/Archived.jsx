@@ -76,7 +76,7 @@ function Archived() {
 
 
     return <div style={{display: 'flex', height:'100vh'}}>
-    <DrawerMenu/>
+    <DrawerMenu menuType={'reports'}/>
     <Stack width={'100vw'}>
         <NavSetting/>
         <div className='mx-4'>

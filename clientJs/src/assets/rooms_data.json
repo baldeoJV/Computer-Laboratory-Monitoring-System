@@ -7,7 +7,7 @@
         "total_inactive_pc": 3,
         "total_major_issues": 3,
         "total_minor_issues": 5,
-        "total_reports": 8
+        "total_reports": 0
     },
     {
         "room": 210,
@@ -17,7 +17,7 @@
         "total_inactive_pc": 2,
         "total_major_issues": 7,
         "total_minor_issues": 9,
-        "total_reports": 16
+        "total_reports": 0
     },
     {
         "room": 310,
@@ -27,7 +27,7 @@
         "total_inactive_pc": 2,
         "total_major_issues": 7,
         "total_minor_issues": 9,
-        "total_reports": 16
+        "total_reports": 0
     },
     {
         "room": 510,
@@ -57,7 +57,7 @@
         "total_inactive_pc": 2,
         "total_major_issues": 7,
         "total_minor_issues": 9,
-        "total_reports": 16
+        "total_reports": 0
     },
     {
         "room": 780,
