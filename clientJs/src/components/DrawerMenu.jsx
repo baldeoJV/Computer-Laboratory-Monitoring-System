@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import {Sidebar, Menu, MenuItem,  } from 'react-pro-sidebar';
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
@@ -24,13 +25,14 @@ function DesignBox(){
 }
 
 
-export default function DrawerMenu() {
+export default function DrawerMenu({menuType}) {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const handleCollapseChange = () => setIsCollapsed(!isCollapsed)
+
     return (
-        
+        <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
           <Sidebar className="sidebr" collapsed={isCollapsed}
-            width='248px' style={{overflow:'hidden', height:'100%'}}
+            width='248px' style={{overflow:'hidden', height:'100%',}}
           >
             <Menu
 
@@ -81,40 +83,55 @@ export default function DrawerMenu() {
                 }}
             >
                 <MenuItem 
-                    icon={<img src={dashboard_pic} alt='dashboard_pic' className='imgIcon'/>} 
-                    className='menuItem py-2 hello'
+                    icon={<img src={dashboard_pic} alt='dashboard_pic'/>} 
+                    className='menuItem py-2'
                     component={<a href="/dashboard"/>}
-                > 
-                    <DesignBox/>
-                    <span>Dashboard </span>
+                >  
+                    {menuType === 'dashboard' && <DesignBox/>}
+                    Dashboard
                 </MenuItem>
                 <MenuItem 
                     icon={<img src={laboratory_pic} alt='laboratory_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/laboratory"/>}
-                > Laboratory </MenuItem>
+                > 
+                {menuType === 'laboratory' && <DesignBox/>}
+                Laboratory 
+                </MenuItem>
                 <MenuItem 
                     icon={<img src={reports_pic} alt='reports_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/report"/>}
-                > Reports </MenuItem>
+                > 
+                    {menuType === 'reports' && <DesignBox/>}
+                    Reports 
+                </MenuItem>
                 <MenuItem 
                     icon={<img src={inventory_pic} alt='inventory_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/inventory"/>}
-                > Inventory </MenuItem>
+                > 
+                    {menuType === 'inventory' && <DesignBox/>}
+                    Inventory 
+                </MenuItem>
                 <MenuItem 
                     icon={<img src={settings1_pic} alt='settings1_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/reports"/>}
-                > ReportModal </MenuItem>
+                > 
+                    {menuType === 'reportModal' && <DesignBox/>}
+                    ReportModal 
+                </MenuItem>
                 <MenuItem 
                     icon={<img src={about_pic} alt='about_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/itable"/>}
-                > Itable</MenuItem>
+                > 
+                    {menuType === 'itable' && <DesignBox/>}
+                    Itable
+                </MenuItem>
             </Menu>
           </Sidebar>
-
+        </div>
       );
 }

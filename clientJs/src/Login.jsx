@@ -96,7 +96,7 @@ function Login() {
                             mt:2.5,
                             bgcolor:'#323e8a',
                         }}
-                        type='submit'
+                    
                     >
                         Login
                     </Button>

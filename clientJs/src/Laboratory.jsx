@@ -20,7 +20,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import palette from './assets/palette';
 import NavSetting from './components/NavSetting';
-
+import axios from 'axios'
 
 function createData(computer_id, room, system_unit, monitor, status, condition, pending_reports){
     return {room, computer_id, system_unit, monitor, condition, status, pending_reports}
@@ -195,6 +195,7 @@ RoomBox.propTypes = {
 }
 function Laboratory() {
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
+    const [selectedRooms, setSelectedRooms] = useState({});
     const headCells = [
         {
             id: "computer_id",
@@ -239,7 +240,33 @@ function Laboratory() {
             label: "Pending Reports",
         },
     ]
-    const rows = computers_data.rows.map((cd)=> createData(
+
+    const getPcRows = () => {
+        // FETCH
+
+        const res = axios({
+            url: "http://localhost:8080/rooms/computers",
+            method: 'POST',
+            headers: {
+                // Authorization if meron
+            },
+            body: JSON.stringify(selectedRooms),
+        })
+        
+
+        // if successful fetch return the data
+        // const pass = 
+        const pass = true
+        if (pass){
+            // 
+            
+        } else {
+            // return no rows
+            return null
+        }
+    }
+
+    const pcRows = computers_data.rows.map((cd)=> createData(
         cd.computer_id,
         cd.room,
         cd.system_unit,
@@ -248,6 +275,9 @@ function Laboratory() {
         cd.condition_id,
         40 //total pending reports
     ))
+
+
+
     const roomCards = rooms_data.map((rd) => getRoomData(
         rd.room,
         rd.building_code,
@@ -264,8 +294,8 @@ function Laboratory() {
 
 
     return <div style={{display: 'flex', height:'100vh'}}>
-        <DrawerMenu/>
-        <Stack width={'100vw'}>
+        <DrawerMenu menuType={'laboratory'}/>
+        <Stack width={'100vw'} overflow={'auto'}>
         <NavSetting/>
         <div className='mx-4'>
         <Stack direction={'row'}>
@@ -277,12 +307,12 @@ function Laboratory() {
         {isCompTableOpen ?
         <Grid2 container spacing={2}>
             <Grid2 size={9}>
-                <ITable headCells={headCells} rows={rows} type="computerTable"/>
+                <ITable headCells={headCells} rows={pcRows} type="computerTable"/>
             </Grid2>
             <Grid2 size={3}>
                 <div style={{height:'100%'}}>
-                    <StatBox sx={{height :'38%'}} head={'Status'}/>
-                    <StatBox sx={{height:'38%', marginTop:'24px'}} head={'Condition'}/>
+                    <StatBox sx={{height :'38%'}}  head={'Computers Condition'}/>
+                    <StatBox sx={{height:'38%', marginTop:'24px'}} head={'Computers Status'}/>
                     <StatBox sx={{height:'15%', marginTop:'24px'}} head={'Reports'}/>
                 </div>
             </Grid2>
