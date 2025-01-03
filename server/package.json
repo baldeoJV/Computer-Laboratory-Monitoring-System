@@ -1,0 +1,21 @@
+{
+  "name": "barkadista_backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "barkadista_backend.js",
+  "scripts": {
+    "dev": "npx nodemon app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5"
+  },
+  "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
