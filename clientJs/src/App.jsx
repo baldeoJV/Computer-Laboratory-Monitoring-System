@@ -19,11 +19,17 @@ import palette from './assets/palette';
 import BedtimeIcon from '@mui/icons-material/Bedtime';
 import NavSetting from './components/NavSetting';
 import StatBox from './components/StatBox';
-import computersData from './assets/computers_data.json';
+
 import { getValueToPositionMapper } from '@mui/x-charts';
-import rooms_data from './assets/rooms_data.json'
+
+// FAKE DATA
+// import computersData from './assets/computers_data.json';
+// import rooms_data from './assets/rooms_data.json'
+// import reports_data from './assets/reports_data.json'
+
 import building_names from './assets/building_names.json'
-import reports_data from './assets/reports_data.json'
+
+// 
 import { Button } from 'bootstrap';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import GppGoodRoundedIcon from '@mui/icons-material/GppGoodRounded';
@@ -57,8 +63,8 @@ function DashboardReportTable({rows}){
           <TableRow>
             <TableCell sx={a_sx}>Room</TableCell>
             <TableCell align='left' sx={a_sx}>Computer</TableCell>
-            <TableCell align='left' sx={a_sx}>Content</TableCell>
-            <TableCell sx={a_sx}>Comments</TableCell>
+            <TableCell align='left' sx={a_sx}>Comments</TableCell>
+            <TableCell sx={a_sx}>Components</TableCell>
             <TableCell sx={a_sx}>Date</TableCell>
           </TableRow>
         </TableHead>
@@ -69,10 +75,10 @@ function DashboardReportTable({rows}){
             ).map((rr,i) => {
               const orr= Object.keys(rr.components)
               return <TableRow key={'rr - '+i}>
-              <TableCell component={'th'}>{`${rr.room}${rr.building}`}</TableCell>
+              <TableCell component={'th'}>{`${rr.room}${rr.building_code}`}</TableCell>
               <TableCell align='left'>{rr.computer_id}</TableCell>
-              <TableCell align='left' sx={{}}>{rr.comment}</TableCell>
-              <TableCell >{orr.filter(r => rr['components'][r] !== null).join(', ')}</TableCell>
+              <TableCell align='left' sx={{}}>{rr.report_comment}</TableCell>
+              <TableCell >{rr.components}</TableCell>
               <TableCell >{rr.date_submitted}</TableCell>
               </TableRow>
           })}
@@ -126,13 +132,44 @@ const statboxStyle = {
 function App()  {
   const [totalReports, setTotalReports] = useState(0);
   const [totalRooms, setTotalRooms] = useState(0)
+
+  const [roomsData, setRoomsData] = useState([]);
+  const [computersData, setComputersData] = useState([]);
+  const [reportsData, setReportsData] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:8080/dashboard').then(res => {
+      const data = res.data
+      console.log(data.formatted_report)
+
+      let totalrep = 0;
+      let roomcount = 0
+
+      data.rooms.forEach(rd => {
+        totalrep += rd.total_reports;
+        roomcount++
+      });
+
+      setRoomsData(data.rooms)
+      setComputersData(data.computers)
+      setReportsData(data.formatted_report)
+      setTotalReports(totalrep);
+      setTotalRooms(roomcount)
+
+
+
+    }).catch(err => console.error('Error: ', err))
+
+  }, []);
+
+
   const bdMap = building_names.reduce((m, bd) => {
     m[bd.building_code] = bd.building_name
     return m
   }, {})
   const ComputersSummary = ()=> {
     let dataPc = new Map();
-    for (let obj of computersData.rows) {
+    for (let obj of computersData) {
       if (!dataPc.has(obj['building_code'])) {
         dataPc.set(obj['building_code'], {
           active: 0,
@@ -153,8 +190,8 @@ function App()  {
       else if (obj['condition_id'] === 3) buildingData.bad++;
   
       // Update status counts
-      if (obj['status'] === 1) buildingData.active++;
-      else if (obj['status'] === 0) buildingData.inactive++;
+      if (obj['computer_status'] === 1) buildingData.active++;
+      else if (obj['computer_status'] === 0) buildingData.inactive++;
   
       dataPc.set(obj['building_code'], buildingData);
     }
@@ -178,21 +215,12 @@ function App()  {
     return [dataset_condition, dataset_status];
   }
 
-  useEffect(() => {
-    axios.get('http://localhost:8080/dashboard').then(data => console.log(data.data)).catch(err => console.error('Error: ', err))
-    let totalrep = 0;
-    let roomcount = 0
-    rooms_data.forEach(rd => {
-      totalrep += rd.total_reports;
-      roomcount++
-    });
-    setTotalReports(totalrep);
-    setTotalRooms(roomcount)
-  }, []);
+
 
   let elms = []
   for (let i = 0; i < 8; i++){
-    let rd = rooms_data[i]
+    if (i > roomsData.length -1 ) break;
+    let rd = roomsData[i]
     let mr = rd.total_reports > 0
     let iconsx= {
       color: mr? palette.badFont : palette.darkBlueFont, 
@@ -247,7 +275,7 @@ function App()  {
                 </Grid2>
               </Grid2>
               {/* Report */}
-              <DashboardReportTable rows={reports_data.rows}/>
+              <DashboardReportTable rows={reportsData}/>
             </Grid2>
             {/* TYPE B for the room summary, and two buttons below */}
             <Grid2 item size={{xs:12, md:12, lg:3}}>
@@ -267,11 +295,15 @@ function App()  {
                   <Typography variant='h6' sx={{fontWeight:700, fontFamily:'Inter'}}>
                     Rooms - <b>{totalRooms}</b>
                   </Typography>
-                  <NavLink to={'/laboratory'}>
-                  <Link component={'button'} variant='body2'>
-                    View more <IoIosArrowForward />
-                  </Link>
-                  </NavLink>
+                  
+                  {totalRooms > 8 && 
+                    <NavLink to={'/laboratory'}>
+                      <Link component={'button'} variant='body2'>
+                        View more <IoIosArrowForward />
+                      </Link>
+                    </NavLink>
+                  }
+
 
                 </Box>
                 <Grid2 spacing={2} container sx={{justifyContent:'center'}}>
