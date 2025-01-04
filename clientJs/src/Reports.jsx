@@ -1,14 +1,36 @@
 /* eslint-disable no-unused-vars */
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Button, Grid2, Stack } from '@mui/material';
 import reports_data from './assets/reports_data.json'
 import ITable from './components/ITable';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
 import DownloadForOfflineIcon from '@mui/icons-material/DownloadForOffline';
-import AddCircleIcon from '@mui/icons-material/AddCircle';function Reports() {
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+function Reports() {
     function createData(report_id, room, computer_id, components, date_submitted, submittee, building, comment){
         return {report_id, room, computer_id, components, date_submitted, submittee, building, comment}
     }
+    
+    useEffect(()=> {
+        axios.get('http://localhost:8080/report').then( res => {
+            const data = res.data
+            const rows = data.map((rd) => createData( 
+                rd.report_id, 
+                rd.room, 
+                rd.computer_id,
+                rd.components,
+                rd.date_submitted,
+                rd.submittee,
+                rd.building,
+                rd.comment
+            ))
+            
+        }).catch(err => console.error("Error: ", err))
+    }, [])
+
+
     
     const rows = reports_data.rows.map((rd) => createData( 
         rd.report_id, 

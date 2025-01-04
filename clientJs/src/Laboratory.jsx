@@ -1,8 +1,12 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import ITable from './components/ITable';
+
+// FAKE DATA
 import computers_data from './assets/computers_data.json'
 import rooms_data from './assets/rooms_data.json'
+
+// 
 import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box } from '@mui/material';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -15,7 +19,6 @@ import Checkbox from '@mui/material/Checkbox';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import DrawerMenu from './components/DrawerMenu'
-
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import palette from './assets/palette';
@@ -196,6 +199,37 @@ RoomBox.propTypes = {
 function Laboratory() {
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
     const [selectedRooms, setSelectedRooms] = useState({});
+    const [roomcards, setRoomcards] = useState([]);
+
+
+    useEffect(() => {
+        axios.get('http://localhost:8080/laboratories').then(res => {
+            const roomsData = res.data
+            const roomCards_data = roomsData.map((rd) => getRoomData(
+                rd.room,
+                rd.building_code,
+                rd.total_pc,
+                rd.total_active_pc,
+                rd.total_inactive_pc,
+                rd.total_major_issue,
+                rd.total_minor_issue,
+                rd.total_reports
+            ))
+            setRoomcards(roomCards_data)
+        }).catch(err => console.error('Error: ', err))
+    
+      }, []);
+    const roomCards = rooms_data.map((rd) => getRoomData(
+        rd.room,
+        rd.building_code,
+        rd.total_pc,
+        rd.total_active_pc,
+        rd.total_inactive_pc,
+        rd.total_major_issues,
+        rd.total_minor_issues,
+        rd.total_reports
+    ))
+
     const headCells = [
         {
             id: "computer_id",
@@ -278,16 +312,7 @@ function Laboratory() {
 
 
 
-    const roomCards = rooms_data.map((rd) => getRoomData(
-        rd.room,
-        rd.building_code,
-        rd.total_pc,
-        rd.total_active_pc,
-        rd.total_inactive_pc,
-        rd.total_major_issues,
-        rd.total_minor_issues,
-        rd.total_reports
-    ))
+
     const building_data = [{building_code: 'MB', building_name:'Main Building'}, {building_code: 'ANB', building_name:'Annex Building'}, {building_code: 'MND', building_name:'Mendiola Building'}]
     const buildings = building_data.map((bd) => getBuildingData(bd.building_code, bd.building_name))
 
@@ -300,8 +325,8 @@ function Laboratory() {
         <div className='mx-4'>
         <Stack direction={'row'}>
             <LabelTop/>
-            <Button variant='outlined' onClick={() => setIsCompTableOpen(!isCompTableOpen)}>
-                Hello
+            <Button variant='outlined' style={{marginLeft:40}} onClick={() => setIsCompTableOpen(!isCompTableOpen)}>
+                Check pc
             </Button>
         </Stack>
         {isCompTableOpen ?
@@ -319,7 +344,7 @@ function Laboratory() {
         </Grid2> :
         <Stack sx={{marginTop:2}}>
             {buildings.map((bdt, i) => {
-                const filtered_rooms = roomCards.filter((rc) => rc.building_code === bdt.building_code)
+                const filtered_rooms = roomcards.filter((rc) => rc.building_code === bdt.building_code)
                 return <div key={`${bdt.building_code}-${i}`} style={{marginBottom: '4px', border:'1px solid #CCCCCC', borderRadius:'2px'}}>
                     <Accordion sx={{paddingTop:1, paddingBottom:2}} defaultExpanded={(i === 0) ? true : false}>
                         <AccordionSummary
