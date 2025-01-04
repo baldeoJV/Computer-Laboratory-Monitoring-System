@@ -1,5 +1,5 @@
 import express from 'express'
-
+import cors from 'cors'
 import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getNonConsumableComponent, createNonConsumableComponent,
@@ -9,6 +9,7 @@ import { getRoom, createRoom,
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
 // Function to format date
 function formatDate(dateString) { 

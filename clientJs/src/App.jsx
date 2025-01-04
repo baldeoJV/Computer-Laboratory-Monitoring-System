@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 
 import './App.css'
+import axios from "axios";
 import DrawerMenu from './components/DrawerMenu'
 import '@fontsource/inter/700.css';
 import '@fontsource/inter/600.css';
@@ -48,7 +49,6 @@ function DashboardReportTable({rows}){
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
-  console.log(page)
   const a_sx = {fontSize:'small', fontWeight:'600', py:2}
   return <Stack sx={{border:'1px solid #DADADA', mt:2}}>
     <TableContainer component={Paper} sx={{overflow:'auto', maxHeight:'430px', minHeight:'430px'}}>
@@ -179,6 +179,7 @@ function App()  {
   }
 
   useEffect(() => {
+    axios.get('http://localhost:8080/dashboard').then(data => console.log(data.data)).catch(err => console.error('Error: ', err))
     let totalrep = 0;
     let roomcount = 0
     rooms_data.forEach(rd => {

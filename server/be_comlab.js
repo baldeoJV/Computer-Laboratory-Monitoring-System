@@ -1,6 +1,6 @@
 // Import mysql2
 import mysql from 'mysql2'
-import dotenv from'dotenv'
+import dotenv from 'dotenv'
 dotenv.config()
 
 // Create a connection to the database
