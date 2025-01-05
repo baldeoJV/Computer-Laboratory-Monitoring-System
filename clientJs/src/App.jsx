@@ -76,11 +76,11 @@ function DashboardReportTable({rows}){
               const orr= Object.keys(rr.components)
               const comp_filter = orr.filter(r => rr['components'][r] !== null).join(', ')
               return <TableRow key={'rr - '+i}>
-              <TableCell component={'th'}>{`${rr.room}${rr.building_code}`}</TableCell>
-              <TableCell align='left'>{rr.computer_id}</TableCell>
-              <TableCell align='left' sx={{}}>{rr.report_comment}</TableCell>
-              <TableCell >{rr.components}</TableCell>
-              <TableCell >{rr.date_submitted}</TableCell>
+                <TableCell component={'th'}>{`${rr.room}${rr.building_code}`}</TableCell>
+                <TableCell align='left'>{rr.computer_id}</TableCell>
+                <TableCell align='left' sx={{}}>{rr.report_comment}</TableCell>
+                <TableCell >{rr.components}</TableCell>
+                <TableCell >{rr.date_submitted}</TableCell>
               </TableRow>
           })}
         </TableBody>

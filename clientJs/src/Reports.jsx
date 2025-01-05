@@ -9,6 +9,7 @@ import NavSetting from './components/NavSetting';
 import DownloadForOfflineIcon from '@mui/icons-material/DownloadForOffline';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 function Reports() {
+    const [reportsData, setReportsData] = useState([]);
     function createData(report_id, room, computer_id, components, date_submitted, submittee, building, comment){
         return {report_id, room, computer_id, components, date_submitted, submittee, building, comment}
     }
@@ -16,6 +17,7 @@ function Reports() {
     useEffect(()=> {
         axios.get('http://localhost:8080/report').then( res => {
             const data = res.data
+            console.log(data)
             const rows = data.map((rd) => createData( 
                 rd.report_id, 
                 rd.room, 
@@ -23,25 +25,13 @@ function Reports() {
                 rd.components,
                 rd.date_submitted,
                 rd.submittee,
-                rd.building,
-                rd.comment
+                rd.building_code,
+                rd.report_comment
             ))
+            setReportsData(rows)
             
         }).catch(err => console.error("Error: ", err))
     }, [])
-
-
-    
-    const rows = reports_data.rows.map((rd) => createData( 
-        rd.report_id, 
-        rd.room, 
-        rd.computer_id,
-        rd.components,
-        rd.date_submitted,
-        rd.submittee,
-        rd.building,
-        rd.comment
-    ))
     const headCells = [
         {
             id: "report_id",
@@ -124,7 +114,7 @@ function Reports() {
 
                 </div>
                 
-                <ITable headCells={headCells} rows={rows} type='reportTable'/>
+                <ITable headCells={headCells} rows={reportsData} type='reportTable'/>
             </div>
         </Stack>
 

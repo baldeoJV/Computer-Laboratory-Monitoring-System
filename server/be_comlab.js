@@ -47,6 +47,15 @@ export async function getNonConsumableComponent(component_id = ''){
   return component_id ? rows[0] : rows
 }
 
+// get consumable_components
+export async function getConsumableComponent(component_id = '') {
+  const [rows] = await pool.query(
+    component_id ? `SELECT * FROM consumable_components WHERE component_id = ?` :
+    `SELECT * FROM consumable_components`, [component_id])
+  return component_id ? rows[0] : rows
+}
+
+
 // display reports
 export async function getReport(report_id=''){
   const [rows] = await pool.query(

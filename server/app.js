@@ -4,7 +4,7 @@ import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount,
-    getBuilding, createBuilding } from './be_comlab.js'
+    getBuilding, createBuilding, getConsumableComponent,  } from './be_comlab.js'
 
 const app = express()
 
@@ -112,7 +112,6 @@ app.post("/create/computer", async (req, res) => {
 //get all computers in specific rooms based in req.body (array format)
 app.post("/rooms/computers", async (req, res) => {
     const { rooms } = req.body;
-
     //check if the input is an array
     if (!Array.isArray(rooms)) {
         return res.status(400).send("Invalid array format.");
@@ -161,6 +160,32 @@ app.post("/create/non_consum_comp", async (req, res) => {
         }
     }
 })
+
+
+//[CONSUMABLE-COMPONENT TABLE RELATED QUERY]
+
+//get consumable component
+app.get("/consum_comp", async (req, res) => {
+    const get_consumable_component = await getConsumableComponent()
+
+    res.send(get_consumable_component)
+})
+
+//create non_consumable_component
+// app.post("/create/consum_comp", async (req, res) => {
+//     const {component_id, reference_id, location, specs} = req.body
+
+//     try{    
+//         const create_non_consumable_component = await createNonConsumableComponent(component_id, reference_id, location, specs)
+//         res.status(201).send(create_non_consumable_component)
+//     }catch(error) {
+//         // Check for duplication error (probably in 'system_unit' and 'monitor' column)
+//         if (error.code === "ER_DUP_ENTRY") {
+//             return res.status(409).send(`Component id '${component_id}' already exist`);
+//         }
+//     }
+// })
+
 
 
 //[REPORT TABLE RELATED QUERY]

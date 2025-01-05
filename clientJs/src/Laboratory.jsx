@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import ITable from './components/ITable';
 
 // FAKE DATA
-import computers_data from './assets/computers_data.json'
-import rooms_data from './assets/rooms_data.json'
+// import computers_data from './assets/computers_data.json'
+// import rooms_data from './assets/rooms_data.json'
 
 // 
-import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box } from '@mui/material';
+import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu } from '@mui/material';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -24,6 +24,7 @@ import './App.css'
 import palette from './assets/palette';
 import NavSetting from './components/NavSetting';
 import axios from 'axios'
+import { MenuItem } from 'react-pro-sidebar';
 
 function createData(computer_id, room, system_unit, monitor, status, condition, pending_reports){
     return {room, computer_id, system_unit, monitor, condition, status, pending_reports}
@@ -41,7 +42,17 @@ function LabelTop() {
     <div className="text-wrapper">Laboratory</div>
     </div>
 }
-function RoomBox({rooms}) {
+function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
+    const handleCheckRoomBox = (e, r)=> {
+        if (e.target.checked){
+            setSelectedRooms([...selectedRooms, {"roomnum": r.room, "building_code": r.building_code}])
+            console.log("checked room: ", r.room)
+            console.log(r.building_code)
+        } else {
+            console.log("unchecked room: ", r.room)
+            setSelectedRooms(selectedRooms.filter(sr => sr.roomnum !== r.room && sr.building_code !== r.building_code))
+        }
+    }
     const stacksx = {
         textAlign: 'left', 
         width: '100%', 
@@ -64,7 +75,7 @@ function RoomBox({rooms}) {
         return rooms.map(r => {
 
             return (
-                <Grid2 item="true" md={6} lg={6} xl={6} key={r.room}>
+                <Grid2 md={6} lg={6} xl={6} key={r.room}>
                     <CardContent 
                         key={r.room} 
                         sx={{
@@ -75,6 +86,7 @@ function RoomBox({rooms}) {
                         }}
                     >
                         <Checkbox 
+                            onChange={(e) => handleCheckRoomBox(e, r)}
                             disableRipple
                             sx={{ 
                                 borderBottom: `1px solid ${palette.strokeMain}`,
@@ -176,7 +188,7 @@ function RoomBox({rooms}) {
                                     </Stack>
                                 </Stack>
 
-                                <Button variant='outlined' size='small' sx={{borderRadius: '16px', marginTop: 1}}>
+                                <Button variant='outlined' size='small' sx={{borderRadius: '16px', marginTop: 1}} onClick={()=> handleOpenPCTable(true, [{"roomnum": r.room, "building_code": r.building_code}])}>
                                     View Table
                                 </Button>
                             </Stack>
@@ -198,11 +210,16 @@ RoomBox.propTypes = {
 }
 function Laboratory() {
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
-    const [selectedRooms, setSelectedRooms] = useState({});
+    const [selectedRooms, setSelectedRooms] = useState([]);
     const [roomcards, setRoomcards] = useState([]);
+    const [allRooms, setAllRooms] = useState([])
+    const [computersData, setComputersData] = useState([])
+
+    const [roomCardAnchorElement, setRoomCardAnchorElement] = useState(null)
+    const [roomCardAnchorData, setRoomCardAnchorData] = useState(null)
 
 
-    useEffect(() => {
+    const fetchLabRooms = () => {
         axios.get('http://localhost:8080/laboratories').then(res => {
             const roomsData = res.data
             const roomCards_data = roomsData.map((rd) => getRoomData(
@@ -216,19 +233,24 @@ function Laboratory() {
                 rd.total_reports
             ))
             setRoomcards(roomCards_data)
+            setAllRooms(roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}}))
         }).catch(err => console.error('Error: ', err))
-    
+    }
+    useEffect(() => {
+        fetchLabRooms()
       }, []);
-    const roomCards = rooms_data.map((rd) => getRoomData(
-        rd.room,
-        rd.building_code,
-        rd.total_pc,
-        rd.total_active_pc,
-        rd.total_inactive_pc,
-        rd.total_major_issues,
-        rd.total_minor_issues,
-        rd.total_reports
-    ))
+
+    
+    // const roomCards = rooms_data.map((rd) => getRoomData(
+    //     rd.room,
+    //     rd.building_code,
+    //     rd.total_pc,
+    //     rd.total_active_pc,
+    //     rd.total_inactive_pc,
+    //     rd.total_major_issues,
+    //     rd.total_minor_issues,
+    //     rd.total_reports
+    // ))
 
     const headCells = [
         {
@@ -275,18 +297,23 @@ function Laboratory() {
         },
     ]
 
-    const getPcRows = () => {
+    const getPcRows = (single = false, singleRoom) => {
         // FETCH
-
-        const res = axios({
+        const targetRooms = single ? singleRoom : selectedRooms.length === 0 ? allRooms : selectedRooms
+        console.log(single, singleRoom)
+        
+        axios({
             url: "http://localhost:8080/rooms/computers",
             method: 'POST',
             headers: {
                 // Authorization if meron
             },
-            body: JSON.stringify(selectedRooms),
-        })
-        
+            data: {rooms: targetRooms},
+        }).then(res => {
+            const data= res.data
+            setComputersData(data)
+        }).catch(err => console.error("ERROR: ", err))
+        setSelectedRooms([])
 
         // if successful fetch return the data
         // const pass = 
@@ -300,18 +327,26 @@ function Laboratory() {
         }
     }
 
-    const pcRows = computers_data.rows.map((cd)=> createData(
+    const pcRows = computersData.map((cd)=> createData(
         cd.computer_id,
         cd.room,
         cd.system_unit,
         cd.monitor,
-        cd.status,
+        cd.computer_status,
         cd.condition_id,
-        40 //total pending reports
+        40 //total pending reports //TODO
     ))
 
-
-
+    const handleOpenPCTable = (single = false, singleRoom = []) => {
+        const toggleTable = !isCompTableOpen
+        if(toggleTable){
+            getPcRows(single, singleRoom)
+        }
+        setIsCompTableOpen(!isCompTableOpen)
+    }
+    const handleRoomCardMenuOpen = () => {
+        setRoomCardAnchorElement(null)
+    }
 
     const building_data = [{building_code: 'MB', building_name:'Main Building'}, {building_code: 'ANB', building_name:'Annex Building'}, {building_code: 'MND', building_name:'Mendiola Building'}]
     const buildings = building_data.map((bd) => getBuildingData(bd.building_code, bd.building_name))
@@ -325,7 +360,7 @@ function Laboratory() {
         <div className='mx-4'>
         <Stack direction={'row'}>
             <LabelTop/>
-            <Button variant='outlined' style={{marginLeft:40}} onClick={() => setIsCompTableOpen(!isCompTableOpen)}>
+            <Button variant='outlined' style={{marginLeft:40}} onClick={()=> handleOpenPCTable()}>
                 Check pc
             </Button>
         </Stack>
@@ -335,11 +370,11 @@ function Laboratory() {
                 <ITable headCells={headCells} rows={pcRows} type="computerTable"/>
             </Grid2>
             <Grid2 size={3}>
-                <div style={{height:'100%'}}>
+                {/* <div style={{height:'100%'}}>
                     <StatBox sx={{height :'38%'}}  head={'Computers Condition'}/>
                     <StatBox sx={{height:'38%', marginTop:'24px'}} head={'Computers Status'}/>
                     <StatBox sx={{height:'15%', marginTop:'24px'}} head={'Reports'}/>
-                </div>
+                </div> */}
             </Grid2>
         </Grid2> :
         <Stack sx={{marginTop:2}}>
@@ -356,7 +391,7 @@ function Laboratory() {
                         </AccordionSummary>
                         <AccordionDetails>
                         <Grid2 container spacing={2}>
-                            <RoomBox rooms={filtered_rooms}/>
+                            <RoomBox rooms={filtered_rooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} handleOpenPCTable={handleOpenPCTable}/>
                         </Grid2>
                     </AccordionDetails>
                     </Accordion>
@@ -367,7 +402,18 @@ function Laboratory() {
         }
         </div>
         </Stack>
-
+        <Menu
+            anchorEl={roomCardAnchorElement}
+            open={Boolean(roomCardAnchorElement)}
+            onClose={handleRoomCardMenuOpen}
+        >
+            <MenuItem>
+                1
+            </MenuItem>
+            <MenuItem>
+                2
+            </MenuItem>
+        </Menu>
 
 
         
