@@ -188,7 +188,7 @@ function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
                                     </Stack>
                                 </Stack>
 
-                                <Button variant='outlined' size='small' sx={{borderRadius: '16px', marginTop: 1}} onClick={()=> handleOpenPCTable(true, [{"roomnum": r.room, "building_code": r.building_code}])}>
+                                <Button variant='outlined' size='small' sx={{borderRadius: '16px', marginTop: 1}} onClick={()=> handleOpenPCTable("single", [{"roomnum": r.room, "building_code": r.building_code}])}>
                                     View Table
                                 </Button>
                             </Stack>
@@ -297,11 +297,16 @@ function Laboratory() {
         },
     ]
 
-    const getPcRows = (single = false, singleRoom) => {
+    const getPcRows = (type_sel, singleRoom) => {
         // FETCH
-        const targetRooms = single ? singleRoom : selectedRooms.length === 0 ? allRooms : selectedRooms
-        console.log(single, singleRoom)
-        
+        let targetRooms = []
+        if (type_sel === "single"){
+            targetRooms =singleRoom
+        } else if (type_sel === "all") {
+            targetRooms = allRooms
+        } else {
+            targetRooms = selectedRooms
+        }
         axios({
             url: "http://localhost:8080/rooms/computers",
             method: 'POST',
@@ -337,12 +342,10 @@ function Laboratory() {
         40 //total pending reports //TODO
     ))
 
-    const handleOpenPCTable = (single = false, singleRoom = []) => {
-        const toggleTable = !isCompTableOpen
-        if(toggleTable){
-            getPcRows(single, singleRoom)
-        }
-        setIsCompTableOpen(!isCompTableOpen)
+    const handleOpenPCTable = (type_sel = "all", singleRoom = []) => {
+        
+        getPcRows(type_sel, singleRoom)
+        setIsCompTableOpen(true)
     }
     const handleRoomCardMenuOpen = () => {
         setRoomCardAnchorElement(null)
@@ -358,11 +361,24 @@ function Laboratory() {
         <Stack width={'100vw'} overflow={'auto'}>
         <NavSetting/>
         <div className='mx-4'>
-        <Stack direction={'row'}>
+        <Stack direction={'row'} justifyContent={'space-between'} marginTop={2}>
             <LabelTop/>
-            <Button variant='outlined' style={{marginLeft:40}} onClick={()=> handleOpenPCTable()}>
-                Check pc
+            <div>
+            {!isCompTableOpen && <>
+                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} onClick={()=> handleOpenPCTable("all")}>
+                View all
             </Button>
+            <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}} onClick={()=> handleOpenPCTable("select")}>
+                View selected
+            </Button>
+            </>}
+
+            {isCompTableOpen && <Button variant='outlined' color="primary" style={{marginLeft:12, borderRadius:'24px',fontSize:'16px', textTransform: 'inherit'}} onClick={()=> setIsCompTableOpen(false)}>
+                View Rooms List
+            </Button>}
+
+            </div>
+
         </Stack>
         {isCompTableOpen ?
         <Grid2 container spacing={2}>

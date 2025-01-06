@@ -19,7 +19,7 @@ function Consumable() {
             const data = res.data
             console.log(data)
             const rows = data.map((cd) => createData( 
-                cd.reference_id,
+                cd.component_name,
                 cd.stock_count
             ))
             setConsumData(rows)

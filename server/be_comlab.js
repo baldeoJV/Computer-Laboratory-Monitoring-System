@@ -42,33 +42,85 @@ export async function getRoomComputer(room, building_code){
 // get non_consumable_components
 export async function getNonConsumableComponent(component_id = ''){
   const [rows] = await pool.query(
-    component_id ? `SELECT * FROM non_consumable_components WHERE component_id = ?` :
-    `SELECT * FROM non_consumable_components`, [component_id])
+    component_id ? `SELECT * FROM non_consumable_components as nonconsum JOIN components_reference as conref ON conref.reference_id = nonconsum.reference_id WHERE component_id = ?` :
+    `SELECT * FROM non_consumable_components as nonconsum JOIN components_reference as conref ON conref.reference_id = nonconsum.reference_id`, [component_id])
   return component_id ? rows[0] : rows
 }
 
 // get consumable_components
 export async function getConsumableComponent(component_id = '') {
   const [rows] = await pool.query(
-    component_id ? `SELECT * FROM consumable_components WHERE component_id = ?` :
-    `SELECT * FROM consumable_components`, [component_id])
+    component_id ? `SELECT * FROM consumable_components as consum JOIN components_reference as conref ON conref.reference_id = consum.reference_id WHERE component_id = ?` :
+    `SELECT * FROM consumable_components as consum JOIN components_reference as conref ON conref.reference_id = consum.reference_id`, [component_id])
   return component_id ? rows[0] : rows
+}
+
+// getcrm
+async function getCrm(rows, table_name, isReportTable) {
+  const uniqueReportsID = new Set()
+  rows.forEach(r => uniqueReportsID.add(r.report_id))
+  let [component_rows] = await pool.query(
+    `SELECT * FROM ${table_name} WHERE report_id IN (${[...uniqueReportsID].join(', ')})`
+  )
+  // console.log(component_rows)
+  let crm = new Map()
+
+  // yes
+  component_rows.forEach(cr => {
+    crm.set(cr.report_id, { ...cr })
+
+    // delete things
+    delete crm.get(cr.report_id).report_id
+    if (isReportTable) delete crm.get(cr.report_id).reported_components_id
+    else delete crm.get(cr.report_id).archived_reported_components_id
+  })
+  return crm
 }
 
 
 // display reports
 export async function getReport(report_id=''){
   const [rows] = await pool.query(
-    report_id ? `SELECT * FROM reports WHERE report_id = ?` :
-    `SELECT * FROM reports`, [report_id])
-  return report_id ? rows[0] : rows
+    report_id 
+      ? `SELECT * FROM reports WHERE report_id = ?` 
+      : `SELECT * FROM reports`, [report_id]
+  )
+  let crm = await getCrm(rows, "reported_components", true)
+
+  // add
+  const res = rows.map(rr => {return {...rr, components: {...crm.get(rr.report_id)} }});;;;;
+  // console.log("Start")
+  // // console.log("GET ",crm.get(27))
+  // console.log(res)
+  return report_id ? res[0] : res
 }
+
+// display archived reports
+export async function getArchivedReport(report_id=''){
+  const [rows] = await pool.query(
+    report_id 
+      ? `SELECT * FROM archived_reports WHERE report_id = ?` 
+      : `SELECT * FROM archived_reports`, [report_id]
+  )
+  let crm = await getCrm(rows, "archived_reported_components", false)
+
+  // add
+  const res = rows.map(rr => {return {...rr, components: {...crm.get(rr.report_id)} }});;;;;
+  // console.log("Start")
+  // // console.log("GET ",crm.get(27))
+  // console.log(res)
+  return report_id ? res[0] : res
+}
+
+
 
 // display buildings (building_reference)
 export async function getBuilding(building_code=''){
   const [rows] = await pool.query(
-    building_code ? `SELECT * FROM building_reference WHERE building_code = ?` :
-    `SELECT * FROM building_reference`, [building_code])
+    building_code 
+      ? `SELECT * FROM building_reference WHERE building_code = ?` 
+      : `SELECT * FROM building_reference`, [building_code]
+  )
   return building_code ? rows[0] : rows
 }
 

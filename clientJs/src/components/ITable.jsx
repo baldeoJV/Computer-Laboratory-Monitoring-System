@@ -246,18 +246,27 @@ function ComputerRow ({isItemSelected, labelId, r, handleMenuClick, handleCheckC
     </TableRow>
 }
 
+const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
+// const baseColor = condition === 0 || condition.includes("good") ? palette.goodBg :
+// condition === 1 || condition.includes("minor") ? palette.minorBg :
+// condition === 2 || condition.includes("major") ? palette.majorBg :
+// condition === 3 || condition.includes("bad") ? palette.badBg : palette.darkBlue;
+// const fontColor = condition === 0 || condition.includes("good") ? palette.goodFont :
+//   condition === 1 || condition.includes("minor") ? palette.minorFont :
+//   condition === 2 || condition.includes("major") ? palette.majorFont :
+//   condition === 3 || condition.includes("bad") ? palette.badFont : "#333333";
 function ReportRow ({isItemSelected, labelId, r, handleMenuClick, handleCheckClick}) {
     const [collapseOpen, setCollapseOpen] = useState(false);
 
     const getChipTheme = (condition) => {
-        const baseColor = condition === 0 || condition.includes("good") ? palette.goodBg :
-                          condition === 1 || condition.includes("minor") ? palette.minorBg :
-                          condition === 2 || condition.includes("major") ? palette.majorBg :
-                          condition === 3 || condition.includes("bad") ? palette.badBg : palette.darkBlue;
-        const fontColor = condition === 0 || condition.includes("good") ? palette.goodFont :
-                            condition === 1 || condition.includes("minor") ? palette.minorFont :
-                            condition === 2 || condition.includes("major") ? palette.majorFont :
-                            condition === 3 || condition.includes("bad") ? palette.badFont : "#333333";
+        const baseColor = condition === 0 ? palette.goodBg :
+                          condition === 1 ? palette.minorBg :
+                          condition === 2 ? palette.majorBg :
+                          condition === 3 ? palette.badBg : palette.darkBlue;
+        const fontColor = condition === 0 ? palette.goodFont :
+                            condition === 1 ? palette.minorFont :
+                            condition === 2 ? palette.majorFont :
+                            condition === 3 ? palette.badFont : "#333333";
         return createTheme({
             palette: {
                 custom: {
@@ -318,7 +327,9 @@ function ReportRow ({isItemSelected, labelId, r, handleMenuClick, handleCheckCli
                 const filtered = Object.entries(r.components)
                                     .filter(([k, v])=> v)
                 const mapped = filtered.map(([k, v], i) => {
+                    console.log("VVV: " ,v)
                     const theme = getChipTheme(v);
+                    {/* + ": " +v.charAt(0).toUpperCase()+v.split(" ")[0].slice(1) */}
                     return (
                         <ThemeProvider theme={theme} key={'chip - '+i}>
                             <Chip
@@ -330,7 +341,7 @@ function ReportRow ({isItemSelected, labelId, r, handleMenuClick, handleCheckCli
                                     color: theme.palette.custom.fontColor,
                                     fontWeight:'600'
                                 }}
-                                label={k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1) + ": " +v.charAt(0).toUpperCase()+v.split(" ")[0].slice(1)}
+                                label={k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1) + ": " + reports_condition_indication[v]}
                             />
                         </ThemeProvider>
                     );
@@ -380,7 +391,7 @@ function ReportRow ({isItemSelected, labelId, r, handleMenuClick, handleCheckCli
                                 {Object.entries(r.components).map( ([k, v], i)=> v 
                                     ? <TableRow direction='row' key={`collapse-component-${r.report_id}-${i}`}>
                                        <TableCell>{k}</TableCell>
-                                       <TableCell>{v}</TableCell>
+                                       <TableCell>{reports_condition_indication[v]}</TableCell>
                                     </TableRow>
                                     : null
                                 )}
@@ -609,16 +620,16 @@ function ArchivedRow ({labelId, r}){
 }
 
 function Non_ConsumableRow({isItemSelected, labelId, r, handleMenuClick, handleCheckClick}) {
-    const getTypeText = (type) => {
-        switch(type) {
-            case 1: return "System Unit";
-            case 2: return "Monitor";
-            case 3: return "Mouse";
-            case 4: return "Keyboard";
-            case 5: return "Product Key";
-            default: return "Unknown";
-        }
-    };
+    // const getTypeText = (type) => {
+    //     switch(type) {
+    //         case 1: return "System Unit";
+    //         case 2: return "Monitor";
+    //         case 3: return "Mouse";
+    //         case 4: return "Keyboard";
+    //         case 5: return "Product Key";
+    //         default: return "Unknown";
+    //     }
+    // };
 
     return (
         <TableRow 
@@ -644,7 +655,7 @@ function Non_ConsumableRow({isItemSelected, labelId, r, handleMenuClick, handleC
                 {r.component_id}
             </TableCell>
             <TableCell padding='none'>
-                {getTypeText(r.reference_id)}
+                {r.reference_id}
             </TableCell>
             <TableCell padding='normal'>
                 {r.location}
@@ -784,12 +795,14 @@ function ITable({headCells, rows, type}) {
     const handleCheckClick = (e, id) => {
         const selectedIndex = selected.indexOf(id)
         let newSelected = []
+
         /* 
         if -1, means the row is not yet selected, so select it
         if 0, means the row is selected and in first row, so unselect it by slicing at the start in the selected
         if n-1, means the row is selected and in last row, so unselect it by slicing at the end in the selected
         if > 0, means the row is selected and somewhere in the middle, so get first the prefix and the suffix and then unselect it
         */
+       
         if (selectedIndex === -1)
             newSelected = newSelected.concat(selected, id)
         else if (selectedIndex === 0)
@@ -866,10 +879,12 @@ function ITable({headCells, rows, type}) {
             </Tabs>
         </Box>
         }
+
         <TableContainer sx={{backgroundColor: 'white', width:'100%',maxheight:'800px', minHeight:'700px', height:'500px',
             fontFamily: 'Inter, sans-serif',
             '& .MuiTableCell-root': { fontFamily: 'Inter, sans-serif' },}}>
             <Table stickyHeader>
+
                 <ITableHead 
                     numSelected={selected.length}
                     order={order}
@@ -881,6 +896,7 @@ function ITable({headCells, rows, type}) {
                     type={type}
                 />
                 <TableBody>
+
                 {type==="computerTable"?visibleRows.map((r, i)=> {
                     const isItemSelected = selected.includes(r.computer_id)
                     const labelId = `Itable-checkbox-${i}`
@@ -945,6 +961,9 @@ function ITable({headCells, rows, type}) {
                     />
                 }) : null
                 
+
+
+
                 }
                 </TableBody>
             </Table>

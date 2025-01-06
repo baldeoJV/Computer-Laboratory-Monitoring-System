@@ -16,7 +16,7 @@ function Non_Consumable() {
             const data = res.data
             const rows = data.map((ncd) => createData( 
                 ncd.component_id,
-                ncd.reference_id,
+                ncd.component_name,
                 ncd.location,
                 ncd.specs,
                 ncd.flagged,

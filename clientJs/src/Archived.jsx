@@ -1,27 +1,40 @@
 /* eslint-disable no-unused-vars */
 
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Grid2, Stack } from '@mui/material';
 import archived_data from './assets/archived_data.json'
 import ITable from './components/ITable';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
 function Archived() {
+    const [archivedReportsData, setArchivedReportsData] = useState([]);
+    
     function createData(report_id, room, computer_id, components, date_submitted, submittee, building, comment, date_archived, status){
         return {report_id, room, computer_id, components, date_submitted, submittee, building, comment, date_archived, status}
     }
 
-    const rows = archived_data.rows.map((rd) => createData( 
-        rd.report_id, 
-        rd.room, 
-        rd.computer_id,
-        rd.components,
-        rd.date_submitted,
-        rd.submittee,
-        rd.building,
-        rd.comment,
-        rd.date_archived,
-        rd.status,
-    ))
+    useEffect(()=> {
+        axios.get('http://localhost:8080/archived_report').then( res => {
+            const data = res.data
+            const rows = data.map((rd) => createData( 
+                rd.report_id, 
+                rd.room, 
+                rd.computer_id,
+                rd.components,
+                rd.date_submitted,
+                rd.submittee,
+                rd.building_code,
+                rd.report_comment,
+                rd.date_resolve,
+                rd.report_status,
+            ))
+            setArchivedReportsData(rows)
+            
+        }).catch(err => console.error("Error: ", err))
+    }, [])
+
+
     const headCells = [
         {
             id: "report_id",
@@ -83,7 +96,7 @@ function Archived() {
             <div className="label">
                 <div className="text-wrapper">Archived Reports</div>
             </div>
-            <ITable headCells={headCells} rows={rows} type='archivedTable'/>
+            <ITable headCells={headCells} rows={archivedReportsData} type='archivedTable'/>
         </div>
     </Stack>
 

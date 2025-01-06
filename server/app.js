@@ -4,7 +4,7 @@ import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount,
-    getBuilding, createBuilding, getConsumableComponent,  } from './be_comlab.js'
+    getBuilding, createBuilding, getConsumableComponent,getArchivedReport} from './be_comlab.js'
 
 const app = express()
 
@@ -200,6 +200,17 @@ app.get('/report', async (req, res) => {
     }))
     res.send(formatted_report)
 })
+
+app.get('/archived_report', async (req, res) => {
+    const get_report = await getArchivedReport()
+
+    //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
+    const formatted_report = get_report.map(report => ({
+        ...report, date_submitted: formatDate(report.date_submitted), date_resolve: formatDate(report.date_resolve)
+    }))
+    res.send(formatted_report)
+})
+
 
 // create report
 app.post("/create/report", async (req, res) => {
