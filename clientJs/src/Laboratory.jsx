@@ -214,10 +214,12 @@ function Laboratory() {
     const [roomcards, setRoomcards] = useState([]);
     const [allRooms, setAllRooms] = useState([])
     const [computersData, setComputersData] = useState([])
-
+    const [pcDCond, setPcDCond] = useState([]);
+    const [pcDStat, setPcDStat] = useState([]);
+    const [totalReports, setTotalReports] = useState(0)
     const [roomCardAnchorElement, setRoomCardAnchorElement] = useState(null)
     const [roomCardAnchorData, setRoomCardAnchorData] = useState(null)
-
+    const [pcIds, setPcIds] = useState([]);
 
     const fetchLabRooms = () => {
         axios.get('http://localhost:8080/laboratories').then(res => {
@@ -296,8 +298,56 @@ function Laboratory() {
             label: "Pending Reports",
         },
     ]
-
-    const getPcRows = (type_sel, singleRoom) => {
+    const ComputersSummary = (data)=> {
+        let dataPc = new Map();
+        for (let obj of data) {
+          if (!dataPc.has(obj['building_code'])) {
+            dataPc.set(obj['building_code'], {
+              active: 0,
+              inactive: 0,
+              good: 0,
+              minor: 0,
+              major: 0,
+              bad: 0,
+            });
+          }
+      
+          const buildingData = dataPc.get(obj['building_code']);
+      
+          // Update condition counts
+          if (obj['condition_id'] === 0) buildingData.good++;
+          else if (obj['condition_id'] === 1) buildingData.minor++;
+          else if (obj['condition_id'] === 2) buildingData.major++;
+          else if (obj['condition_id'] === 3) buildingData.bad++;
+      
+          // Update status counts
+          if (obj['computer_status'] === 1) buildingData.active++;
+          else if (obj['computer_status'] === 0) buildingData.inactive++;
+      
+          dataPc.set(obj['building_code'], buildingData);
+        }
+      
+        const dataset_condition = [];
+        const dataset_status = []
+        for (let [bd, values] of dataPc) {
+          dataset_condition.push({ 
+            building: bd, 
+            good: values['good'],
+            minor: values['minor'],
+            major: values['major'],
+            bad: values['bad'],
+          });
+          dataset_status.push({
+            building: bd,
+            active: values['active'],
+            inactive: values['inactive']
+          })
+        }
+        setPcDCond(dataset_condition)
+        setPcDStat(dataset_status)
+      }
+    const getPcRows = async (type_sel, singleRoom) => {
+        const pcIds_tmp =[]
         // FETCH
         let targetRooms = []
         if (type_sel === "single"){
@@ -307,28 +357,41 @@ function Laboratory() {
         } else {
             targetRooms = selectedRooms
         }
-        axios({
-            url: "http://localhost:8080/rooms/computers",
-            method: 'POST',
-            headers: {
-                // Authorization if meron
-            },
-            data: {rooms: targetRooms},
-        }).then(res => {
-            const data= res.data
-            setComputersData(data)
-        }).catch(err => console.error("ERROR: ", err))
-        setSelectedRooms([])
+        try {
+            const fetched_computers = await axios({
+                    url: "http://localhost:8080/rooms/computers",
+                    method: 'POST',
+                    headers: {
+                        // Authorization if meron
+                    },
+                    data: {rooms: targetRooms},
+                })
+            const dataPc= fetched_computers.data
+               
+            dataPc.forEach(dpc => {
+                pcIds_tmp.push(dpc.computer_id)
+            });
+            console.log(dataPc)
+            setComputersData(dataPc)
+            ComputersSummary(dataPc)
+                
+            setSelectedRooms([])
+            console.log("pcidTmp", pcIds_tmp.length)
 
-        // if successful fetch return the data
-        // const pass = 
-        const pass = true
-        if (pass){
-            // 
+            const total_reports_fetched= await axios({
+                url: "http://localhost:8080/report/selected",
+                method: 'POST',
+                headers: {
+                    // Authorization if meron
+                },
+                data: {pcIds: pcIds_tmp},
+            })
+
+            const dataTotalReps= total_reports_fetched.data.report_count
+            setTotalReports(dataTotalReps)
             
-        } else {
-            // return no rows
-            return null
+        } catch (error) {
+            console.error("error ", error)
         }
     }
 
@@ -339,7 +402,7 @@ function Laboratory() {
         cd.monitor,
         cd.computer_status,
         cd.condition_id,
-        40 //total pending reports //TODO
+        cd.report_count
     ))
 
     const handleOpenPCTable = (type_sel = "all", singleRoom = []) => {
@@ -382,15 +445,21 @@ function Laboratory() {
         </Stack>
         {isCompTableOpen ?
         <Grid2 container spacing={2}>
-            <Grid2 size={9}>
+            <Grid2 size={{xs: 12, md:12, lg:9}}>
                 <ITable headCells={headCells} rows={pcRows} type="computerTable"/>
             </Grid2>
-            <Grid2 size={3}>
-                {/* <div style={{height:'100%'}}>
-                    <StatBox sx={{height :'38%'}}  head={'Computers Condition'}/>
-                    <StatBox sx={{height:'38%', marginTop:'24px'}} head={'Computers Status'}/>
-                    <StatBox sx={{height:'15%', marginTop:'24px'}} head={'Reports'}/>
-                </div> */}
+            <Grid2 size={{xs: 12, md:12, lg:3}}>
+                
+                    <StatBox sx={{height :'38%'}}  data={pcDCond} type="condition" keys={['good', 'minor', 'major', 'bad']}/>
+                    <StatBox sx={{height:'38%', marginTop:'24px'}} data={pcDStat} type="status" keys={['inactive', 'active']}/>
+                    <Box sx={{fontFamily:'Inter',textAlign:'left', border: '1px solid '+palette.strokeWeak, p:2, borderRadius:'16px'}} width={'100%'}>
+                        <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Total pending reports</Typography>
+                        <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} > {totalReports === 0 
+                        ? "There are currently no pending reports. Click here to submit a report" 
+                        : <>The system detected <b style={{color:palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
+                        }</Typography>
+                  </Box>
+                
             </Grid2>
         </Grid2> :
         <Stack sx={{marginTop:2}}>

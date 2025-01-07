@@ -4,7 +4,7 @@ import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount,
-    getBuilding, createBuilding, getConsumableComponent,getArchivedReport} from './be_comlab.js'
+    getBuilding, createBuilding, getConsumableComponent,getArchivedReport, selectedReportAll, } from './be_comlab.js'
 
 const app = express()
 
@@ -91,6 +91,7 @@ app.get("/rooms/all_computers", async (req, res) => {
 })
 
 //create computer
+
 app.post("/create/computer", async (req, res) => {
     const {room, building_code, system_unit, monitor} = req.body
 
@@ -112,6 +113,7 @@ app.post("/create/computer", async (req, res) => {
 //get all computers in specific rooms based in req.body (array format)
 app.post("/rooms/computers", async (req, res) => {
     const { rooms } = req.body;
+
     //check if the input is an array
     if (!Array.isArray(rooms)) {
         return res.status(400).send("Invalid array format.");
@@ -121,6 +123,7 @@ app.post("/rooms/computers", async (req, res) => {
         const results = await Promise.all(
             rooms.map(async ({ roomnum, building_code }) => {
                 const roomData = await getRoomComputer(roomnum, building_code);
+                
                 return roomData;
             })
         );
@@ -201,14 +204,27 @@ app.get('/report', async (req, res) => {
     res.send(formatted_report)
 })
 
+// RAINNAND POST SELECTED REPORT
+app.post('/report/selected', async (req, res) => {
+    const { pcIds } = req.body;
+    //check if the input is an array
+    if (!Array.isArray(pcIds)) {
+        return res.status(400).send("Invalid array format.");
+    }
+
+    const report_count = await selectedReportAll(pcIds)
+    res.send({report_count: report_count})
+})
+
+// RAINNAND: ARCHIVED REPORT
 app.get('/archived_report', async (req, res) => {
     const get_report = await getArchivedReport()
-
+ 
     //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
     const formatted_report = get_report.map(report => ({
         ...report, date_submitted: formatDate(report.date_submitted), date_resolve: formatDate(report.date_resolve)
     }))
-    res.send(formatted_report)
+    res.status(200).send(formatted_report)
 })
 
 

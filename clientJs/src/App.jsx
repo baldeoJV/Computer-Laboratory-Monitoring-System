@@ -326,7 +326,6 @@ function App()  {
                     ? "There are currently no pending reports. Click here to submit a report" 
                     : <>The system detected <b style={{color:palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
                     }</Typography>
-
                   </Box>
                 </Stack>
 

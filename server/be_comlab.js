@@ -31,11 +31,28 @@ export async function getComputer(computer_id = ''){
   return computer_id ? rows[0] : rows
 }
 
+async function selectedReport(pcIds) {
+  const q = `SELECT * FROM REPORTS WHERE computer_id IN (${[...pcIds].join(', ')})`
+  console.log(q)
+  // console.log(pcIds)
+  const [rows] = await pool.query(q)
+  return rows
+}
+
 // get computer table/ specific computer information
 export async function getRoomComputer(room, building_code){
-  const [rows] = await pool.query(
+  let [rows] = await pool.query(
     `SELECT * FROM computers WHERE room = ? AND building_code = ?`
     , [room, building_code])
+
+  const pcIds = []
+  rows.forEach(pcr => pcIds.push(pcr.computer_id))
+  
+  const eachReport = await selectedReport(pcIds)
+  // console.log(eachReport)
+  rows = rows.map(r => ({...r, report_count: eachReport.filter(c => c.computer_id === r.computer_id ).length }))
+  // console.log(rows)
+  
   return rows
 }
 
@@ -88,13 +105,17 @@ export async function getReport(report_id=''){
   let crm = await getCrm(rows, "reported_components", true)
 
   // add
-  const res = rows.map(rr => {return {...rr, components: {...crm.get(rr.report_id)} }});;;;;
-  // console.log("Start")
-  // // console.log("GET ",crm.get(27))
-  // console.log(res)
+  const res = rows.map(rr => {return {...rr, components: {...crm.get(rr.report_id)} }})
+  
   return report_id ? res[0] : res
 }
 
+export async function selectedReportAll(pcIds) {
+  const [rows] = await pool.query(`SELECT COUNT(*) as total_report FROM REPORTS WHERE computer_id IN (${[...pcIds].join(', ')})`)
+  return rows[0].total_report
+}
+
+  
 // display archived reports
 export async function getArchivedReport(report_id=''){
   const [rows] = await pool.query(
@@ -103,7 +124,7 @@ export async function getArchivedReport(report_id=''){
       : `SELECT * FROM archived_reports`, [report_id]
   )
   let crm = await getCrm(rows, "archived_reported_components", false)
-
+    
   // add
   const res = rows.map(rr => {return {...rr, components: {...crm.get(rr.report_id)} }});;;;;
   // console.log("Start")
@@ -129,6 +150,7 @@ export async function getReportCount(){
   const [rows] = await pool.query(`SELECT count(*) as number_of_reports FROM reports`)
   return rows
 }
+
 
 
 
