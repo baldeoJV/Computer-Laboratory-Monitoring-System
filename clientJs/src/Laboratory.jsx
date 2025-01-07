@@ -454,10 +454,12 @@ function Laboratory() {
                     <StatBox sx={{height:'38%', marginTop:'24px'}} data={pcDStat} type="status" keys={['inactive', 'active']}/>
                     <Box sx={{fontFamily:'Inter',textAlign:'left', border: '1px solid '+palette.strokeWeak, p:2, borderRadius:'16px'}} width={'100%'}>
                         <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Total pending reports</Typography>
-                        <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} > {totalReports === 0 
-                        ? "There are currently no pending reports. Click here to submit a report" 
-                        : <>The system detected <b style={{color:palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
-                        }</Typography>
+                        <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} > 
+                            {totalReports === 0 
+                                ? "There are currently no pending reports. Click here to submit a report" 
+                                : <>The system detected <b style={{color:palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
+                            }
+                        </Typography>
                   </Box>
                 
             </Grid2>
