@@ -109,11 +109,11 @@ app.post("/create/computer", async (req, res) => {
         }
     }
 })
-
+ 
 //get all computers in specific rooms based in req.body (array format)
 app.post("/rooms/computers", async (req, res) => {
     const { rooms } = req.body;
-
+    // console.log("BACKEND ROOMS: ", rooms)
     //check if the input is an array
     if (!Array.isArray(rooms)) {
         return res.status(400).send("Invalid array format.");

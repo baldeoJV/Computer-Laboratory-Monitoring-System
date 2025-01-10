@@ -12,7 +12,8 @@ import React, { useState } from 'react';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import palette from '../assets/palette';
 import BedtimeIcon from '@mui/icons-material/Bedtime';
-
+import LogoutIcon from '@mui/icons-material/Logout';
+import { NavLink } from 'react-router-dom';
 const StyledMenu = styled((props) => (
     <Menu
       elevation={0}
@@ -67,7 +68,7 @@ function NavSetting() {
       setAnchorEl(null);
     };
 
-    return       <Stack sx={{float:'none',  marginLeft:'32px', marginRight:'32px', fontFamily: 'Inter, sans-serif'}}>
+    return <Stack sx={{float:'none',  marginLeft:'32px', marginRight:'32px', fontFamily: 'Inter, sans-serif'}}>
     <Stack sx={{width:'100%', textAlign:'right'}} direction={'row'} alignItems="center">
       <Typography sx={{width:'100%', textAlign:'right'}}>
         John Doe
@@ -90,12 +91,6 @@ function NavSetting() {
         </Stack>
         <MenuItem onClick={handleClose}>
           <div className='py-1' style={{fontSize:'14px'}}>
-          <AccountCircleOutlinedIcon/>
-          Account Settings
-          </div>
-        </MenuItem>
-        <MenuItem onClick={handleClose}>
-          <div className='py-1' style={{fontSize:'14px'}}>
           <SettingsIcon/>
           Server Settings
           </div>
@@ -105,6 +100,20 @@ function NavSetting() {
           <BedtimeIcon/>
           Night Mode
           </div>
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <div className='py-1' style={{fontSize:'14px'}}>
+          <AccountCircleOutlinedIcon/>
+          Account Settings
+          </div>
+        </MenuItem>
+        <MenuItem>
+          <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>  {/* Use NavLink for navigation */}
+            <div className="py-1" style={{ fontSize: '14px' }}>
+              <LogoutIcon />
+              Sign Out
+            </div>
+          </NavLink>
         </MenuItem>
 
       </StyledMenu>

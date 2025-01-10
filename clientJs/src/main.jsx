@@ -47,6 +47,7 @@ const router = createBrowserRouter(
       element:<ReportModal/>
     }
   ],
+  
   // DISABLE FUTURE ERROR WARNINGS
   {
     future: {

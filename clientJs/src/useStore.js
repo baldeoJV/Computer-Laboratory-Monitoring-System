@@ -26,6 +26,22 @@ const useStore = create((set) => ({
 
     tableType: '',
     setTableType: (t) => set({type: t}),
+
+    reportedBuilding: '',
+    setReportedBuilding: (rb) => set({reportedBuilding: rb}),
+
+    reportedPcID: null,
+    setReportedPcID: (id) => set({reportedPcID:id}),
+
+    reportedRoom:null,
+    setReportedRoom: (r) =>set({reportedRoom: r}),
+
+    targetedRooms:[], 
+    setTargetedRooms: (tr) => set({targetedRooms:tr}),
+
+    targetedComputerIDs:[], 
+    setTargetedComputerIDs: (tc) => set({targetedComputerIDs:tc}),
+
 }))
 
 export default useStore

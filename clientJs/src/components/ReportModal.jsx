@@ -4,8 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Box, Button, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Stack, IconButton, Grid2, Chip } from '@mui/material';
 import { Typography as InterTypography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
+// FAKE DATA
 import computers_data from '../assets/computers_data.json'
 import rooms_data from '../assets/rooms_data.json'
+
+import axios from 'axios'
+
 import CircularProgress from '@mui/material/CircularProgress';
 import Slide from '@mui/material/Slide';
 import MonitorIcon from '@mui/icons-material/Monitor';
@@ -24,6 +28,8 @@ import { TextareaAutosize as BaseTextareaAutosize } from '@mui/base/TextareaAuto
 import {bgcolor, color, display, padding, styled} from '@mui/system'
 import palette from '../assets/palette';
 import SendIcon from '@mui/icons-material/Send';
+import useStore from '../useStore';
+import { getComputersByRoom, getRoomsByBuilding } from '../customMethods';
 
 function MaxHeightTextarea({textAreaValue, setTextAreaValue}) {
     const handleChange = (e) => {
@@ -217,7 +223,6 @@ ReportGridItem.propTypes = {
     partsStatuses: PropTypes.object,
     setPartsStatuses: PropTypes.func,
 };
-
 const ReportModal = ({open, setOpen, anchor}) => {
     const [partsStatuses, setPartsStatuses] = useState({
         systemunit: { background: 'transparent', color: palette.textStrong },
@@ -228,28 +233,53 @@ const ReportModal = ({open, setOpen, anchor}) => {
         mouse: { background: 'transparent', color: palette.textStrong },
         other: { background: 'transparent', color: palette.textStrong },
     });
+    const {
+        reportedRoom, setReportedRoom,
+        reportedBuilding, setReportedBuilding,
+        reportedPcID, setReportedPcID,
+        targetedRooms, setTargetedRooms,
+        targetedComputerIDs, setTargetedComputerIDs
+    } = useStore()
+
     const [commentValue, setCommentValue] = useState('');
     
-    const [building, setBuilding] = useState('');
-    const [room, setRoom] = useState(null);
-    const [computerId, setComputerId] = useState(null);
+    // const [building, setBuilding] = useState('');
+    // const [room, setRoom] = useState(null);
+    // const [computerId, setComputerId] = useState(null);
 
     const handleCommentChange = (e) => {
         setCommentValue(e.target.value)
     }
 
-    const getRooms = () => rooms_data
-        .filter(room => room.building_code === building)
-        .map(room => String(room.room));
 
-    const getComputers = () => computers_data.rows
-        .filter(computer => computer.room === Number(room) && computer.building_code === building)
-        .map(computer => String(computer.computer_id));
+
+
+    // GET ALL SELECTED ROOMS BASEC ON BUILDING INPUT
+    // useEffect(() => {
+
+    //     if (reportedBuilding === '' || reportedBuilding === null){
+    //         setTargetedRooms([])
+    //     } else {
+    //         getRoomsByBuilding()
+    //     }
+        
+    // }, [reportedBuilding])
+
+    // GET ALL SELECTED COMPUTERS BASED ON ROOM FIELD
+    // useEffect(() => {
+    //     getComputersByRoom(reportedRoom, setTargetedComputerIDs, reportedBuilding);
+
+    // }, [reportedRoom, reportedBuilding])
+    
+
+
+    // const getComputers = () => computers_data.rows
+    //     .filter(computer => computer.room === Number(reportedRoom) && computer.building_code === reportedBuilding)
+    //     .map(computer => String(computer.computer_id));
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
     const handleSubmit = () => handleClose();
-
     return (
         <div>
             <Dialog
@@ -296,18 +326,21 @@ const ReportModal = ({open, setOpen, anchor}) => {
                         </Stack>
                     </FormControl>
                     <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mt={2} fontWeight={500}>
-                                Select Location
+                        Select Location
                     </InterTypography>
+
+                    {/*BUILDING FIELD*/}
                     <FormControl fullWidth sx={{ mt: 2, mb:2}}>
                         <InputLabel id="building-label" sx={{ fontFamily: 'Inter' }}>Building *</InputLabel>
                         <Select
                             labelId="building-label"
-                            value={building}
+                            value={reportedBuilding}
                             label="Building"
                             onChange={(e) => {
-                                setRoom(null);
-                                setComputerId(null);
-                                setBuilding(e.target.value);
+                                setReportedRoom(null);
+                                setReportedPcID(null);
+                                setReportedBuilding(e.target.value);
+                                getRoomsByBuilding(e.target.value, setTargetedRooms)
                             }}
                             sx={{ fontFamily: 'Inter' }}
                         >
@@ -316,13 +349,16 @@ const ReportModal = ({open, setOpen, anchor}) => {
                             <MenuItem value="MND" sx={{ fontFamily: 'Inter' }}>Mendiola Building</MenuItem>
                         </Select>
                     </FormControl>
+
+                    {/* ROOM FIELD */}
                     <Autocomplete
-                        options={getRooms()}
-                        value={room}
+                        options={targetedRooms}
+                        value={reportedRoom}
                         sx={{mb:2}}
                         onChange={(event, newRoom) => {
-                            setComputerId(null);
-                            setRoom(newRoom);
+                            setReportedPcID(null);
+                            setReportedRoom(newRoom);
+                            getComputersByRoom(newRoom, setTargetedComputerIDs, reportedBuilding)
                         }}
                         disablePortal
                         renderInput={params => 
@@ -333,10 +369,15 @@ const ReportModal = ({open, setOpen, anchor}) => {
                             />
                         }
                     />
+
+                    {/* COMPUTERS */}
                     <Autocomplete
-                        options={getComputers()}
-                        value={computerId}
-                        onChange={(event, newComputerId) => setComputerId(newComputerId)}
+                        options={targetedComputerIDs}
+                        value={reportedPcID}
+                        onChange={(event, newComputerId) => {
+
+                            setReportedPcID(newComputerId)
+                        }}
                         disablePortal
                         sx={{mb:2}}
                         renderInput={params => 
@@ -372,6 +413,8 @@ const ReportModal = ({open, setOpen, anchor}) => {
 };
 
 export default ReportModal;
+
+
 
 
 // {parts.map((part) => (

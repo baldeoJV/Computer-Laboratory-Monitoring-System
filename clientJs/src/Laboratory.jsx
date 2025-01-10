@@ -26,8 +26,8 @@ import NavSetting from './components/NavSetting';
 import axios from 'axios'
 import { MenuItem } from 'react-pro-sidebar';
 
-function createData(computer_id, room, system_unit, monitor, status, condition, pending_reports){
-    return {room, computer_id, system_unit, monitor, condition, status, pending_reports}
+function createData(computer_id, room, system_unit, monitor, status, condition, pending_reports, building_code){
+    return {room, computer_id, system_unit, monitor, condition, status, pending_reports, building_code}
 }
 
 function getRoomData(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports){
@@ -351,7 +351,7 @@ function Laboratory() {
         // FETCH
         let targetRooms = []
         if (type_sel === "single"){
-            targetRooms =singleRoom
+            targetRooms = singleRoom
         } else if (type_sel === "all") {
             targetRooms = allRooms
         } else {
@@ -371,12 +371,12 @@ function Laboratory() {
             dataPc.forEach(dpc => {
                 pcIds_tmp.push(dpc.computer_id)
             });
-            console.log(dataPc)
+            // console.log(dataPc)
             setComputersData(dataPc)
             ComputersSummary(dataPc)
                 
             setSelectedRooms([])
-            console.log("pcidTmp", pcIds_tmp.length)
+            // console.log("pcidTmp", pcIds_tmp.length)
 
             const total_reports_fetched= await axios({
                 url: "http://localhost:8080/report/selected",
@@ -384,6 +384,7 @@ function Laboratory() {
                 headers: {
                     // Authorization if meron
                 },
+                 
                 data: {pcIds: pcIds_tmp},
             })
 
@@ -402,7 +403,8 @@ function Laboratory() {
         cd.monitor,
         cd.computer_status,
         cd.condition_id,
-        cd.report_count
+        cd.report_count,
+        cd.building_code
     ))
 
     const handleOpenPCTable = (type_sel = "all", singleRoom = []) => {
@@ -445,10 +447,10 @@ function Laboratory() {
         </Stack>
         {isCompTableOpen ?
         <Grid2 container spacing={2}>
-            <Grid2 size={{xs: 12, md:12, lg:9}}>
+            <Grid2 size={{xs: 12, md:12, lg:8}}>
                 <ITable headCells={headCells} rows={pcRows} type="computerTable"/>
             </Grid2>
-            <Grid2 size={{xs: 12, md:12, lg:3}}>
+            <Grid2 size={{xs: 12, md:12, lg:4}}>
                 
                     <StatBox sx={{height :'38%'}}  data={pcDCond} type="condition" keys={['good', 'minor', 'major', 'bad']}/>
                     <StatBox sx={{height:'38%', marginTop:'24px'}} data={pcDStat} type="status" keys={['inactive', 'active']}/>

@@ -33,7 +33,7 @@ export async function getComputer(computer_id = ''){
 
 async function selectedReport(pcIds) {
   const q = `SELECT * FROM REPORTS WHERE computer_id IN (${[...pcIds].join(', ')})`
-  console.log(q)
+  // console.log(q)
   // console.log(pcIds)
   const [rows] = await pool.query(q)
   return rows

@@ -15,7 +15,7 @@ import { visuallyHidden } from '@mui/utils';
 import { useEffect, useMemo, useState } from 'react';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import useStore from '../useStore.js';
-import '@fontsource/inter/700.css';
+import '@fontsource/inter/700.css'; 
 import '@fontsource/inter/600.css';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -28,6 +28,7 @@ import { createTheme, ThemeProvider, alpha, getContrastRatio } from '@mui/materi
 import FlagIcon from '@mui/icons-material/Flag';
 import { green, red } from '@mui/material/colors';
 import ReportModal from './ReportModal.jsx';
+import { getComputersByRoom, getRoomsByBuilding } from '../customMethods.js';
 
 // compares the rows value, lower or higher value gets placed first or last depending on orderBy
 const descendingComparator = (a, b, orderBy) => {
@@ -742,6 +743,11 @@ function ITable({headCells, rows, type}) {
         anchorEl, setAnchorEl,
         menuRow, setMenuRow,
         tableType, setTableType,
+        reportedRoom, setReportedRoom,
+        reportedBuilding, setReportedBuilding,
+        reportedPcID, setReportedPcID,
+        targetedRooms, setTargetedRooms,
+        targetedComputerIDs, setTargetedComputerIDs
     } = useStore()
     useEffect(() =>{
         setTableType(type)
@@ -765,7 +771,7 @@ function ITable({headCells, rows, type}) {
     };
 
     const handleMenuAction = (action) => {
-        console.log(`Action: ${action} for row: ${menuRow.computer_id}`);
+        console.log(`Action: ${action} for row: ${menuRow}`);
         handleCloseMenu(); // Close the menu after an action
     };
     
@@ -866,6 +872,14 @@ function ITable({headCells, rows, type}) {
         sx={{}}
     >
             <MenuItem onClick={() => {
+                setReportedBuilding(String(menuRow.building_code))
+                getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms)
+
+                setReportedRoom(String(menuRow.room))
+                getComputersByRoom(String(menuRow.room), setTargetedComputerIDs, String(menuRow.building_code))
+
+                setReportedPcID(String(menuRow.computer_id))
+                
                 handleCloseMenu()
                 setComputerTable_AddReportModalOpen(true)}}>Report this computer</MenuItem>
         </Menu>
@@ -908,7 +922,7 @@ function ITable({headCells, rows, type}) {
                             r={r}
                             handleMenuClick={handleMenuClick}
                             handleCheckClick={handleCheckClick}
-                        />  
+                    />  
                 }) : type === "reportTable" ? visibleRows.map((r,i) => {
                     
                     const isItemSelected = selected.includes(r.report_id)
@@ -960,10 +974,6 @@ function ITable({headCells, rows, type}) {
                         handleCheckClick={handleCheckClick}
                     />
                 }) : null
-                
-
-
-
                 }
                 </TableBody>
             </Table>
