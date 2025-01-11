@@ -893,7 +893,7 @@ function ITable({headCells, rows, type}) {
             </Tabs>
         </Box>
         }
-
+ 
         <TableContainer sx={{backgroundColor: 'white', width:'100%',maxheight:'800px', minHeight:'700px', height:'500px',
             fontFamily: 'Inter, sans-serif',
             '& .MuiTableCell-root': { fontFamily: 'Inter, sans-serif' },}}>
