@@ -1001,12 +1001,12 @@ function ITable({headCells, rows, type}) {
         />
 
         {type === "computerTable" ? computerTable_reportMenuOptions() : null}
-
+        {type === "computerTable" || type ==="reportTable" ? 
         <ReportModal
             open={computerTable_addReportModalOpen}
             setOpen={setComputerTable_AddReportModalOpen}
             anchor={anchorEl}
-        />
+        /> : null}
         
     </Box>;
 }
