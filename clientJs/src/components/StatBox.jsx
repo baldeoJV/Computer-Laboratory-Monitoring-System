@@ -8,7 +8,7 @@ import * as React from 'react';
 import {ResponsiveBar} from '@nivo/bar'
 import { IoIosArrowForward } from "react-icons/io";
 import { NavLink } from 'react-router-dom';
-function StatBox({head, sx = {height :'38%'}, data, type, keys}) {
+function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
     const conditionColors = [palette.good, '#FBD148', palette.major, '#FF6363']; // Colors for good, minor, major, bad
     const statusColors = ['#FF6363', '#0079FF']; // Colors for active, inactive
     return (

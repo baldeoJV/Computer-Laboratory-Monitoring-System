@@ -1,92 +1,139 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Grid2, Stack } from '@mui/material';
 import archived_data from './assets/archived_data.json'
 import ITable from './components/ITable';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Button, Grid2, Stack } from '@mui/material';
+import { Accordion, AccordionDetails,CardContent,Paper,Typography, Box, Menu, Chip, ListItemIcon } from '@mui/material';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css'
+import ITableV2 from './components/ITableV2';
+import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
+import { getChipTheme_condition, getChipTheme_resolve_reject } from './customMethods';
+import {MRT_ActionMenuItem,} from 'material-react-table';
+import ReportModal from './components/ReportModal';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import palette from './assets/palette';
+const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
+
+function createData(report_id, computer_id, room, building_code, components, date_submitted, submittee,  comment, date_archived, status){
+    return {report_id, computer_id, room,  building_code, status, components, date_submitted, submittee,  comment, date_archived, }
+}
 function Archived() {
     const [archivedReportsData, setArchivedReportsData] = useState([]);
-    
-    function createData(report_id, room, computer_id, components, date_submitted, submittee, building, comment, date_archived, status){
-        return {report_id, room, computer_id, components, date_submitted, submittee, building, comment, date_archived, status}
-    }
-
     useEffect(()=> {
         axios.get('http://localhost:8080/archived_report').then( res => {
             const data = res.data
             const rows = data.map((rd) => createData( 
                 rd.report_id, 
-                rd.room, 
                 rd.computer_id,
+                rd.room, 
+                rd.building_code,
                 rd.components,
                 rd.date_submitted,
                 rd.submittee,
-                rd.building_code,
                 rd.report_comment,
                 rd.date_resolve,
                 rd.report_status,
             ))
             setArchivedReportsData(rows)
-            
         }).catch(err => console.error("Error: ", err))
     }, [])
 
+    const headCellsV2 = useMemo(() => [
+        {
+            accessorKey: "report_id",
+            header: "Report ID",
+            size:20,
 
-    const headCells = [
-        {
-            id: "report_id",
-            numeric: false,
-            disablePadding: true,
-            label: "Report ID",
         },
         {
-            id: "computer_id",
-            numeric: false,
-            disablePadding: true,
-            label: "Computer ID",
+            accessorKey: "computer_id",
+            header: "Computer ID",
+            size:20,
         },
         {
-            id: "status",
-            numeric: false,
-            disablePadding: true,
-            label: "Status",
+            accessorKey: "room",
+            header: "Room",
+            size:20,
         },
         {
-            id: "room",
-            numeric: false,
-            disablePadding: true,
-            label: "Room - Bd",
+            accessorKey: "building_code",
+            header: "Building",
+            size:20,
         },
         {
-            id: "components",
-            numeric: false,
-            disablePadding: false,
-            label: "Reported Components",
+            accessorKey: "status",
+            header: "Report Status",
+            size:20,
+            Cell: ({cell}) => {
+                const status_data  = cell.getValue()
+                const label = status_data === 1 ? "Resolved" : "Rejected"
+                return <Typography 
+                    sx={{
+                        m: 0.5,
+                        p: 0.5,
+                        fontWeight:'600',
+                        color: status_data === 1 ? palette.goodFont : palette.badFont
+                    }}
+                >
+                    {label}
+                </Typography>
+            }
         },
         {
-            id: "date_submitted",
-            numeric: false,
-            disablePadding: true,
-            label: "Date Submitted",
-        },
-        {
-            id: "date_archived",
-            numeric: false,
-            disablePadding: true,
-            label: "Date Archived",
-        },
-        {
-            id: "submittee",
-            numeric: false,
-            disablePadding: true,
-            label: "Submittee",
-        },
+            accessorKey: "components",
+            header: "Reported Components",
+            Cell: ({cell}) => {
+                const componentsList = useMemo(() => {
+                    return Object.entries(cell.getValue())
+                        .filter(([k, v]) => v)
+                        .map(([k, v], i) => ({
+                            key: i,
+                            label: `${k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1)}: ${reports_condition_indication[v]}`,
+                        }));
+                }, [cell]);
+                // console.log(componentsList)
+                return componentsList.map(({key, label, theme}, i)=> (
+                        <React.Fragment key={key}> 
+                        {i % 2 === 0 && <br/>}
+                        <Chip
+                            sx={{
+                                m: 0.5,
+                                p: 0.5,
+                                fontWeight:'600',
+                            }}
+                            label={label}
+                        />
+                        </React.Fragment>
 
-    ]
+                ))
+            }
+        },
+        {
+            accessorKey: "date_submitted",
+            header: "Date Submitted",
 
+        },
+        {
+            accessorKey: "date_archived",
+            header: "Date Archived",
+
+        },
+        {
+            accessorKey: "submittee",
+            header: "Submittee",
+
+        },
+    ], []);
 
     return <div style={{display: 'flex', height:'100vh'}}>
     <DrawerMenu menuType={'reports'}/>
@@ -96,7 +143,30 @@ function Archived() {
             <div className="label">
                 <div className="text-wrapper">Archived Reports</div>
             </div>
-            <ITable headCells={headCells} rows={archivedReportsData} type='archivedTable'/>
+            <ITableV2 
+                    columns={headCellsV2} 
+                    data={archivedReportsData} 
+                    type={'archivedTable'} 
+                    extraActionsTable={{
+                        initialState: { density: 'compact' },
+                        positionActionsColumn:'first',
+                        // enableColumnOrdering: true,
+                        muiTableContainerProps: { sx: { maxHeight: '600px', minHeight:'600px' } },
+                        renderDetailPanel:(({row}) => {
+                            const menuRow = row.original
+                            return <Box
+                                sx={{
+                                    display: 'grid',
+                                    margin: 'auto',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    width: '100%',
+                                }}
+                            >
+                                <Typography>{menuRow.comment}</Typography>    
+                            </Box>
+                        }),
+                    }}
+                />
         </div>
     </Stack>
 

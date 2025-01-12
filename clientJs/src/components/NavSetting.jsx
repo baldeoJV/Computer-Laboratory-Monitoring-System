@@ -108,7 +108,7 @@ function NavSetting() {
           </div>
         </MenuItem>
         <MenuItem>
-          <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>  {/* Use NavLink for navigation */}
+          <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="py-1" style={{ fontSize: '14px' }}>
               <LogoutIcon />
               Sign Out

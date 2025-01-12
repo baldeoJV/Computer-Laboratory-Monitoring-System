@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ITable from './components/ITable';
 
 // FAKE DATA
@@ -7,7 +8,7 @@ import ITable from './components/ITable';
 // import rooms_data from './assets/rooms_data.json'
 
 // 
-import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu } from '@mui/material';
+import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon } from '@mui/material';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -25,9 +26,19 @@ import palette from './assets/palette';
 import NavSetting from './components/NavSetting';
 import axios from 'axios'
 import { MenuItem } from 'react-pro-sidebar';
+import ITableV2 from './components/ITableV2';
+import { createTheme, ThemeProvider, alpha, getContrastRatio } from '@mui/material/styles';
+import { getChipTheme_condition } from './customMethods';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import {MRT_ActionMenuItem,} from 'material-react-table';
+import useStore from './useStore';
+import { getComputersByRoom, getRoomsByBuilding } from './customMethods.js';
+import ReportModal from './components/ReportModal';
 
-function createData(computer_id, room, system_unit, monitor, status, condition, pending_reports, building_code){
-    return {room, computer_id, system_unit, monitor, condition, status, pending_reports, building_code}
+const COMPUTERS_DOWNLOAD_FILE_NAME = ''
+
+function createData(computer_id, room, building_code, system_unit, monitor, status, condition, pending_reports){
+    return {computer_id, room,building_code,system_unit, monitor, condition, status, pending_reports, }
 }
 
 function getRoomData(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports){
@@ -209,6 +220,7 @@ RoomBox.propTypes = {
     rooms: PropTypes.array
 }
 function Laboratory() {
+    const [computerTable_addReportModalOpen, setComputerTable_AddReportModalOpen] = useState(false);
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
     const [selectedRooms, setSelectedRooms] = useState([]);
     const [roomcards, setRoomcards] = useState([]);
@@ -220,7 +232,14 @@ function Laboratory() {
     const [roomCardAnchorElement, setRoomCardAnchorElement] = useState(null)
     const [roomCardAnchorData, setRoomCardAnchorData] = useState(null)
     const [pcIds, setPcIds] = useState([]);
-
+    const {
+        tableType, setTableType,
+        reportedRoom, setReportedRoom,
+        reportedBuilding, setReportedBuilding,
+        reportedPcID, setReportedPcID,
+        targetedRooms, setTargetedRooms,
+        targetedComputerIDs, setTargetedComputerIDs
+    }= useStore()
     const fetchLabRooms = () => {
         axios.get('http://localhost:8080/laboratories').then(res => {
             const roomsData = res.data
@@ -298,6 +317,82 @@ function Laboratory() {
             label: "Pending Reports",
         },
     ]
+    const headCellsV2 = useMemo(() => [
+        {
+            accessorKey: "computer_id",
+            header: "Computer ID",
+            size: 30,
+        },
+        {
+            accessorKey: "room",
+            header: "Room",
+            size: 50,
+        },
+        {
+            accessorKey: "building_code",
+            header: "Building",
+            size: 50,
+        },
+        {
+            accessorKey: "system_unit",
+            header: "System Unit Tag",
+            size: 50,
+        },
+        {
+            accessorKey: "monitor",
+            header: "Monitor Tag",
+            size: 50,
+        },
+        {
+            accessorKey: "condition",
+            header: "Condition",
+            size: 50,
+            Cell: ({cell}) => {
+                const theme = getChipTheme_condition(cell.getValue())
+                return <ThemeProvider theme={theme}>
+                    <Chip
+                        variant='filled'
+                        sx={{
+                            m: 0.5,
+                            p: 0.5,
+                            backgroundColor:theme.palette.custom.main,
+                            color: theme.palette.custom.fontColor,
+                            fontWeight:'600',
+                        }}
+                        label={
+                            (cell.getValue() === 0) ? "Good" : 
+                            (cell.getValue() === 1) ? "Minor Issue" : 
+                            (cell.getValue() === 2) ? "Major Issue" : 
+                            (cell.getValue() === 3) ? "Bad" : "Unlisted"
+                        }
+                    />
+
+                </ThemeProvider>
+            }
+        },
+        {
+            accessorKey: "status",
+            header: "Status",
+            size: 50,
+            Cell:({cell}) => {
+                const status = cell.getValue()
+                return <Typography                    
+                    sx={{
+                        fontFamily:'Inter',
+                        fontWeight:'600', 
+                        color:(status === 0) ? palette.badFont : palette.darkBlueFont 
+                    }}
+                    >
+                    {(status === 0) ? "Inactive" : "Active" }
+                </Typography>
+            }
+        },
+        {
+            accessorKey: "pending_reports",
+            header: "Pending Reports",
+            size: 30,
+        },
+    ], []);
     const ComputersSummary = (data)=> {
         let dataPc = new Map();
         for (let obj of data) {
@@ -372,10 +467,23 @@ function Laboratory() {
                 pcIds_tmp.push(dpc.computer_id)
             });
             // console.log(dataPc)
-            setComputersData(dataPc)
+            const pcRes = dataPc.map((cd)=> createData(
+                cd.computer_id,
+                cd.room,
+                cd.building_code,
+                cd.system_unit,
+                cd.monitor,
+                cd.computer_status,
+                cd.condition_id,
+                cd.report_count,
+                
+            ))
+            setComputersData(pcRes)
+            
+            console.log("PCROWS: ",pcRes)
             ComputersSummary(dataPc)
                 
-            setSelectedRooms([])
+            
             // console.log("pcidTmp", pcIds_tmp.length)
 
             const total_reports_fetched= await axios({
@@ -396,20 +504,10 @@ function Laboratory() {
         }
     }
 
-    const pcRows = computersData.map((cd)=> createData(
-        cd.computer_id,
-        cd.room,
-        cd.system_unit,
-        cd.monitor,
-        cd.computer_status,
-        cd.condition_id,
-        cd.report_count,
-        cd.building_code
-    ))
-
     const handleOpenPCTable = (type_sel = "all", singleRoom = []) => {
         
         getPcRows(type_sel, singleRoom)
+        
         setIsCompTableOpen(true)
     }
     const handleRoomCardMenuOpen = () => {
@@ -418,8 +516,6 @@ function Laboratory() {
 
     const building_data = [{building_code: 'MB', building_name:'Main Building'}, {building_code: 'ANB', building_name:'Annex Building'}, {building_code: 'MND', building_name:'Mendiola Building'}]
     const buildings = building_data.map((bd) => getBuildingData(bd.building_code, bd.building_name))
-
-
 
     return <div style={{display: 'flex', height:'100vh'}}>
         <DrawerMenu menuType={'laboratory'}/>
@@ -430,15 +526,22 @@ function Laboratory() {
             <LabelTop/>
             <div>
             {!isCompTableOpen && <>
-                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} onClick={()=> handleOpenPCTable("all")}>
+                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} 
+                onClick={()=> handleOpenPCTable("all")}>
                 View all
             </Button>
-            <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}} onClick={()=> handleOpenPCTable("select")}>
+            <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}} 
+                onClick={()=> handleOpenPCTable("select")}>
                 View selected
             </Button>
             </>}
 
-            {isCompTableOpen && <Button variant='outlined' color="primary" style={{marginLeft:12, borderRadius:'24px',fontSize:'16px', textTransform: 'inherit'}} onClick={()=> setIsCompTableOpen(false)}>
+            {isCompTableOpen && <Button variant='outlined' color="primary" style={{marginLeft:12, borderRadius:'24px',fontSize:'16px', textTransform: 'inherit'}} 
+                onClick={()=> {
+                    setIsCompTableOpen(false) 
+                    setSelectedRooms([])
+                }}
+            >
                 View Rooms List
             </Button>}
 
@@ -447,14 +550,42 @@ function Laboratory() {
         </Stack>
         {isCompTableOpen ?
         <Grid2 container spacing={2}>
-            <Grid2 size={{xs: 12, md:12, lg:8}}>
-                <ITable headCells={headCells} rows={pcRows} type="computerTable"/>
+            <Grid2 size={{xs: 12, md:12, lg:12}}>
+                <ITableV2 
+                    columns={headCellsV2} 
+                    data={computersData} 
+                    type={'computerTable'}
+                    extraActionsTable={{
+                        enableRowSelection:true,
+                        enableRowActions:true,
+                        positionActionsColumn: 'last',
+                        renderRowActionMenuItems:({row, table})=>{
+                            const menuRow = row.original
+                            return [
+                            <MRT_ActionMenuItem
+                                key={"report"}
+                                label='Report this computer'
+                                table={table}
+                                icon={<ReportProblemIcon/>}
+                                onClick={() => {
+                                    setReportedBuilding(String(menuRow.building_code))
+                                    getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms)
+                    
+                                    setReportedRoom(String(menuRow.room))
+                                    getComputersByRoom(String(menuRow.room), setTargetedComputerIDs, String(menuRow.building_code))
+                    
+                                    setReportedPcID(String(menuRow.computer_id))
+                                    setComputerTable_AddReportModalOpen(true)
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />
+                        ]}
+                    }}
+                />
             </Grid2>
-            <Grid2 size={{xs: 12, md:12, lg:4}}>
-                
-                    <StatBox sx={{height :'38%'}}  data={pcDCond} type="condition" keys={['good', 'minor', 'major', 'bad']}/>
-                    <StatBox sx={{height:'38%', marginTop:'24px'}} data={pcDStat} type="status" keys={['inactive', 'active']}/>
-                    <Box sx={{fontFamily:'Inter',textAlign:'left', border: '1px solid '+palette.strokeWeak, p:2, borderRadius:'16px'}} width={'100%'}>
+            <Grid2 container spacing={2} size={{xs: 12, md:12, lg:12}} >
+                <Grid2 size={{xs: 12, md:12, lg:12}} >
+                    <Box sx={{fontFamily:'Inter',textAlign:'left', border: '1px solid '+palette.strokeWeak, p:2, borderRadius:'16px'}} width={'100%'} height={'100px'}>
                         <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Total pending reports</Typography>
                         <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} > 
                             {totalReports === 0 
@@ -462,8 +593,15 @@ function Laboratory() {
                                 : <>The system detected <b style={{color:palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
                             }
                         </Typography>
-                  </Box>
-                
+                    </Box>
+                </Grid2>
+                <Grid2 size={{xs: 12, md:6, lg:6}} height={'300px'} maxHeight={'400px'}>
+                    <StatBox head={'Computers Condition'} data={pcDCond} type="condition" keys={['good', 'minor', 'major', 'bad']}/>
+                </Grid2>
+                <Grid2 size={{xs: 12, md:6, lg:6}} height={'300px'} maxHeight={'400px'}>
+                    <StatBox head={'Computers Status'} data={pcDStat} type="status" keys={['inactive', 'active']}/>
+                </Grid2>
+
             </Grid2>
         </Grid2> :
         <Stack sx={{marginTop:2}}>
@@ -475,7 +613,7 @@ function Laboratory() {
                             expandIcon={<ExpandMoreIcon />}
                             aria-controls="panel1-content"
                             id="panel1-header"
-                            >
+                        >
                             {bdt.building_name}
                         </AccordionSummary>
                         <AccordionDetails>
@@ -503,7 +641,10 @@ function Laboratory() {
                 2
             </MenuItem>
         </Menu>
-
+        <ReportModal
+            open={computerTable_addReportModalOpen}
+            setOpen={setComputerTable_AddReportModalOpen}
+        />
 
         
     </div>

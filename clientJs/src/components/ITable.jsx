@@ -328,7 +328,7 @@ function ReportRow ({isItemSelected, labelId, r, handleMenuClick, handleCheckCli
                 const filtered = Object.entries(r.components)
                                     .filter(([k, v])=> v)
                 const mapped = filtered.map(([k, v], i) => {
-                    console.log("VVV: " ,v)
+                    {/* console.log("VVV: " ,v) */}
                     const theme = getChipTheme(v);
                     {/* + ": " +v.charAt(0).toUpperCase()+v.split(" ")[0].slice(1) */}
                     return (
@@ -880,7 +880,7 @@ function ITable({headCells, rows, type}) {
 
                 setReportedPcID(String(menuRow.computer_id))
                 
-                handleCloseMenu()
+                handleCloseMenu(); // Close the menu
                 setComputerTable_AddReportModalOpen(true)}}>Report this computer</MenuItem>
         </Menu>
     }
@@ -896,7 +896,8 @@ function ITable({headCells, rows, type}) {
  
         <TableContainer sx={{backgroundColor: 'white', width:'100%',maxheight:'800px', minHeight:'700px', height:'500px',
             fontFamily: 'Inter, sans-serif',
-            '& .MuiTableCell-root': { fontFamily: 'Inter, sans-serif' },}}>
+            '& .MuiTableCell-root': { fontFamily: 'Inter, sans-serif' },}}
+        >
             <Table stickyHeader>
 
                 <ITableHead 
