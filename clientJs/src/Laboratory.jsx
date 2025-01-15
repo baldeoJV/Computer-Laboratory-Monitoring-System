@@ -241,7 +241,7 @@ function Laboratory() {
         targetedComputerIDs, setTargetedComputerIDs
     }= useStore()
     const fetchLabRooms = () => {
-        axios.get('http://localhost:8080/laboratories').then(res => {
+        axios.get('/api/laboratories').then(res => {
             const roomsData = res.data
             const roomCards_data = roomsData.map((rd) => getRoomData(
                 rd.room,
@@ -454,7 +454,7 @@ function Laboratory() {
         }
         try {
             const fetched_computers = await axios({
-                    url: "http://localhost:8080/rooms/computers",
+                    url: "/api/rooms/computers",
                     method: 'POST',
                     headers: {
                         // Authorization if meron
@@ -487,7 +487,7 @@ function Laboratory() {
             // console.log("pcidTmp", pcIds_tmp.length)
 
             const total_reports_fetched= await axios({
-                url: "http://localhost:8080/report/selected",
+                url: "/api/report/selected",
                 method: 'POST',
                 headers: {
                     // Authorization if meron

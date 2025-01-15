@@ -30,7 +30,7 @@ function createData(report_id, computer_id, room, building_code, components, dat
 function Archived() {
     const [archivedReportsData, setArchivedReportsData] = useState([]);
     useEffect(()=> {
-        axios.get('http://localhost:8080/archived_report').then( res => {
+        axios.get('/api/archived_report').then( res => {
             const data = res.data
             const rows = data.map((rd) => createData( 
                 rd.report_id, 

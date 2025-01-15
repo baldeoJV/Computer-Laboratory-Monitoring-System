@@ -2,114 +2,99 @@
 /* eslint-disable no-unused-vars */
 
 import './App.css'
-import axios from "axios";
+import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import DrawerMenu from './components/DrawerMenu'
 import '@fontsource/inter/700.css';
 import '@fontsource/inter/600.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 // import { SideMenu } from './components/SideMenu'
-import Laboratory from './Laboratory'
 import { Box, Card, CardActions, CardContent, Grid, Grid2, IconButton, Link, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material';
-import SettingsIcon from '@mui/icons-material/Settings';
-import Menu from '@mui/material/Menu';
-import { styled, alpha } from '@mui/material/styles';
-import React, { useState, useEffect } from 'react';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import palette from './assets/palette';
-import BedtimeIcon from '@mui/icons-material/Bedtime';
 import NavSetting from './components/NavSetting';
 import StatBox from './components/StatBox';
-
-import { getValueToPositionMapper } from '@mui/x-charts';
-
-// FAKE DATA
-// import computersData from './assets/computers_data.json';
-// import rooms_data from './assets/rooms_data.json'
-// import reports_data from './assets/reports_data.json'
-
 import building_names from './assets/building_names.json'
-
-// 
-import { Button } from 'bootstrap';
-import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import GppGoodRoundedIcon from '@mui/icons-material/GppGoodRounded';
 import GppMaybeRoundedIcon from '@mui/icons-material/GppMaybeRounded';
 import { IoIosWarning } from "react-icons/io";
 import { IoMdDownload } from "react-icons/io";
 import { IoIosArrowForward } from "react-icons/io";
 import { NavLink } from 'react-router-dom';
-
+import ITableV2 from './components/ITableV2';
+function createData(report_id, computer_id, room,  building_code, components, date_submitted, submittee, comment){
+  return {report_id, computer_id, room,  building_code, components, date_submitted, submittee,  comment}
+}
 function LabelTop() {
   return <div className="label">
   <div className="text-wrapper">Dashboard</div>
   </div>
 }
-function DashboardReportTable({rows}){
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [page, setPage] = useState(0);
-  const handleChangeRowsPerPage = (event) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    setRowsPerPage(newRowsPerPage);
-    setPage(0);
-  };
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-  const a_sx = {fontSize:'small', fontWeight:'600', py:2}
-  return <Stack sx={{border:'1px solid #DADADA', mt:2}}>
-    <TableContainer component={Paper} sx={{overflow:'auto', maxHeight:'430px', minHeight:'430px'}}>
-      <Table >
-        <TableHead>
-          <TableRow>
-            <TableCell sx={a_sx}>Room</TableCell>
-            <TableCell align='left' sx={a_sx}>Computer</TableCell>
-            <TableCell align='left' sx={a_sx}>Comments</TableCell>
-            <TableCell sx={a_sx}>Components</TableCell>
-            <TableCell sx={a_sx}>Date</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(rowsPerPage > 0 
-            ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) 
-            : rows
-            ).map((rr,i) => {
-              const orr= Object.keys(rr.components)
+// function DashboardReportTable({rows}){
+//   const [rowsPerPage, setRowsPerPage] = useState(5);
+//   const [page, setPage] = useState(0);
+//   const handleChangeRowsPerPage = (event) => {
+//     const newRowsPerPage = parseInt(event.target.value, 10);
+//     setRowsPerPage(newRowsPerPage);
+//     setPage(0);
+//   };
+//   const handleChangePage = (event, newPage) => {
+//     setPage(newPage);
+//   };
+//   const a_sx = {fontSize:'small', fontWeight:'600', py:2}
+//   return <Stack sx={{border:'1px solid #DADADA', mt:2}}>
+//     <TableContainer component={Paper} sx={{overflow:'auto', maxHeight:'430px', minHeight:'430px'}}>
+//       <Table >
+//         <TableHead>
+//           <TableRow>
+//             <TableCell sx={a_sx}>Room</TableCell>
+//             <TableCell align='left' sx={a_sx}>Computer</TableCell>
+//             <TableCell align='left' sx={a_sx}>Comments</TableCell>
+//             <TableCell sx={a_sx}>Components</TableCell>
+//             <TableCell sx={a_sx}>Date</TableCell>
+//           </TableRow>
+//         </TableHead>
+//         <TableBody>
+//           {(rowsPerPage > 0 
+//             ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) 
+//             : rows
+//             ).map((rr,i) => {
+//               const orr= Object.keys(rr.components)
               
-              const comp_filter = orr.filter(r => rr['components'][r] !== null).join(', ')
-              return <TableRow key={'rr - '+i}>
-                <TableCell component={'th'}>{`${rr.room}${rr.building_code}`}</TableCell>
-                <TableCell align='left'>{rr.computer_id}</TableCell>
-                <TableCell align='left' sx={{}}>{rr.report_comment}</TableCell>
-                <TableCell >{comp_filter}</TableCell>
-                <TableCell >{rr.date_submitted}</TableCell>
-              </TableRow>
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
-    <TablePagination
-      sx={{
-          backgroundColor: 'white',
-          '.MuiInputBase-root':{
-              marginRight:'1em'
-          },
-          '.MuiTablePagination-displayedRows': {
-              marginTop: '1em', 
-          },
-          '.MuiTablePagination-selectLabel': {
-              marginTop: '1em', 
-          }
-      }}
-      rowsPerPageOptions={[5,10,20,30]}
-      component={'div'}
-      count={rows.length}
-      rowsPerPage={rowsPerPage}
-      page={page}
-      onPageChange={handleChangePage}
-      onRowsPerPageChange={handleChangeRowsPerPage}
-    />
-  </Stack>
-}
+//               const comp_filter = orr.filter(r => rr['components'][r] !== null).join(', ')
+//               return <TableRow key={'rr - '+i}>
+//                 <TableCell component={'th'}>{`${rr.room}${rr.building_code}`}</TableCell>
+//                 <TableCell align='left'>{rr.computer_id}</TableCell>
+//                 <TableCell align='left' sx={{}}>{rr.report_comment}</TableCell>
+//                 <TableCell >{comp_filter}</TableCell>
+//                 <TableCell >{rr.date_submitted}</TableCell>
+//               </TableRow>
+//           })}
+//         </TableBody>
+//       </Table>
+//     </TableContainer>
+//     <TablePagination
+//       sx={{
+//           backgroundColor: 'white',
+//           '.MuiInputBase-root':{
+//               marginRight:'1em'
+//           },
+//           '.MuiTablePagination-displayedRows': {
+//               marginTop: '1em', 
+//           },
+//           '.MuiTablePagination-selectLabel': {
+//               marginTop: '1em', 
+//           }
+//       }}
+//       rowsPerPageOptions={[5,10,20,30]}
+//       component={'div'}
+//       count={rows.length}
+//       rowsPerPage={rowsPerPage}
+//       page={page}
+//       onPageChange={handleChangePage}
+//       onRowsPerPageChange={handleChangeRowsPerPage}
+//     />
+//   </Stack>
+// }
 
 const clickableStyle = {
   borderRadius: '16px', 
@@ -134,15 +119,14 @@ const statboxStyle = {
 function App()  {
   const [totalReports, setTotalReports] = useState(0);
   const [totalRooms, setTotalRooms] = useState(0)
-
   const [roomsData, setRoomsData] = useState([]);
   const [computersData, setComputersData] = useState([]);
   const [reportsData, setReportsData] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/dashboard').then(res => {
+    axios.get('/api/dashboard').then(res => {
       const data = res.data
-      console.log(data.formatted_report)
+      
 
       let totalrep = 0;
       let roomcount = 0
@@ -151,18 +135,59 @@ function App()  {
         totalrep += rd.total_reports;
         roomcount++
       });
-
+      const reportRows = data.formatted_report.map((rd) => createData( 
+        rd.report_id, 
+        rd.computer_id,
+        rd.room, 
+        rd.building_code,
+        rd.components,
+        rd.date_submitted,
+        rd.submittee,
+        rd.report_comment
+    ))
+      
       setRoomsData(data.rooms)
       setComputersData(data.computers)
-      setReportsData(data.formatted_report)
+      setReportsData(reportRows)
       setTotalReports(totalrep);
       setTotalRooms(roomcount)
-
-
-
     }).catch(err => console.error('Error: ', err))
-
   }, []);
+
+  const headCellsV2 = useMemo(() => [
+    {
+        accessorKey: "computer_id",
+        header: "Computer ID",
+        size:20,
+    },
+    {
+        accessorKey: "room",
+        header: "Room",
+        size:20,
+    },
+    {
+        accessorKey: "building_code",
+        header: "Building",
+        size:20,
+    },
+    {
+        accessorKey: "components",
+        header: "Reported Components",
+        Cell: ({cell}) => {
+            const componentsList = useMemo(() => {
+                return Object.entries(cell.getValue())
+                    .filter(([k, v]) => v)
+                    .map(([k, v]) => k).join(', ');
+            }, [cell]);
+            return <Typography sx={{fontFamily:'Inter'}}>{componentsList}</Typography>
+        }
+    },
+    {
+        accessorKey: "date_submitted",
+        header: "Date Submitted",
+
+    },
+], []);
 
 
   const bdMap = building_names.reduce((m, bd) => {
@@ -277,7 +302,16 @@ function App()  {
                 </Grid2>
               </Grid2>
               {/* Report */}
-              <DashboardReportTable rows={reportsData}/>
+              {/* <DashboardReportTable rows={reportsData}/> */}
+              <ITableV2 
+                    columns={headCellsV2} 
+                    data={reportsData} 
+                    type={'dashboardTable'} 
+                    extraActionsTable={{
+                        initialState: { density: 'compact' },
+                        muiTableContainerProps: { sx: { maxHeight: '400px', minHeight:'400px'} },
+                    }}
+                />
             </Grid2>
             {/* TYPE B for the room summary, and two buttons below */}
             <Grid2 item size={{xs:12, md:12, lg:3}}>

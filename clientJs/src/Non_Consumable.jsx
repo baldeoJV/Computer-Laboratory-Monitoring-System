@@ -1,18 +1,29 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Grid2, Stack } from '@mui/material';
-import Non_Consumable_data from './assets/Non_Consumable_data.json'
-import ITable from './components/ITable';
+import { Button, Grid2, Stack } from '@mui/material';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
+import { Accordion, AccordionDetails,CardContent,Paper,Typography, Box, Menu, Chip, ListItemIcon } from '@mui/material';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css'
+import ITableV2 from './components/ITableV2';
+import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
+import { getChipTheme_condition } from './customMethods';
+import {MRT_ActionMenuItem,} from 'material-react-table';
+import ReportModal from './components/ReportModal';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 function Non_Consumable() {
     const [nonConsumData, setNonConsumData] = useState([]);
     function createData(component_id, reference_id, location, specs, flagged){
         return {component_id, reference_id, location, specs, flagged}
     }
     useEffect(()=> {
-        axios.get('http://localhost:8080/non_consum_comp').then( res => {
+        axios.get('/api/non_consum_comp').then( res => {
             const data = res.data
             const rows = data.map((ncd) => createData( 
                 ncd.component_id,
@@ -25,40 +36,34 @@ function Non_Consumable() {
             
         }).catch(err => console.error("Error: ", err))
     }, [])
+    const headCellsV2 = useMemo(() => [
+        {
+            accessorKey: "component_id",
+            header: "Component ID",
+            size:10,
 
-    const headCells = [
-        {
-            id: "component_id",
-            numeric: false,
-            disablePadding: true,
-            label: "Component ID",
         },
         {
-            id: "reference_id",
-            numeric: false,
-            disablePadding: true,
-            label: "Type",
+            accessorKey: "reference_id",
+            header: "Type",
+            size:10,
         },
         {
-            id: "location",
-            numeric: false,
-            disablePadding: true,
-            label: "Location",
+            accessorKey: "location",
+            header: "Location",
+            size:10,
         },
         {
-            id: "specs",
-            numeric: false,
-            disablePadding: true,
-            label: "Specs",
+            accessorKey: "specs",
+            header: "Specs",
+            grow: true,
+            size:200,
         },
         {
-            id: "flagged",
-            numeric: false,
-            disablePadding: false,
-            label: "Flag",
+            accessorKey: "flagged",
+            header: "Flag",
         },
-    ]
-
+    ], []);
 
     return <div style={{display: 'flex', height:'100vh'}}>
     <DrawerMenu menuType={'inventory'}/>
@@ -68,7 +73,41 @@ function Non_Consumable() {
             <div className="label">
                 <div className="text-wrapper">Inventory</div>
             </div>
-            <ITable headCells={headCells} rows={nonConsumData} type='non_consumableTable'/>
+            {/* <ITable headCells={headCells} rows={nonConsumData} type='non_consumableTable'/> */}
+            <ITableV2 
+                    columns={headCellsV2} 
+                    data={nonConsumData} 
+                    type={'non_consumableTable'} 
+                    extraActionsTable={{
+                        initialState: { density: 'comfortable' },
+                        enableRowSelection: true,
+                        enableRowActions: true, 
+                        positionActionsColumn:'last',
+                        muiTableContainerProps: { sx: { maxHeight: '600px', minHeight:'600px' } },
+                        renderRowActionMenuItems:({row, table})=>{
+                            const menuRow = row.original
+                            return [
+                            <MRT_ActionMenuItem
+                                key={"resolve"}
+                                label='Resolve'
+                                table={table}
+                                icon={<CheckIcon/>}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"reject"}
+                                label='Reject'
+                                table={table}
+                                icon={<CloseIcon/>}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />
+                        ]}
+                    }}
+                />
         </div>
     </Stack>
 

@@ -13,7 +13,7 @@ import { createTheme, ThemeProvider, alpha, getContrastRatio } from '@mui/materi
 // REPORT MODAL.JSX
 export const getRoomsByBuilding = (reportedBuildingInner, setTargetedRooms) =>{
     try {
-        axios.get('http://localhost:8080/laboratories').then(d => {
+        axios.get(`/api/laboratories`).then(d => {
             const roomsData = d.data
             setTargetedRooms(roomsData.filter(room => room.building_code === reportedBuildingInner)
             .map(room => String(room.room)))
@@ -29,7 +29,7 @@ export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reporte
     } else {
         // console.log("reportedRoom: ", [{ roomnum: Number(reportedRoom), building_code: reportedBuilding }]);
 
-        axios.post("http://localhost:8080/rooms/computers", {rooms: [
+        axios.post("/api/rooms/computers", {rooms: [
             { roomnum: Number(reportedRoom), building_code: reportedBuilding }
         ]}).then(d => {
             const computersData = d.data;
@@ -46,21 +46,25 @@ export const handleExportRows = (rows, columns, name, downloadType, optionalIndi
         decimalSeparator: '.',
         useKeysAsHeaders: true,
     });
-
-    const tableHeaders = columns.map((c) => c.header);
+    // console.log(rows.map(r=>r.original))
+    const tableHeaders = columns.map((c) => c.header);    
     const tableData = rows.map((row) => 
         columns.map((col) => {
             // if a column of a row is an object, join all the value of that object.
-            let rowVal = row.original[col.accessorKey]
+            let rowVal = row.original[col.accessorKey || col.id]
+            
             if ((typeof rowVal) === "object"){
                 rowVal = Object.entries(rowVal)
                             .filter(([k, v])=> v)
-                            .map(([k, v], i) => k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1) + ": " + optionalIndications[v])
+                            .map(([k, v], i) => {
+                                const res = k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1) + ": " + optionalIndications[v]
+                                return res
+                            })
             }
             return rowVal
         })
     );
-    console.log(rows)
+    
 
     if (downloadType.toLowerCase() === 'pdf'){
         const doc = new jsPDF();

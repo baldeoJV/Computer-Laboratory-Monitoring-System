@@ -26,7 +26,7 @@ function Reports() {
 
     
     useEffect(()=> {
-        axios.get('http://localhost:8080/report').then( res => {
+        axios.get('/api/report').then( res => {
             const data = res.data
             const rows = data.map((rd) => createData( 
                 rd.report_id, 
@@ -48,7 +48,6 @@ function Reports() {
             accessorKey: "report_id",
             header: "Report ID",
             size:20,
-
         },
         {
             accessorKey: "computer_id",
@@ -78,7 +77,6 @@ function Reports() {
                             theme: getChipTheme_condition(v),
                         }));
                 }, [cell]);
-                // console.log(componentsList)
                 return componentsList.map(({key, label, theme}, i)=> (
                     <ThemeProvider theme={theme} key={key}>
                         {i % 2 === 0 && <br/>}

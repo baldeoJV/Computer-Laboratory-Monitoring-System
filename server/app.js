@@ -24,6 +24,8 @@ function formatDate(dateString) {
 
 // fetch data for dashboard
 app.get("/dashboard", async (req, res) => {
+    console.log("hellooo");
+    
     try {
         // Fetch all required data
         const rooms = await getRoom()   //select all rooms
@@ -283,6 +285,6 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!')
 })
 
-app.listen(8080, () =>{
-    console.log('Server is running on port 8080')
+app.listen(process.env.PORT || 8080, () =>{
+    console.log('Server is running on port 8080 ' + process.env.PORT)
 })

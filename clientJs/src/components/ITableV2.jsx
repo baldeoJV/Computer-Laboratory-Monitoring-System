@@ -74,7 +74,8 @@ const FILENAME_LIST = {
     'archivedTable': "Archived Reports List",
     'consumableTable': "Monitors and System Units List",
     'non_consumableTable': 'Component Stocks List',
-    'computerTable': 'Computers List'
+    'computerTable': 'Computers List',
+    'dashboardTable': "Pending Reports Summary List"
 }
 const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
 // datas are roows
@@ -89,7 +90,7 @@ export default function ITableV2({columns, data, type, extraActionsTable}) {
     };
     const handleExecute_DownloadMenu = (dtype) => {
         try {
-            const optionalIndication = (type === "reportTable" || type === "archivedTable") ? reports_condition_indication : null
+            const optionalIndication = (type === "reportTable" || type === "archivedTable" || type=== "dashboardTable") ? reports_condition_indication : null
             handleExportRows(downloadTargetTableMode, columns, FILENAME_LIST[type], dtype, optionalIndication)
         } catch (error) {
             console.error("Error exporting rows: ", error);
@@ -125,7 +126,7 @@ export default function ITableV2({columns, data, type, extraActionsTable}) {
         paginationDisplayMode: 'pages',
         positionToolbarAlertBanner: 'bottom',
         defaultColumn: {
-            minSize: 20, //allow columns to get smaller than default
+            minSize: 10, //allow columns to get smaller than default
           },
         renderTopToolbarCustomActions: ({ table }) => (
             <Box
@@ -171,7 +172,7 @@ export default function ITableV2({columns, data, type, extraActionsTable}) {
     })
 
     return (
-    <Box sx={{border:'1px solid #DADADA'}}>
+    <Box sx={{border:'1px solid #DADADA', marginTop:'24px'}}>
         {(type==='reportTable' || type==='archivedTable' || type==='non_consumableTable' || type==='consumableTable') && <Box>
             <Tabs value={tabValue} onChange={handleTabChange}>
                 {tabLabel}

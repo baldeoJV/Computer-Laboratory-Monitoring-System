@@ -1,12 +1,23 @@
 /* eslint-disable no-unused-vars */
-
-import { Grid2, Stack } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import Consumable_data from './assets/Consumable_data.json'
-import ITable from './components/ITable';
+import { Button, Grid2, Stack } from '@mui/material';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
+import { Accordion, AccordionDetails,CardContent,Paper,Typography, Box, Menu, Chip, ListItemIcon } from '@mui/material';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css'
+import ITableV2 from './components/ITableV2';
+import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
+import { getChipTheme_condition } from './customMethods';
+import {MRT_ActionMenuItem,} from 'material-react-table';
+import ReportModal from './components/ReportModal';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+
 function Consumable() {
     const [consumData, setConsumData] = useState([]);
 
@@ -15,7 +26,7 @@ function Consumable() {
     }
 
     useEffect(()=> {
-        axios.get('http://localhost:8080/consum_comp').then( res => {
+        axios.get('/api/consum_comp').then( res => {
             const data = res.data
             console.log(data)
             const rows = data.map((cd) => createData( 
@@ -26,18 +37,16 @@ function Consumable() {
             
         }).catch(err => console.error("Error: ", err))
     }, [])
-    const headCells = [
+    const headCellsV2 = [
         {
-            id: "reference_id",
-            numeric: false,
-            disablePadding: true,
-            label: "Type",
+            accessorKey: "reference_id",
+            header: "Type",
+            size:10,
         },
         {
-            id: "stock_count",
-            numeric: false,
-            disablePadding: true,
-            label: "Stock Count",
+            accessorKey: "stock_count",
+            header: "Stock Count",
+            size:10,
         },
     ]
 
@@ -50,7 +59,40 @@ function Consumable() {
             <div className="label">
                 <div className="text-wrapper">Inventory</div>
             </div>
-            <ITable headCells={headCells} rows={consumData} type='consumableTable'/>
+            <ITableV2 
+                    columns={headCellsV2} 
+                    data={consumData} 
+                    type={'consumableTable'} 
+                    extraActionsTable={{
+                        initialState: { density: 'compact' },
+                        enableRowSelection: true,
+                        enableRowActions: true, 
+                        positionActionsColumn:'last',
+                        muiTableContainerProps: { sx: { maxHeight: '600px', minHeight:'600px' } },
+                        renderRowActionMenuItems:({row, table})=>{
+                            const menuRow = row.original
+                            return [
+                            <MRT_ActionMenuItem
+                                key={"resolve"}
+                                label='Resolve'
+                                table={table}
+                                icon={<CheckIcon/>}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"reject"}
+                                label='Reject'
+                                table={table}
+                                icon={<CloseIcon/>}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />
+                        ]}
+                    }}
+                />
         </div>
     </Stack>
 </div>;
