@@ -11,6 +11,8 @@ import Non_Consumable from './Non_Consumable.jsx'
 import Consumable from './Consumable.jsx'
 import Login from './Login.jsx'
 import GuestPage from './GuestPage.jsx'
+import Settings from './Settings.jsx'
+import About from './About.jsx'
 
 const router = createBrowserRouter(
   [
@@ -46,6 +48,14 @@ const router = createBrowserRouter(
       path:'/reportGuest',
       element:<GuestPage/>
     },
+    {
+      path:'/settings',
+      element:<Settings/>
+    },
+    {
+      path:'/about',
+      element:<About/>
+    }
   ],
   
   // DISABLE FUTURE ERROR WARNINGS

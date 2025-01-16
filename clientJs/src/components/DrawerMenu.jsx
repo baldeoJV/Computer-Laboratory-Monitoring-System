@@ -15,7 +15,7 @@ import KeyboardDoubleArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardDou
 import { IconButton } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css'
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 
 function DesignBox(){
 
@@ -117,18 +117,18 @@ export default function DrawerMenu({menuType}) {
                 <MenuItem 
                     icon={<img src={settings1_pic} alt='settings1_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/reports"/>}
+                    component={<a href="/settings"/>}
                 > 
                     {menuType === 'reportModal' && <DesignBox/>}
-                    ReportModal 
+                    Settings
                 </MenuItem>
                 <MenuItem 
                     icon={<img src={about_pic} alt='about_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/itable"/>}
+                    component={<a href="/about"/>}
                 > 
                     {menuType === 'itable' && <DesignBox/>}
-                    Itable
+                    About
                 </MenuItem>
             </Menu>
           </Sidebar>
