@@ -1,11 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+// import './index.css'
 import App from './App.jsx'
 import {createBrowserRouter, RouterProvider} from 'react-router-dom'
 import Laboratory from './Laboratory.jsx'
 import '@fontsource/inter'; 
-import ReportModal from './components/ReportModal.jsx'
 import Reports from './Reports.jsx'
 import Archived from './Archived.jsx'
 import Non_Consumable from './Non_Consumable.jsx'
@@ -44,13 +43,9 @@ const router = createBrowserRouter(
       element: <Consumable/>
     },
     {
-      path:'/try',
-      element:<ReportModal/>
-    },
-    {
       path:'/reportGuest',
       element:<GuestPage/>
-    }
+    },
   ],
   
   // DISABLE FUTURE ERROR WARNINGS

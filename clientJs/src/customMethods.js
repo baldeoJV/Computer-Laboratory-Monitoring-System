@@ -5,15 +5,35 @@ import autoTable from 'jspdf-autotable';
 import { mkConfig, generateCsv, download } from 'export-to-csv';
 import palette from "./assets/palette";
 import { createTheme, ThemeProvider, alpha, getContrastRatio } from '@mui/material/styles';
+import { useNavigate } from "react-router-dom";
 
 
 
+
+function handleErrorLogin (err, navigate) {
+    navigate('/')
+}
+export const handleErrorFetch = (err, navigate) => {
+    // const rs = err.response.data
+    // const isForcedLogin = rs.forceLogin
+    // const err_msg = rs.error_message
+    // const err_status = rs.status
+    if (err.response.data.forceLogin)  {
+    handleErrorLogin(err, navigate)
+    }
+    else {
+    console.error("ERROR DB: ", err)
+    }
+}
+// export const handleErrorDb = ()
 
 
 // REPORT MODAL.JSX
-export const getRoomsByBuilding = (reportedBuildingInner, setTargetedRooms) =>{
+export const getRoomsByBuilding = (reportedBuildingInner, setTargetedRooms, permissionType = "admin") =>{
     try {
-        axios.get(`/api/laboratories`).then(d => {
+        const url = (permissionType === "admin") ? `/api/laboratories`: '/api/guest/laboratories'
+        console.log(url);
+        axios.get(url).then(d => {
             const roomsData = d.data
             setTargetedRooms(roomsData.filter(room => room.building_code === reportedBuildingInner)
             .map(room => String(room.room)))
@@ -22,14 +42,16 @@ export const getRoomsByBuilding = (reportedBuildingInner, setTargetedRooms) =>{
         console.error("ERROR: ",error)
     }
 }
-export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reportedBuilding) => {
+export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reportedBuilding, permissionType) => {
     if (reportedRoom === '' || reportedRoom === null) {
         // console.log("NULL ROOM");
         setTargetedComputerIDs([]);
     } else {
         // console.log("reportedRoom: ", [{ roomnum: Number(reportedRoom), building_code: reportedBuilding }]);
-
-        axios.post("/api/rooms/computers", {rooms: [
+        const url = (permissionType === "admin") ? "/api/rooms/computers" : "/api/guest/rooms/computers"
+        console.log(url);
+        
+        axios.post(url, {rooms: [
             { roomnum: Number(reportedRoom), building_code: reportedBuilding }
         ]}).then(d => {
             const computersData = d.data;

@@ -42,6 +42,17 @@ const useStore = create((set) => ({
     targetedComputerIDs:[], 
     setTargetedComputerIDs: (tc) => set({targetedComputerIDs:tc}),
 
+    // to show ui before logging in or not
+    showUi: true,
+    setShowUi: (su) => set({showUi: su}),
+
+    errorMessage: "",
+    setErrorMessage: (em) => set({errorMessage: em}),
+
+    errorStatus: 0,
+    setErrorStatus: (es) => set({errorStatus: es}),
+
+
 }))
 
 export default useStore

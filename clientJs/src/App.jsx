@@ -19,8 +19,12 @@ import GppMaybeRoundedIcon from '@mui/icons-material/GppMaybeRounded';
 import { IoIosWarning } from "react-icons/io";
 import { IoMdDownload } from "react-icons/io";
 import { IoIosArrowForward } from "react-icons/io";
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import ITableV2 from './components/ITableV2';
+import { handleErrorFetch} from './customMethods';
+import useStore from './useStore';
+import { SnackbarProvider, useSnackbar } from 'notistack';
+
 function createData(report_id, computer_id, room,  building_code, components, date_submitted, submittee, comment){
   return {report_id, computer_id, room,  building_code, components, date_submitted, submittee,  comment}
 }
@@ -29,72 +33,6 @@ function LabelTop() {
   <div className="text-wrapper">Dashboard</div>
   </div>
 }
-// function DashboardReportTable({rows}){
-//   const [rowsPerPage, setRowsPerPage] = useState(5);
-//   const [page, setPage] = useState(0);
-//   const handleChangeRowsPerPage = (event) => {
-//     const newRowsPerPage = parseInt(event.target.value, 10);
-//     setRowsPerPage(newRowsPerPage);
-//     setPage(0);
-//   };
-//   const handleChangePage = (event, newPage) => {
-//     setPage(newPage);
-//   };
-//   const a_sx = {fontSize:'small', fontWeight:'600', py:2}
-//   return <Stack sx={{border:'1px solid #DADADA', mt:2}}>
-//     <TableContainer component={Paper} sx={{overflow:'auto', maxHeight:'430px', minHeight:'430px'}}>
-//       <Table >
-//         <TableHead>
-//           <TableRow>
-//             <TableCell sx={a_sx}>Room</TableCell>
-//             <TableCell align='left' sx={a_sx}>Computer</TableCell>
-//             <TableCell align='left' sx={a_sx}>Comments</TableCell>
-//             <TableCell sx={a_sx}>Components</TableCell>
-//             <TableCell sx={a_sx}>Date</TableCell>
-//           </TableRow>
-//         </TableHead>
-//         <TableBody>
-//           {(rowsPerPage > 0 
-//             ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) 
-//             : rows
-//             ).map((rr,i) => {
-//               const orr= Object.keys(rr.components)
-              
-//               const comp_filter = orr.filter(r => rr['components'][r] !== null).join(', ')
-//               return <TableRow key={'rr - '+i}>
-//                 <TableCell component={'th'}>{`${rr.room}${rr.building_code}`}</TableCell>
-//                 <TableCell align='left'>{rr.computer_id}</TableCell>
-//                 <TableCell align='left' sx={{}}>{rr.report_comment}</TableCell>
-//                 <TableCell >{comp_filter}</TableCell>
-//                 <TableCell >{rr.date_submitted}</TableCell>
-//               </TableRow>
-//           })}
-//         </TableBody>
-//       </Table>
-//     </TableContainer>
-//     <TablePagination
-//       sx={{
-//           backgroundColor: 'white',
-//           '.MuiInputBase-root':{
-//               marginRight:'1em'
-//           },
-//           '.MuiTablePagination-displayedRows': {
-//               marginTop: '1em', 
-//           },
-//           '.MuiTablePagination-selectLabel': {
-//               marginTop: '1em', 
-//           }
-//       }}
-//       rowsPerPageOptions={[5,10,20,30]}
-//       component={'div'}
-//       count={rows.length}
-//       rowsPerPage={rowsPerPage}
-//       page={page}
-//       onPageChange={handleChangePage}
-//       onRowsPerPageChange={handleChangeRowsPerPage}
-//     />
-//   </Stack>
-// }
 
 const clickableStyle = {
   borderRadius: '16px', 
@@ -122,6 +60,11 @@ function App()  {
   const [roomsData, setRoomsData] = useState([]);
   const [computersData, setComputersData] = useState([]);
   const [reportsData, setReportsData] = useState([]);
+  const [showUi, setShowUi] = useState(false);
+  const navigate = useNavigate()
+  const {errorMessage} = useStore()
+  
+
 
   useEffect(() => {
     axios.get('/api/dashboard').then(res => {
@@ -145,14 +88,14 @@ function App()  {
         rd.submittee,
         rd.report_comment
     ))
-      
+      setShowUi(true)
       setRoomsData(data.rooms)
       setComputersData(data.computers)
       setReportsData(reportRows)
       setTotalReports(totalrep);
       setTotalRooms(roomcount)
-    }).catch(err => console.error('Error: ', err))
-  }, []);
+    }).catch(err => handleErrorFetch(err, navigate))
+  }, [navigate]);
 
   const headCellsV2 = useMemo(() => [
     {
@@ -291,13 +234,13 @@ function App()  {
           {/* CONTAINER OF THE WHOLE THING */}
           <Grid2 container spacing={4} sx={{mt:2}} >
             {/* TYPE A for the 2 statbox and report table */}
-            <Grid2 item size={{xs: 12, md:12, lg:9}}>
+            <Grid2 size={{xs: 12, md:12, lg:9}}>
               {/* Statboxes */}
               <Grid2 container spacing={2}>
-                <Grid2 item size={{xs: 12, md:12,lg:6}}>
+                <Grid2 size={{xs: 12, md:12,lg:6}}>
                   <StatBox head={"Computers Condition"} sx={statboxStyle} data={dataset_condition} type="condition" keys={['good', 'minor', 'major', 'bad']}/>
                 </Grid2>
-                <Grid2 item size={{xs: 12, md:12, lg:6}}>
+                <Grid2 size={{xs: 12, md:12, lg:6}}>
                   <StatBox head={"Computers Status"} sx={statboxStyle} data={dataset_status} type="status" keys={['inactive', 'active']}/>
                 </Grid2>
               </Grid2>
@@ -314,7 +257,7 @@ function App()  {
                 />
             </Grid2>
             {/* TYPE B for the room summary, and two buttons below */}
-            <Grid2 item size={{xs:12, md:12, lg:3}}>
+            <Grid2 size={{xs:12, md:12, lg:3}}>
               {/* room */}
               <Box 
                 style={{

@@ -4,23 +4,21 @@ import axios from 'axios';
 import { Button, Grid2, Stack } from '@mui/material';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
-import { Accordion, AccordionDetails,CardContent,Paper,Typography, Box, Menu, Chip, ListItemIcon } from '@mui/material';
 import '@fontsource/inter/700.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import ITableV2 from './components/ITableV2';
-import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
-import { getChipTheme_condition } from './customMethods';
+import {handleErrorFetch,  } from './customMethods';
 import {MRT_ActionMenuItem,} from 'material-react-table';
-import ReportModal from './components/ReportModal';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import { useNavigate } from 'react-router-dom';
 
 function Consumable() {
     const [consumData, setConsumData] = useState([]);
-
+    const navigate = useNavigate()
     function createData(reference_id, stock_count){
         return {reference_id, stock_count}
     }
@@ -35,8 +33,8 @@ function Consumable() {
             ))
             setConsumData(rows)
             
-        }).catch(err => console.error("Error: ", err))
-    }, [])
+        }).catch(err => handleErrorFetch(err, navigate))
+    }, [navigate])
     const headCellsV2 = [
         {
             accessorKey: "reference_id",

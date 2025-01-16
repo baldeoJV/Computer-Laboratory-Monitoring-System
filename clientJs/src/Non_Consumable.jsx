@@ -12,16 +12,18 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import ITableV2 from './components/ITableV2';
 import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
-import { getChipTheme_condition } from './customMethods';
+import { getChipTheme_condition, handleErrorFetch} from './customMethods';
 import {MRT_ActionMenuItem,} from 'material-react-table';
 import ReportModal from './components/ReportModal';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import { useNavigate } from 'react-router-dom';
 function Non_Consumable() {
     const [nonConsumData, setNonConsumData] = useState([]);
     function createData(component_id, reference_id, location, specs, flagged){
         return {component_id, reference_id, location, specs, flagged}
     }
+    const navigate = useNavigate()
     useEffect(()=> {
         axios.get('/api/non_consum_comp').then( res => {
             const data = res.data
@@ -34,8 +36,8 @@ function Non_Consumable() {
             ))
             setNonConsumData(rows)
             
-        }).catch(err => console.error("Error: ", err))
-    }, [])
+        }).catch(err => handleErrorFetch(err, navigate))
+    }, [navigate])
     const headCellsV2 = useMemo(() => [
         {
             accessorKey: "component_id",

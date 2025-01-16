@@ -2,8 +2,6 @@
 /* eslint-disable no-unused-vars */
 
 import axios from 'axios';
-import archived_data from './assets/archived_data.json'
-import ITable from './components/ITable';
 import DrawerMenu from './components/DrawerMenu';
 import NavSetting from './components/NavSetting';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -15,13 +13,9 @@ import '@fontsource/inter';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import ITableV2 from './components/ITableV2';
-import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
-import { getChipTheme_condition, getChipTheme_resolve_reject } from './customMethods';
-import {MRT_ActionMenuItem,} from 'material-react-table';
-import ReportModal from './components/ReportModal';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
+import {handleErrorFetch} from './customMethods';
 import palette from './assets/palette';
+import { useNavigate } from 'react-router-dom';
 const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
 
 function createData(report_id, computer_id, room, building_code, components, date_submitted, submittee,  comment, date_archived, status){
@@ -29,6 +23,8 @@ function createData(report_id, computer_id, room, building_code, components, dat
 }
 function Archived() {
     const [archivedReportsData, setArchivedReportsData] = useState([]);
+
+    const navigate = useNavigate()
     useEffect(()=> {
         axios.get('/api/archived_report').then( res => {
             const data = res.data
@@ -45,8 +41,8 @@ function Archived() {
                 rd.report_status,
             ))
             setArchivedReportsData(rows)
-        }).catch(err => console.error("Error: ", err))
-    }, [])
+        }).catch(err => handleErrorFetch(err, navigate))
+    }, [navigate])
 
     const headCellsV2 = useMemo(() => [
         {

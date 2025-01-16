@@ -27,9 +27,13 @@ app.use(session({
 }))
 
 // RAINNAND : MIDDLEWARE
-function checkAdminIdSession(req, res, next) {
+async function checkAdminIdSession(req, res, next) {
     if (!req.session.adminId){
-        return res.status(401).send("Unauthorized: Please login again")
+        return res.status(401).json({forceLogin: true, error_message: "Unauthorized access, please login."})
+    }
+    const admins = await verifyAdminId(req.session.adminId)
+    if (admins.length === 0){
+        return res.status(500).json({forceLogin: true, error_message: "Invalid Account, please login again."})
     }
     next()
 }
@@ -59,6 +63,8 @@ app.post('/login', async (req, res) => {
         if (adminData.password !== password){
             return res.status(401).send("Incorrect Password")
         }
+
+        
 
         req.session.adminId = adminData.admin_id
         res.status(200).send("Login Successful")
@@ -121,10 +127,14 @@ app.get("/dashboard", checkAdminIdSession, async (req, res) => {
 //get all rooms
 app.get("/laboratories", checkAdminIdSession, async (req, res) => {
     const get_room = await getRoom()
-
     res.send(get_room)
 })
 
+// RAINNAND : FOR GUESTS / STUDENT 
+app.get("/guest/laboratories", async (req, res) => {
+    const get_room = await getRoom()
+    res.send(get_room)
+})
 //get specific room
 app.get("/laboratories/:room_id", checkAdminIdSession, async (req, res) => {
     const room_id = req.params.room_id
@@ -200,6 +210,34 @@ app.post("/rooms/computers", checkAdminIdSession, async (req, res) => {
     }
 });
 
+// RAINNAND : FOR GUESTS / STUDENT
+app.post("/guest/rooms/computers", async (req, res) => {
+    const { rooms } = req.body;
+    // console.log("BACKEND ROOMS: ", rooms)
+    //check if the input is an array
+    if (!Array.isArray(rooms)) {
+        return res.status(400).send("Invalid array format.");
+    }
+    
+    try {
+        const results = await Promise.all(
+            rooms.map(async ({ roomnum, building_code }) => {
+                const roomData = await getRoomComputer(roomnum, building_code);
+                
+                return roomData;
+            })
+        );
+
+        if (results.flat().length === 0) {
+            return res.status(404).send("No computers in the given room/s.");
+        }
+
+        res.status(200).json(results.flat());// .flat() make 2d array into 1d
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching room data.");
+    }
+});
 
 //[NON-CONSUMABLE-COMPONENT TABLE RELATED QUERY]
 

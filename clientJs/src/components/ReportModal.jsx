@@ -25,12 +25,18 @@ import '@fontsource/inter';
 import '@fontsource/inter/700.css';
 import '@fontsource/inter/600.css';
 import { TextareaAutosize as BaseTextareaAutosize } from '@mui/base/TextareaAutosize';
-import {bgcolor, color, display, padding, styled} from '@mui/system'
+import {bgcolor, color, display, padding, styled, textTransform} from '@mui/system'
 import palette from '../assets/palette';
 import SendIcon from '@mui/icons-material/Send';
 import useStore from '../useStore';
 import { getComputersByRoom, getRoomsByBuilding } from '../customMethods';
 import { NavLink } from 'react-router-dom';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+
+// PDF
+import { saveAs } from 'file-saver';
+import { pdf } from '@react-pdf/renderer';
+import ReportDocument from './ReportDocument';
 
 function MaxHeightTextarea({textAreaValue, setTextAreaValue}) {
     const handleChange = (e) => {
@@ -117,29 +123,35 @@ const ReportIconButton = ({ icon: Icon, label, partsStatuses, setPartsStatuses }
                     : "Condition";
     const handleClick = () => {
         setPartsStatuses(prevStatuses => {
-            const currentStatus = partsStatuses[partKey].background;
+            const currentCondition = partsStatuses[partKey].condition;
             let newBackground = null;
             let newColor = null;
-
-            if (currentStatus === 'transparent') {
+            let newCondition = ''
+            if (currentCondition === '') {
                 newBackground = palette.minorBg;
                 newColor = palette.minorFont;
-            } else if (currentStatus === palette.minorBg) {
+                newCondition = 'Minor Issue'
+            } else if (currentCondition === 'Minor Issue') {
                 newBackground = palette.majorBg;
                 newColor = palette.majorFont;
-            } else if (currentStatus === palette.majorBg) {
+                newCondition = 'Major Issue'
+            } else if (currentCondition === 'Major Issue') {
                 newBackground = palette.badBg;
                 newColor = palette.badFont;
+                newCondition = 'Bad Condition'
             } else {
                 newBackground = 'transparent';
                 newColor = palette.txtStrong;
+                newCondition = ''
             }
 
             return {
                 ...prevStatuses,
                 [partKey]: {
+                    ...prevStatuses[partKey],
                     background: newBackground,
                     color: newColor,
+                    condition: newCondition,
                 }
             };
         });
@@ -224,15 +236,20 @@ ReportGridItem.propTypes = {
     partsStatuses: PropTypes.object,
     setPartsStatuses: PropTypes.func,
 };
-const ReportModal = ({open = true, setOpen, isClosable = true}) => {
+
+const smallButtonStyle = {
+    textTransform: 'none'
+}
+
+const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) => {
     const [partsStatuses, setPartsStatuses] = useState({
-        systemunit: { background: 'transparent', color: palette.textStrong },
-        monitor: { background: 'transparent', color: palette.textStrong },
-        software: { background: 'transparent', color: palette.textStrong },
-        internet: { background: 'transparent', color: palette.textStrong },
-        keyboard: { background: 'transparent', color: palette.textStrong },
-        mouse: { background: 'transparent', color: palette.textStrong },
-        other: { background: 'transparent', color: palette.textStrong },
+        systemunit: { background: 'transparent', color: palette.txtStrong, condition: '', key:'System Unit',},
+        monitor: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Monitor',},
+        software: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Software',},
+        internet: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Internet',},
+        keyboard: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Keyboard',},
+        mouse: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Mouse',},
+        other: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Others',},
     });
     const {
         reportedRoom, setReportedRoom,
@@ -243,6 +260,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
     } = useStore()
 
     const [commentValue, setCommentValue] = useState('');
+    const [studentId, setStudentId] = useState('');
     
     // const [building, setBuilding] = useState('');
     // const [room, setRoom] = useState(null);
@@ -252,31 +270,9 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
         setCommentValue(e.target.value)
     }
 
-
-
-
-    // GET ALL SELECTED ROOMS BASEC ON BUILDING INPUT
-    // useEffect(() => {
-
-    //     if (reportedBuilding === '' || reportedBuilding === null){
-    //         setTargetedRooms([])
-    //     } else {
-    //         getRoomsByBuilding()
-    //     }
-        
-    // }, [reportedBuilding])
-
-    // GET ALL SELECTED COMPUTERS BASED ON ROOM FIELD
-    // useEffect(() => {
-    //     getComputersByRoom(reportedRoom, setTargetedComputerIDs, reportedBuilding);
-
-    // }, [reportedRoom, reportedBuilding])
-    
-
-
-    // const getComputers = () => computers_data.rows
-    //     .filter(computer => computer.room === Number(reportedRoom) && computer.building_code === reportedBuilding)
-    //     .map(computer => String(computer.computer_id));
+    const handleStudentIdChange = (e) => {
+        setStudentId(e.target.value)
+    }
     return (
         <div>
             <Dialog
@@ -303,6 +299,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
                 >
                     <FormControl fullWidth>
                         <Stack sx={{ marginTop: 2}}>
+                            
                             <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mb={3} fontWeight={500}>
                                 Choose reporting area
                             </InterTypography>
@@ -322,6 +319,20 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
                             </Grid2>
                         </Stack>
                     </FormControl>
+                    {permissionType === "guest" && <>
+                        <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mt={2} mb={1.5} fontWeight={500}>
+                            Enter your student / faculty ID
+                        </InterTypography>
+                        <TextField
+                            id="outlined-multiline-static"
+                            label="student / faculty ID"
+                            placeholder={`e.g 2021-106072, 2023-106671`}
+                            sx={{width:'30%'}}
+                            value={studentId}
+                            onChange={handleStudentIdChange}
+                        />
+                    </>}
+
                     <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mt={2} fontWeight={500}>
                         Select Location
                     </InterTypography>
@@ -337,7 +348,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
                                 setReportedRoom(null);
                                 setReportedPcID(null);
                                 setReportedBuilding(e.target.value);
-                                getRoomsByBuilding(e.target.value, setTargetedRooms)
+                                getRoomsByBuilding(e.target.value, setTargetedRooms, permissionType)
                             }}
                             sx={{ fontFamily: 'Inter' }}
                         >
@@ -355,7 +366,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
                         onChange={(event, newRoom) => {
                             setReportedPcID(null);
                             setReportedRoom(newRoom);
-                            getComputersByRoom(newRoom, setTargetedComputerIDs, reportedBuilding)
+                            getComputersByRoom(newRoom, setTargetedComputerIDs, reportedBuilding, permissionType)
                         }}
                         disablePortal
                         renderInput={params => 
@@ -397,25 +408,79 @@ const ReportModal = ({open = true, setOpen, isClosable = true}) => {
                     />
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
-                    <Button onClick={() => isClosable ? setOpen(false) : null} color="primary" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }} startIcon={<SendIcon/>}>
+                    <Button onClick={() => isClosable ? setOpen(false) : null} color="primary" variant='contained' 
+                        sx={{ 
+                            fontFamily: 'Inter',
+                            ...smallButtonStyle
+                        }} 
+                        startIcon={<SendIcon/>}
+                    >
                         Submit Report
+                    </Button>
+                    <Button 
+                        disabled={!(reportedBuilding && reportedPcID && reportedRoom && studentId)}
+                        sx={{ 
+                            padding: '6px 16px',
+                            fontFamily: 'Inter',
+                            ...smallButtonStyle,
+                            color:palette.badFont,
+                            border:'1px solid '+palette.badFont
+                        }} 
+                        startIcon={<PictureAsPdfIcon sx={{color:palette.badFont}}/>}
+                        onClick={async () => {
+                            const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v)
+                            console.log(partConArray)
+                            const blob = await pdf(<ReportDocument 
+                                reportedBuilding={reportedBuilding}
+                                reportedPcID={reportedPcID}
+                                reportedRoom={reportedRoom}
+                                comment={commentValue}
+                                submittee={studentId}
+                                partsCondition={partConArray}
+                            />).toBlob()
+                            saveAs(blob, `${studentId}-report-form.pdf`)
+                        }}
+                    >
+                        Submit Report & Download PDF
                     </Button>
                     {isClosable 
                         ? ( 
-                            <Button onClick={() => isClosable ? setOpen(false) : null} color="default" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }}>
+                            <Button onClick={() => isClosable ? setOpen(false) : null} color="default" variant='outlined' 
+                                sx={{ 
+                                    borderColor: '#5F5F5F',
+                                    color: '#4F4F4F',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        borderColor: '#3C3C3C',
+                                        backgroundColor: '#F5F5F5',
+                                    },
+                                    fontWeight:'600'
+                                }}
+                            >
                                 Close
                             </Button>
                         )
                         : (
                             <NavLink to={'/'}>
-                                <Button color="default" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }}>
-                                    Go back 
-                                </Button>
+                            <Button
+                            variant="outlined"
+                            sx={{
+                                borderColor: '#5F5F5F',
+                                color: '#4F4F4F',
+                                textTransform: 'none',
+                                padding: '6px 16px',
+                                '&:hover': {
+                                    borderColor: '#3C3C3C',
+                                    backgroundColor: '#F5F5F5',
+                                },
+                                fontWeight:'600'
+                            }}
+                            >
+                            Cancel
+                            </Button>
                             </NavLink>
                         )
                     }
-
-
                 </DialogActions>
             </Dialog>
         </div>

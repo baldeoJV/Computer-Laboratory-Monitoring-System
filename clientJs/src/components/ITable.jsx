@@ -873,10 +873,10 @@ function ITable({headCells, rows, type}) {
     >
             <MenuItem onClick={() => {
                 setReportedBuilding(String(menuRow.building_code))
-                getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms)
+                getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms, "admin")
 
                 setReportedRoom(String(menuRow.room))
-                getComputersByRoom(String(menuRow.room), setTargetedComputerIDs, String(menuRow.building_code))
+                getComputersByRoom(String(menuRow.room), setTargetedComputerIDs, String(menuRow.building_code), "admin")
 
                 setReportedPcID(String(menuRow.computer_id))
                 
@@ -1007,6 +1007,7 @@ function ITable({headCells, rows, type}) {
             open={computerTable_addReportModalOpen}
             setOpen={setComputerTable_AddReportModalOpen}
             anchor={anchorEl}
+            permissionType={"admin"}
         /> : null}
         
     </Box>;

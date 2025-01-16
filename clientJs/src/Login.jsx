@@ -31,6 +31,26 @@ function Login() {
         setPassword(event.target.value);
     };
 
+    const handleLoginButton = ()=>{
+        axios.post('/api/login', {
+            adminId, 
+            password,
+        }).then(dt => {
+            navigate('/dashboard')
+        }).catch(err => console.error("CONSOLE ERROR ", err))
+
+    }
+    
+    useEffect(() => {
+        axios.post('/api/logout')
+            .then(response => {
+                console.log("Session cleared");
+            })
+            .catch(error => {
+                console.error("Error clearing session", error);
+            });
+    }, []);
+
     return <div 
         style={{
             display:'flex', 
@@ -85,6 +105,12 @@ function Login() {
                             type={showPassword ? 'text' : 'password'}
                             value={password}
                             onChange={handlePasswordChange}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter"){
+                                    console.log("enter")
+                                    handleLoginButton()
+                                }
+                            }}
                             endAdornment={
                             <InputAdornment position="end">
                                 <IconButton
@@ -105,15 +131,7 @@ function Login() {
                     </FormControl>
                 </Stack>
                     <Button
-                        onClick={()=>{
-                            axios.post('/api/login', {
-                                adminId, 
-                                password,
-                            }).then(dt => {
-                                navigate('/dashboard')
-                            }).catch(err => console.error("CONSOLE ERROR ", err))
-
-                        }}
+                        onClick={handleLoginButton}
                         sx={{
                             color: 'white',
                             textTransform:'none',

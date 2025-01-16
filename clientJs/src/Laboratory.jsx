@@ -28,12 +28,13 @@ import axios from 'axios'
 import { MenuItem } from 'react-pro-sidebar';
 import ITableV2 from './components/ITableV2';
 import { createTheme, ThemeProvider, alpha, getContrastRatio } from '@mui/material/styles';
-import { getChipTheme_condition } from './customMethods';
+import { getChipTheme_condition, handleErrorFetch} from './customMethods';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import {MRT_ActionMenuItem,} from 'material-react-table';
 import useStore from './useStore';
 import { getComputersByRoom, getRoomsByBuilding } from './customMethods.js';
 import ReportModal from './components/ReportModal';
+import { useNavigate } from 'react-router-dom';
 
 const COMPUTERS_DOWNLOAD_FILE_NAME = ''
 
@@ -232,6 +233,7 @@ function Laboratory() {
     const [roomCardAnchorElement, setRoomCardAnchorElement] = useState(null)
     const [roomCardAnchorData, setRoomCardAnchorData] = useState(null)
     const [pcIds, setPcIds] = useState([]);
+    const navigate= useNavigate()
     const {
         tableType, setTableType,
         reportedRoom, setReportedRoom,
@@ -240,26 +242,27 @@ function Laboratory() {
         targetedRooms, setTargetedRooms,
         targetedComputerIDs, setTargetedComputerIDs
     }= useStore()
-    const fetchLabRooms = () => {
-        axios.get('/api/laboratories').then(res => {
-            const roomsData = res.data
-            const roomCards_data = roomsData.map((rd) => getRoomData(
-                rd.room,
-                rd.building_code,
-                rd.total_pc,
-                rd.total_active_pc,
-                rd.total_inactive_pc,
-                rd.total_major_issue,
-                rd.total_minor_issue,
-                rd.total_reports
-            ))
-            setRoomcards(roomCards_data)
-            setAllRooms(roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}}))
-        }).catch(err => console.error('Error: ', err))
-    }
+    
     useEffect(() => {
+        const fetchLabRooms = () => {
+            axios.get('/api/laboratories').then(res => {
+                const roomsData = res.data
+                const roomCards_data = roomsData.map((rd) => getRoomData(
+                    rd.room,
+                    rd.building_code,
+                    rd.total_pc,
+                    rd.total_active_pc,
+                    rd.total_inactive_pc,
+                    rd.total_major_issue,
+                    rd.total_minor_issue,
+                    rd.total_reports
+                ))
+                setRoomcards(roomCards_data)
+                setAllRooms(roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}}))
+            }).catch(err => handleErrorFetch(err, navigate))
+        }
         fetchLabRooms()
-      }, []);
+      }, [navigate,]);
 
     
     // const roomCards = rooms_data.map((rd) => getRoomData(
@@ -569,10 +572,10 @@ function Laboratory() {
                                 icon={<ReportProblemIcon/>}
                                 onClick={() => {
                                     setReportedBuilding(String(menuRow.building_code))
-                                    getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms)
+                                    getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms, "admin")
                     
                                     setReportedRoom(String(menuRow.room))
-                                    getComputersByRoom(String(menuRow.room), setTargetedComputerIDs, String(menuRow.building_code))
+                                    getComputersByRoom(String(menuRow.room), setTargetedComputerIDs, String(menuRow.building_code), "admin")
                     
                                     setReportedPcID(String(menuRow.computer_id))
                                     setComputerTable_AddReportModalOpen(true)
@@ -644,6 +647,7 @@ function Laboratory() {
         <ReportModal
             open={computerTable_addReportModalOpen}
             setOpen={setComputerTable_AddReportModalOpen}
+            permissionType={"admin"}
         />
 
         

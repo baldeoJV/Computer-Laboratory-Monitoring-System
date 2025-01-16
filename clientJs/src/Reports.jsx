@@ -12,18 +12,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import ITableV2 from './components/ITableV2';
 import { createTheme, ThemeProvider, alpha, getContrastRatio, styled } from '@mui/material/styles';
-import { getChipTheme_condition } from './customMethods';
+import { getChipTheme_condition, handleErrorFetch} from './customMethods';
 import {MRT_ActionMenuItem,} from 'material-react-table';
 import ReportModal from './components/ReportModal';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import { useNavigate } from 'react-router-dom';
 const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
 function createData(report_id, computer_id, room,  building_code, components, date_submitted, submittee, comment){
     return {report_id, computer_id, room,  building_code, components, date_submitted, submittee,  comment}
 }
 function Reports() {
     const [reportsData, setReportsData] = useState([]);
-
+    const navigate = useNavigate()
     
     useEffect(()=> {
         axios.get('/api/report').then( res => {
@@ -39,10 +40,8 @@ function Reports() {
                 rd.report_comment
             ))
             setReportsData(rows)
-        }).catch(err => {
-            console.error("Error: ", err)
-        })
-    }, [])
+        }).catch(err => handleErrorFetch(err, navigate))
+    }, [navigate])
     const headCellsV2 = useMemo(() => [
         {
             accessorKey: "report_id",
