@@ -30,6 +30,7 @@ import palette from '../assets/palette';
 import SendIcon from '@mui/icons-material/Send';
 import useStore from '../useStore';
 import { getComputersByRoom, getRoomsByBuilding } from '../customMethods';
+import { NavLink } from 'react-router-dom';
 
 function MaxHeightTextarea({textAreaValue, setTextAreaValue}) {
     const handleChange = (e) => {
@@ -223,7 +224,7 @@ ReportGridItem.propTypes = {
     partsStatuses: PropTypes.object,
     setPartsStatuses: PropTypes.func,
 };
-const ReportModal = ({open, setOpen, anchor}) => {
+const ReportModal = ({open = true, setOpen, isClosable = true}) => {
     const [partsStatuses, setPartsStatuses] = useState({
         systemunit: { background: 'transparent', color: palette.textStrong },
         monitor: { background: 'transparent', color: palette.textStrong },
@@ -276,17 +277,13 @@ const ReportModal = ({open, setOpen, anchor}) => {
     // const getComputers = () => computers_data.rows
     //     .filter(computer => computer.room === Number(reportedRoom) && computer.building_code === reportedBuilding)
     //     .map(computer => String(computer.computer_id));
-
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-    const handleSubmit = () => handleClose();
     return (
         <div>
             <Dialog
                 fullWidth={true}
                 maxWidth={'lg'}
                 open={open}
-                onClose={handleClose}
+                onClose={isClosable? () => setOpen(false) : null}
                 TransitionComponent={Transition}
                 keepMounted
                 aria-describedby="alert-dialog-slide-description"
@@ -400,12 +397,25 @@ const ReportModal = ({open, setOpen, anchor}) => {
                     />
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
-                    <Button onClick={handleSubmit} color="primary" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }} startIcon={<SendIcon/>}>
+                    <Button onClick={() => isClosable ? setOpen(false) : null} color="primary" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }} startIcon={<SendIcon/>}>
                         Submit Report
                     </Button>
-                    <Button onClick={handleClose} color="default" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }}>
-                        Close
-                    </Button>
+                    {isClosable 
+                        ? ( 
+                            <Button onClick={() => isClosable ? setOpen(false) : null} color="default" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }}>
+                                Close
+                            </Button>
+                        )
+                        : (
+                            <NavLink to={'/'}>
+                                <Button color="default" variant='contained' sx={{ mt: 2, fontFamily: 'Inter' }}>
+                                    Go back 
+                                </Button>
+                            </NavLink>
+                        )
+                    }
+
+
                 </DialogActions>
             </Dialog>
         </div>

@@ -4,12 +4,37 @@ import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount,
-    getBuilding, createBuilding, getConsumableComponent,getArchivedReport, selectedReportAll, } from './be_comlab.js'
+    getBuilding, createBuilding, getConsumableComponent,getArchivedReport, selectedReportAll,
+    verifyAdminId, } from './be_comlab.js'
+
+// NEW
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
+
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
+
+// AUTHENTICATION LIBRARY
+app.use(cookieParser())
+app.use(session({
+    secret: process.env.SECRET_KEY || 'default',
+    resave:false,
+    saveUninitialized: false,
+    cookie: {secure: false , httpOnly:true},
+}))
+
+// RAINNAND : MIDDLEWARE
+function checkAdminIdSession(req, res, next) {
+    if (!req.session.adminId){
+        return res.status(401).send("Unauthorized: Please login again")
+    }
+    next()
+}
+
+
 
 // Function to format date
 function formatDate(dateString) { 
@@ -20,11 +45,45 @@ function formatDate(dateString) {
     return `${year}-${month}-${day}`
 }
 
-// [DASHBOARD RELATED QUERY]
+// LOGIN RAINNAND
+app.post('/login', async (req, res) => {
+    const {adminId, password} = req.body
 
+    try {
+        const admins = await verifyAdminId(adminId)
+        if (admins.length === 0){
+            return res.status(401).send("Admin Id not found")
+        }
+        const adminData = admins[0]
+    
+        if (adminData.password !== password){
+            return res.status(401).send("Incorrect Password")
+        }
+
+        req.session.adminId = adminData.admin_id
+        res.status(200).send("Login Successful")
+    } catch (error) {
+        res.status(500).send("there was an error on the server admin verification")
+    }
+})
+
+// LOGOUT RAINNAND
+app.post('/logout', (req, res) => {
+    req.session.destroy( err => {
+        if (err){
+            res.status(500).send("Logout Failed")
+        }
+        res.clearCookie('connect.sid')
+        res.status(200).send("Logged out successfully")
+    }
+
+    )
+})
+
+
+// [DASHBOARD RELATED QUERY]
 // fetch data for dashboard
-app.get("/dashboard", async (req, res) => {
-    console.log("hellooo");
+app.get("/dashboard", checkAdminIdSession, async (req, res) => {
     
     try {
         // Fetch all required data
@@ -60,14 +119,14 @@ app.get("/dashboard", async (req, res) => {
 //[LABORATORIES TABLE RELATED QUERY]
 
 //get all rooms
-app.get("/laboratories", async (req, res) => {
+app.get("/laboratories", checkAdminIdSession, async (req, res) => {
     const get_room = await getRoom()
 
     res.send(get_room)
 })
 
 //get specific room
-app.get("/laboratories/:room_id", async (req, res) => {
+app.get("/laboratories/:room_id", checkAdminIdSession, async (req, res) => {
     const room_id = req.params.room_id
 
     const get_room = await getRoom(room_id)
@@ -76,7 +135,7 @@ app.get("/laboratories/:room_id", async (req, res) => {
 })
 
 //create room
-app.post("/create/room", async (req, res) => {
+app.post("/create/room", checkAdminIdSession, async (req, res) => {
     const {room, building_code} = req.body
     const create_room = await createRoom(room, building_code)
     res.status(201).send(create_room)
@@ -86,7 +145,7 @@ app.post("/create/room", async (req, res) => {
 //[COMPUTERS TABLE RELATED QUERY]
 
 //get all computers
-app.get("/rooms/all_computers", async (req, res) => {
+app.get("/rooms/all_computers", checkAdminIdSession, async (req, res) => {
     const get_computer = await getComputer()
 
     res.send(get_computer)
@@ -94,7 +153,7 @@ app.get("/rooms/all_computers", async (req, res) => {
 
 //create computer
 
-app.post("/create/computer", async (req, res) => {
+app.post("/create/computer", checkAdminIdSession, async (req, res) => {
     const {room, building_code, system_unit, monitor} = req.body
 
     try{    
@@ -113,7 +172,7 @@ app.post("/create/computer", async (req, res) => {
 })
  
 //get all computers in specific rooms based in req.body (array format)
-app.post("/rooms/computers", async (req, res) => {
+app.post("/rooms/computers", checkAdminIdSession, async (req, res) => {
     const { rooms } = req.body;
     // console.log("BACKEND ROOMS: ", rooms)
     //check if the input is an array
@@ -145,14 +204,14 @@ app.post("/rooms/computers", async (req, res) => {
 //[NON-CONSUMABLE-COMPONENT TABLE RELATED QUERY]
 
 //get non consumable component
-app.get("/non_consum_comp", async (req, res) => {
+app.get("/non_consum_comp", checkAdminIdSession, async (req, res) => {
     const get_non_consumable_component = await getNonConsumableComponent()
 
     res.send(get_non_consumable_component)
 })
 
 //create non_consumable_component
-app.post("/create/non_consum_comp", async (req, res) => {
+app.post("/create/non_consum_comp", checkAdminIdSession, async (req, res) => {
     const {component_id, reference_id, location, specs} = req.body
 
     try{    
@@ -170,7 +229,7 @@ app.post("/create/non_consum_comp", async (req, res) => {
 //[CONSUMABLE-COMPONENT TABLE RELATED QUERY]
 
 //get consumable component
-app.get("/consum_comp", async (req, res) => {
+app.get("/consum_comp", checkAdminIdSession, async (req, res) => {
     const get_consumable_component = await getConsumableComponent()
 
     res.send(get_consumable_component)
@@ -196,7 +255,7 @@ app.get("/consum_comp", async (req, res) => {
 //[REPORT TABLE RELATED QUERY]
 
 // get reports
-app.get('/report', async (req, res) => {
+app.get('/report', checkAdminIdSession, async (req, res) => {
     const get_report = await getReport()
 
     //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
@@ -207,7 +266,7 @@ app.get('/report', async (req, res) => {
 })
 
 // RAINNAND POST SELECTED REPORT
-app.post('/report/selected', async (req, res) => {
+app.post('/report/selected', checkAdminIdSession, async (req, res) => {
     const { pcIds } = req.body;
     //check if the input is an array
     if (!Array.isArray(pcIds)) {
@@ -219,7 +278,7 @@ app.post('/report/selected', async (req, res) => {
 })
 
 // RAINNAND: ARCHIVED REPORT
-app.get('/archived_report', async (req, res) => {
+app.get('/archived_report', checkAdminIdSession, async (req, res) => {
     const get_report = await getArchivedReport()
  
     //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
@@ -231,7 +290,7 @@ app.get('/archived_report', async (req, res) => {
 
 
 // create report
-app.post("/create/report", async (req, res) => {
+app.post("/create/report", checkAdminIdSession, async (req, res) => {
     const {room, building_code, computer_id, components, report_comment, reported_condition, submittee} = req.body
 
     try{    
@@ -246,7 +305,7 @@ app.post("/create/report", async (req, res) => {
 })
 
 // get number of report based in status
-app.get('/report_count/:status', async (req, res) => {
+app.get('/report_count/:status', checkAdminIdSession, async (req, res) => {
     const report_status = req.params.status
     const get_report = await getReportCount(report_status)
 
@@ -257,14 +316,14 @@ app.get('/report_count/:status', async (req, res) => {
 // [REFERENCES TABLE RELATED QUERY]
 
 // get building
-app.get("/building", async (req, res) => {
+app.get("/building", checkAdminIdSession, async (req, res) => {
     const get_building = await getBuilding()
 
     res.send(get_building)
 })
 
 // create building
-app.post("/create/building", async (req, res) => {
+app.post("/create/building", checkAdminIdSession, async (req, res) => {
     const {building_code, building_name} = req.body
 
     try{    

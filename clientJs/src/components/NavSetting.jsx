@@ -13,7 +13,8 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 import palette from '../assets/palette';
 import BedtimeIcon from '@mui/icons-material/Bedtime';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { NavLink } from 'react-router-dom';
+import {NavLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 const StyledMenu = styled((props) => (
     <Menu
       elevation={0}
@@ -67,6 +68,7 @@ function NavSetting() {
     const handleClose = () => {
       setAnchorEl(null);
     };
+    const navigate = useNavigate()
 
     return <Stack sx={{float:'none',  marginLeft:'32px', marginRight:'32px', fontFamily: 'Inter, sans-serif'}}>
     <Stack sx={{width:'100%', textAlign:'right'}} direction={'row'} alignItems="center">
@@ -107,13 +109,13 @@ function NavSetting() {
           Account Settings
           </div>
         </MenuItem>
-        <MenuItem>
-          <NavLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="py-1" style={{ fontSize: '14px' }}>
-              <LogoutIcon />
-              Sign Out
-            </div>
-          </NavLink>
+        <MenuItem onClick={() => {
+          axios.post('/api/logout').then(navigate('/')).catch(err => console.error('Error: ', err))
+        }}>
+          <div className="py-1" style={{ fontSize: '14px' }}>
+            <LogoutIcon />
+            Sign Out
+          </div>
         </MenuItem>
 
       </StyledMenu>

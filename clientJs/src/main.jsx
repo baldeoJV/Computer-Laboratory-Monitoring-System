@@ -11,6 +11,7 @@ import Archived from './Archived.jsx'
 import Non_Consumable from './Non_Consumable.jsx'
 import Consumable from './Consumable.jsx'
 import Login from './Login.jsx'
+import GuestPage from './GuestPage.jsx'
 
 const router = createBrowserRouter(
   [
@@ -45,6 +46,10 @@ const router = createBrowserRouter(
     {
       path:'/try',
       element:<ReportModal/>
+    },
+    {
+      path:'/reportGuest',
+      element:<GuestPage/>
     }
   ],
   

@@ -15,6 +15,12 @@ const pool = mysql.createPool({
 
 //[READ QUERY]
 
+// LOGIN (RAINNAND)
+export async function verifyAdminId(adminId) {
+  const [rows] = await pool.query('SELECT * FROM admin WHERE admin_id = ?', [adminId]);
+  return rows;
+}
+
 // display the room table/ specific room information
 export async function getRoom(room_id = ''){
   const [rows] = await pool.query(
@@ -39,6 +45,7 @@ async function selectedReport(pcIds) {
   return rows
 }
 
+// RAINNAND 
 // get computer table/ specific computer information
 export async function getRoomComputer(room, building_code){
   let [rows] = await pool.query(
@@ -72,6 +79,7 @@ export async function getConsumableComponent(component_id = '') {
   return component_id ? rows[0] : rows
 }
 
+// RAINNAND
 // getcrm
 async function getCrm(rows, table_name, isReportTable) {
   const uniqueReportsID = new Set()
@@ -94,7 +102,7 @@ async function getCrm(rows, table_name, isReportTable) {
   return crm
 }
 
-
+// RAINNAND
 // display reports
 export async function getReport(report_id=''){
   const [rows] = await pool.query(
@@ -115,7 +123,7 @@ export async function selectedReportAll(pcIds) {
   return rows[0].total_report
 }
 
-  
+// RAINNAND
 // display archived reports
 export async function getArchivedReport(report_id=''){
   const [rows] = await pool.query(
