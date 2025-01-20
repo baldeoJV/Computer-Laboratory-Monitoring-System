@@ -55,6 +55,7 @@ function LabelTop() {
     </div>
 }
 function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
+
     const handleCheckRoomBox = (e, r)=> {
         if (e.target.checked){
             setSelectedRooms([...selectedRooms, {"roomnum": r.room, "building_code": r.building_code}])
@@ -183,7 +184,7 @@ function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
                         />
 
 
-                        <Box sx={{margin:2, marginBottom:0}}>
+                        <Box sx={{margin:2, marginBottom:0}} >
                             <Stack>
                                 <Stack direction={'row'} width={1} textAlign={'center'} paddingBottom={1}>
                                     <Stack width={1/3}>
