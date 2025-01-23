@@ -18,6 +18,7 @@ import ReportModal from './components/ReportModal';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
+import palette from './assets/palette';
 const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
 function createData(report_id, computer_id, room,  building_code, components, date_submitted, submittee, comment){
     return {report_id, computer_id, room,  building_code, components, date_submitted, submittee,  comment}
@@ -25,7 +26,7 @@ function createData(report_id, computer_id, room,  building_code, components, da
 function Reports() {
     const [reportsData, setReportsData] = useState([]);
     const navigate = useNavigate()
-    
+    const [reportModalOpen, setReportModalOpen] = useState(false);
     useEffect(()=> {
         axios.get('/api/report').then( res => {
             const data = res.data
@@ -113,7 +114,13 @@ function Reports() {
                 <div className="label my-3">
                     <Stack direction={'row'}>
                         <div className="text-wrapper">Reports</div>
-                        
+                        <Button
+                            color='error'
+                            sx={{border:'1px solid '+palette.bad}}
+                            onClick={()=>setReportModalOpen(true)}
+                        >
+                            Submit a report
+                        </Button>
                     </Stack>
 
                 </div>
@@ -168,6 +175,11 @@ function Reports() {
                 />
             </div>
         </Stack>
+        <ReportModal
+            open={reportModalOpen}
+            setOpen={setReportModalOpen}
+            permissionType={"admin"}
+        />
 
     </div>;
 }

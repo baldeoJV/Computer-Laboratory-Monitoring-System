@@ -71,23 +71,21 @@ function Consumable() {
                             const menuRow = row.original
                             return [
                             <MRT_ActionMenuItem
-                                key={"resolve"}
-                                label='Resolve'
+                                key={"Delete"}
+                                label='Delete'
                                 table={table}
-                                icon={<CheckIcon/>}
                                 onClick={() => {
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
                             />,
                             <MRT_ActionMenuItem
-                                key={"reject"}
-                                label='Reject'
+                                key={"edit"}
+                                label='Edit'
                                 table={table}
-                                icon={<CloseIcon/>}
                                 onClick={() => {
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
-                            />
+                            />,
                         ]}
                     }}
                 />

@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ITable from './components/ITable';
 
 // FAKE DATA
@@ -8,7 +8,7 @@ import ITable from './components/ITable';
 // import rooms_data from './assets/rooms_data.json'
 
 // 
-import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon } from '@mui/material';
+import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem } from '@mui/material';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -17,29 +17,25 @@ import '@fontsource/inter/700.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter';
 import Checkbox from '@mui/material/Checkbox';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import DrawerMenu from './components/DrawerMenu'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import palette from './assets/palette';
 import NavSetting from './components/NavSetting';
 import axios from 'axios'
-import { MenuItem } from 'react-pro-sidebar';
 import ITableV2 from './components/ITableV2';
 import { createTheme, ThemeProvider, alpha, getContrastRatio } from '@mui/material/styles';
 import { getChipTheme_condition, handleErrorFetch} from './customMethods';
-import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import {MRT_ActionMenuItem,} from 'material-react-table';
 import useStore from './useStore';
 import { getComputersByRoom, getRoomsByBuilding } from './customMethods.js';
 import ReportModal from './components/ReportModal';
 import { useNavigate } from 'react-router-dom';
-
+import SharedModal from './components/SharedModal.jsx';
 const COMPUTERS_DOWNLOAD_FILE_NAME = ''
 
-function createData(computer_id, room, building_code, system_unit, monitor, status, condition, pending_reports){
-    return {computer_id, room,building_code,system_unit, monitor, condition, status, pending_reports, }
+function createData(computer_id, room, building_code, system_unit, monitor, status, condition, pending_reports, has_mouse, has_keyboard, has_internet, has_software){
+    return {computer_id, room,building_code,system_unit, monitor, condition, status, pending_reports, has_mouse, has_keyboard, has_internet, has_software}
 }
 
 function getRoomData(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports){
@@ -54,7 +50,7 @@ function LabelTop() {
     <div className="text-wrapper">Laboratory</div>
     </div>
 }
-function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
+function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable, onContextMenu}) {
 
     const handleCheckRoomBox = (e, r)=> {
         if (e.target.checked){
@@ -90,6 +86,7 @@ function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
             return (
                 <Grid2 md={6} lg={6} xl={6} key={r.room}>
                     <CardContent 
+                        onContextMenu={(e)=>onContextMenu(e, r)}
                         key={r.room} 
                         sx={{
                             border: `1.5px solid ${palette.strokeMain}`, 
@@ -184,7 +181,7 @@ function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable}) {
                         />
 
 
-                        <Box sx={{margin:2, marginBottom:0}} >
+                        <Box sx={{margin:2, marginBottom:0}}>
                             <Stack>
                                 <Stack direction={'row'} width={1} textAlign={'center'} paddingBottom={1}>
                                     <Stack width={1/3}>
@@ -231,9 +228,13 @@ function Laboratory() {
     const [pcDCond, setPcDCond] = useState([]);
     const [pcDStat, setPcDStat] = useState([]);
     const [totalReports, setTotalReports] = useState(0)
-    const [roomCardAnchorElement, setRoomCardAnchorElement] = useState(null)
-    const [roomCardAnchorData, setRoomCardAnchorData] = useState(null)
     const [pcIds, setPcIds] = useState([]);
+    const [roomAnchorPosition, setRoomAnchorPosition] = useState(null)
+
+    // COMPUTER DETAILS MODAL
+    const [computerDetailsModalOpen , setComputerDetailsModalOpen ] = useState(false)
+    const [computerDetailsItems, setComputerDetailsItems] = useState({})
+
     const navigate= useNavigate()
     const {
         tableType, setTableType,
@@ -243,29 +244,28 @@ function Laboratory() {
         targetedRooms, setTargetedRooms,
         targetedComputerIDs, setTargetedComputerIDs
     }= useStore()
-    
+    const mapRoomCards = (roomsData) => {
+        const roomCards_data = roomsData.map((rd) => getRoomData(
+            rd.room,
+            rd.building_code,
+            rd.total_pc,
+            rd.total_active_pc,
+            rd.total_inactive_pc,
+            rd.total_major_issue,
+            rd.total_minor_issue,
+            rd.total_reports
+        ))
+        setRoomcards(roomCards_data)
+        setAllRooms(roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}}))
+    }
+    const fetchLabRooms = useCallback(() => {
+        axios.get('/api/laboratories').then(res => {
+            mapRoomCards(res.data)
+        }).catch(err => handleErrorFetch(err, navigate))
+    }, [navigate])
     useEffect(() => {
-        const fetchLabRooms = () => {
-            axios.get('/api/laboratories').then(res => {
-                const roomsData = res.data
-                const roomCards_data = roomsData.map((rd) => getRoomData(
-                    rd.room,
-                    rd.building_code,
-                    rd.total_pc,
-                    rd.total_active_pc,
-                    rd.total_inactive_pc,
-                    rd.total_major_issue,
-                    rd.total_minor_issue,
-                    rd.total_reports
-                ))
-                setRoomcards(roomCards_data)
-                setAllRooms(roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}}))
-            }).catch(err => handleErrorFetch(err, navigate))
-        }
         fetchLabRooms()
-      }, [navigate,]);
-
-    
+      }, [fetchLabRooms]);
     // const roomCards = rooms_data.map((rd) => getRoomData(
     //     rd.room,
     //     rd.building_code,
@@ -396,6 +396,26 @@ function Laboratory() {
             header: "Pending Reports",
             size: 30,
         },
+        {
+            accessorKey: "has_mouse",
+            header: "Mouse",
+            size:30,
+        },
+        {
+            accessorKey: "has_keyboard",
+            header: "Keyboard",
+            size:30,
+        },
+        {
+            accessorKey: "has_internet",
+            header: "Internet",
+            size:30,
+        },
+        {
+            accessorKey: "has_software",
+            header: "Software",
+            size:30,
+        }
     ], []);
     const ComputersSummary = (data)=> {
         let dataPc = new Map();
@@ -480,7 +500,10 @@ function Laboratory() {
                 cd.computer_status,
                 cd.condition_id,
                 cd.report_count,
-                
+                cd.has_mouse,
+                cd.has_keyboard,
+                cd.has_internet,
+                cd.has_software,
             ))
             setComputersData(pcRes)
             
@@ -514,8 +537,13 @@ function Laboratory() {
         
         setIsCompTableOpen(true)
     }
-    const handleRoomCardMenuOpen = () => {
-        setRoomCardAnchorElement(null)
+    const handleRoomCardMenuClose= () => {
+        setRoomAnchorPosition(null)
+    }
+    const handleRoomCardMenuOpen= (e, r) => {
+        e.preventDefault()
+        setRoomAnchorPosition({top: e.clientY, left: e.clientX})
+        console.log(r.room)
     }
 
     const building_data = [{building_code: 'MB', building_name:'Main Building'}, {building_code: 'ANB', building_name:'Annex Building'}, {building_code: 'MND', building_name:'Mendiola Building'}]
@@ -560,6 +588,12 @@ function Laboratory() {
                     data={computersData} 
                     type={'computerTable'}
                     extraActionsTable={{
+                        initialState:{ columnVisibility: { 
+                            has_keyboard: false,
+                            has_mouse: false,
+                            has_software: false,
+                            has_internet: false,
+                        }},
                         enableRowSelection:true,
                         enableRowActions:true,
                         positionActionsColumn: 'last',
@@ -570,7 +604,6 @@ function Laboratory() {
                                 key={"report"}
                                 label='Report this computer'
                                 table={table}
-                                icon={<ReportProblemIcon/>}
                                 onClick={() => {
                                     setReportedBuilding(String(menuRow.building_code))
                                     getRoomsByBuilding(String(menuRow.building_code), setTargetedRooms, "admin")
@@ -582,7 +615,68 @@ function Laboratory() {
                                     setComputerTable_AddReportModalOpen(true)
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
-                            />
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"edit"}
+                                label='Edit Details'
+                                table={table}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"delete"}
+                                label='Delete computer'
+                                table={table}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"details"}
+                                label='Computer details'
+                                table={table}
+                                onClick={() => {
+                                    setComputerDetailsItems({
+                                        "Computer ID:": menuRow.computer_id,
+                                        "Building: ": menuRow.building_code,
+                                        "Room: " : menuRow.room,
+                                        "System Unit: ": menuRow.system_unit,
+                                        "Monitor: " : menuRow.monitor,
+                                        "Condition: ":(menuRow.condition === 0)  ? "Good" 
+                                                    : (menuRow.condition  === 1) ? "Minor Issue" 
+                                                    : (menuRow.condition  === 2) ? "Major Issue" 
+                                                    : (menuRow.condition  === 3) ? "Bad" 
+                                                    : "Unknown",
+                                        "Status: ": (menuRow.status === 0) ? "Inactive" 
+                                                : (menuRow.status === 1 ) ? "Active" : "Unknown",
+                                        "Pending Reports: ": menuRow.pending_reports,
+                                        "Keyboard" : menuRow.has_keyboard === 1 ? "Keyboard Available" : "No Keyboard",
+                                        "Mouse" : menuRow.has_mouse === 1 ? "Mouse Available" : "No Mouse",
+                                        "Internet" : menuRow.has_internet === 1 ? "Internet Available" : "No Internet",
+                                        "Software" : menuRow.has_software === 1 ? "Software/s Available" : "No Software/s",
+                                        
+                                    })
+                                    setComputerDetailsModalOpen(true)
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"activate"}
+                                label='Activate'
+                                table={table}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"deactivate"}
+                                label='Deactivate'
+                                table={table}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
                         ]}
                     }}
                 />
@@ -622,7 +716,7 @@ function Laboratory() {
                         </AccordionSummary>
                         <AccordionDetails>
                         <Grid2 container spacing={2}>
-                            <RoomBox rooms={filtered_rooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} handleOpenPCTable={handleOpenPCTable}/>
+                            <RoomBox rooms={filtered_rooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} handleOpenPCTable={handleOpenPCTable} onContextMenu={handleRoomCardMenuOpen}/>
                         </Grid2>
                     </AccordionDetails>
                     </Accordion>
@@ -634,21 +728,38 @@ function Laboratory() {
         </div>
         </Stack>
         <Menu
-            anchorEl={roomCardAnchorElement}
-            open={Boolean(roomCardAnchorElement)}
-            onClose={handleRoomCardMenuOpen}
+            open={Boolean(roomAnchorPosition)}
+            onClose={handleRoomCardMenuClose}
+            anchorReference='anchorPosition'
+            anchorPosition={roomAnchorPosition}
         >
-            <MenuItem>
-                1
+            <MenuItem
+                onClick={()=>{
+                    // TODO
+                    handleRoomCardMenuClose()
+                }}
+            >
+                Delete Room
             </MenuItem>
-            <MenuItem>
-                2
+            <MenuItem 
+                onClick={()=>{
+                    // TODO
+                    handleRoomCardMenuClose()
+                }}
+            >
+
+                Rename
             </MenuItem>
         </Menu>
         <ReportModal
             open={computerTable_addReportModalOpen}
             setOpen={setComputerTable_AddReportModalOpen}
             permissionType={"admin"}
+        />
+        <SharedModal
+            open={computerDetailsModalOpen}
+            setOpen={setComputerDetailsModalOpen}
+            items={computerDetailsItems}
         />
 
         

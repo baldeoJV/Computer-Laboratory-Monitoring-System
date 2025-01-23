@@ -89,24 +89,40 @@ function Non_Consumable() {
                         renderRowActionMenuItems:({row, table})=>{
                             const menuRow = row.original
                             return [
+                                // TODO
                             <MRT_ActionMenuItem
-                                key={"resolve"}
-                                label='Resolve'
+                                key={"Delete"}
+                                label='Delete'
                                 table={table}
-                                icon={<CheckIcon/>}
                                 onClick={() => {
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
                             />,
                             <MRT_ActionMenuItem
-                                key={"reject"}
-                                label='Reject'
+                                key={"edit"}
+                                label='Edit'
                                 table={table}
-                                icon={<CloseIcon/>}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"flag"}
+                                label='Flag'
+                                table={table}
+                                onClick={() => {
+                                    // console.log(Object.entries(row), row.getValue)
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
+                                key={"unflag"}
+                                label='Unflag'
+                                table={table}
                                 onClick={() => {
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
                             />
+                            
                         ]}
                     }}
                 />

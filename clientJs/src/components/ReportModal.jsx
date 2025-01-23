@@ -418,7 +418,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         Submit Report
                     </Button>
                     <Button 
-                        disabled={!(reportedBuilding && reportedPcID && reportedRoom && studentId)}
+                        disabled={!(reportedBuilding && reportedPcID && reportedRoom && (permissionType === "admin" ? true : studentId))}
                         sx={{ 
                             padding: '6px 16px',
                             fontFamily: 'Inter',

@@ -158,14 +158,6 @@ export default function ITableV2({columns, data, type, extraActionsTable}) {
               >
                 Export Selected Rows
               </Button>
-              {type === "reportTable" && <>
-                <Button
-                  color='error'
-                  sx={{border:'1px solid '+palette.bad}}
-                >
-                  Submit a report
-                </Button>
-              </>}
             </Box>
           ),
         ...extraActionsTable // Add this line to include extra actions
