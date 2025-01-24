@@ -34,9 +34,7 @@ export default function DrawerMenu({menuType}) {
           <Sidebar className="sidebr" collapsed={isCollapsed}
             width='248px' style={{overflow:'hidden', height:'100%',}}
           >
-            <Menu
-
-            >
+            <Menu>
                 {isCollapsed 
                     ? (
                         <MenuItem
@@ -119,7 +117,7 @@ export default function DrawerMenu({menuType}) {
                     className='menuItem py-2'
                     component={<a href="/settings"/>}
                 > 
-                    {menuType === 'reportModal' && <DesignBox/>}
+                    {menuType === 'settings' && <DesignBox/>}
                     Settings
                 </MenuItem>
                 <MenuItem 
