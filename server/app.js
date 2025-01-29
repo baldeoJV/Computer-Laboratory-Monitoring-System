@@ -2,9 +2,14 @@ import express from 'express'
 
 import { getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
+    getComponentCondition, createComponentCondition,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount,
-    getBuilding, createBuilding } from './be_comlab.js'
+    getBuilding, createBuilding,
+    getAdmin, createAdmin,
+
+    updateRoom,
+    updateNonConsumableComponent} from './be_comlab.js'
 
 const app = express()
 
@@ -94,8 +99,25 @@ app.post("/create/computer", async (req, res) => {
     const {room, building_code, system_unit, monitor} = req.body
 
     try{    
+        //create computer
         const create_computer = await createComputer(room, building_code, system_unit, monitor)
-        res.status(201).send(create_computer)
+
+        //create component condition
+        const create_component_condition = await createComponentCondition(create_computer.computer_id)
+
+        // res.status(201).send(create_computer)
+
+        //update the non consumable components location
+        const location = `${room}${building_code}` //concat room and building_code
+        const update_non_consumable_component = await updateNonConsumableComponent(location, system_unit, monitor)
+
+        //return both created computer, component condition, and updated non consumable component
+        res.status(201).json({
+            create_computer,
+            create_component_condition,
+            update_non_consumable_component
+        });
+
     }catch(error) {
         // Check for duplication error (probably in 'system_unit' and 'monitor' column)
         if (error.code === "ER_DUP_ENTRY") {
@@ -112,6 +134,14 @@ app.post("/create/computer", async (req, res) => {
 app.post("/rooms/computers", async (req, res) => {
     const { rooms } = req.body;
 
+    //json format
+    //  {
+    //      "rooms": [
+    //          { "roomnum": 410, "building_code": "MB" },
+    //          ...
+    //      ]
+    //  }
+      
     //check if the input is an array
     if (!Array.isArray(rooms)) {
         return res.status(400).send("Invalid array format.");
@@ -219,6 +249,64 @@ app.post("/create/building", async (req, res) => {
         // Check for duplication error.
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Building code '${building_code}' already exist`);
+        }
+    }
+})
+
+// [ADMIN RELATED QUERY]
+
+// get all admin
+app.get("/admin", async (req, res) => {
+    const get_admin = await getAdmin()
+
+    if (!get_admin || get_admin.length === 0) {
+        return res.status(404).send(`Admin empty`);
+    }
+
+    res.send(get_admin)
+})
+
+// get specific admin
+app.get("/admin/:id", async (req, res) => {
+    const admin_id = req.params.id
+    const get_admin = await getAdmin(admin_id)
+
+    if (!get_admin) {
+        return res.status(404).send(`Admin id: ${admin_id} not found`);
+    }
+
+    res.send(get_admin)
+})
+
+// create admin
+app.post("/create/admin", async (req, res) => {
+    const {admin_id, password, first_name, last_name} = req.body
+
+    try{    
+        const create_admin = await createAdmin(admin_id, password, first_name, last_name)
+        res.status(201).send(create_admin)
+    }catch(error) {
+        // Check for duplication error.
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Admin id '${admin_id}' already exist`);
+        }
+    }
+})
+
+// [UPDATE ROOM]
+
+// update room (call this when any updates are made e.g. adding a computer, updating a computer, etc.)
+app.get("/update/room", async (req, res) => {
+    // const room_id = req.params.room_id
+    // const {room, building_code} = req.body
+
+    try{    
+        const update_room = await updateRoom()
+        res.status(201).send(update_room)
+    }catch(error) {
+        // Check for duplication error.
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Room id '${room_id}' already exist`);
         }
     }
 })
