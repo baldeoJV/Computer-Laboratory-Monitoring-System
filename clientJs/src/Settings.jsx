@@ -21,34 +21,32 @@ function Settings ()  {
   return <div style={{display: 'flex', height:'100vh'}}>
     <DrawerMenu menuType={'settings'}/>
     <Stack width={'100vw'} overflow={'auto'} direction={'row'}>
-    <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
-      <Sidebar className="sidebr"
-              style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Menu
-                  style={{
-                    marginTop:'20%'
-                  }}
-                  menuItemStyles={{
-                      root: {
-                          marginLeft:'4px',
-                      }
-                  }}
-              >
-                  <MenuItem className='menuItem py-2' style={{width:'100%'}} onClick={() => setisAccountClicked(true)}>{isAccountClicked && <DesignBox/>} Account </MenuItem>
-                  <MenuItem className='menuItem py-2' onClick={() => setisAccountClicked(false)}> {!isAccountClicked && <DesignBox/>} Laboratory </MenuItem>
+      <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
+        <Sidebar className="sidebr"
+                style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Menu
+                    style={{
+                      marginTop:'20%'
+                    }}
+                    menuItemStyles={{
+                        root: {
+                            marginLeft:'4px',
+                        }
+                    }}
+                >
+                    <MenuItem className='menuItem py-2' style={{width:'100%'}} onClick={() => setisAccountClicked(true)}>{isAccountClicked && <DesignBox/>} Account </MenuItem>
+                    <MenuItem className='menuItem py-2' onClick={() => setisAccountClicked(false)}> {!isAccountClicked && <DesignBox/>} Laboratory </MenuItem>
 
-                  <MenuItem className='menuItem py-2'> 
-                      <Button color='primary' variant='outlined' sx={{height:'100%', width:'100%'}}>Sign Out</Button>
-                  </MenuItem>
-              </Menu>
-      </Sidebar>
-    </div>
-    <Stack sx={{width:'100%'}}>
-
-    <NavSetting/>
-
-
-    </Stack>
+                    <MenuItem className='menuItem py-2'> 
+                        <Button color='primary' variant='outlined' sx={{height:'100%', width:'100%'}}>Sign Out</Button>
+                    </MenuItem>
+                </Menu>
+        </Sidebar>
+      </div>
+      <Stack sx={{width:'100%'}}>
+        <NavSetting/>
+        
+      </Stack>
 
 
     </Stack>
