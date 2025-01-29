@@ -1,111 +1,98 @@
-import express from 'express'
-import cors from 'cors'
-import { getRoom, createRoom,
-    getComputer, createComputer, getRoomComputer,
-    getNonConsumableComponent, createNonConsumableComponent,
-    getReport, createReport, getReportCount,
-    getBuilding, createBuilding, getConsumableComponent,getArchivedReport, selectedReportAll,
-    verifyAdminId, } from './be_comlab.js'
-
-// NEW
+import express from 'express';
+import cors from 'cors';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
+import {
+    getRoom, createRoom,
+    getComputer, createComputer, getRoomComputer,
+    getNonConsumableComponent, createNonConsumableComponent,
+    getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
+    getBuilding, createBuilding, getConsumableComponent,
+    getAdmin, createAdmin, verifyAdminId,
+    updateRoom, updateNonConsumableComponent
+} from './be_comlab.js';
 
+const app = express();
 
-const app = express()
-
-app.use(express.json())
-app.use(cors())
+app.use(express.json());
+app.use(cors());
 
 // AUTHENTICATION LIBRARY
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(session({
     secret: process.env.SECRET_KEY || 'default',
-    resave:false,
+    resave: false,
     saveUninitialized: false,
-    cookie: {secure: false , httpOnly:true},
-}))
+    cookie: { secure: false, httpOnly: true },
+}));
 
-// RAINNAND : MIDDLEWARE
+// MIDDLEWARE
 async function checkAdminIdSession(req, res, next) {
-    if (!req.session.adminId){
-        return res.status(401).json({forceLogin: true, error_message: "Unauthorized access, please login."})
+    if (!req.session.adminId) {
+        return res.status(401).json({ forceLogin: true, error_message: "Unauthorized access, please login." });
     }
-    const admins = await verifyAdminId(req.session.adminId)
-    if (admins.length === 0){
-        return res.status(500).json({forceLogin: true, error_message: "Invalid Account, please login again."})
+    const admins = await verifyAdminId(req.session.adminId);
+    if (admins.length === 0) {
+        return res.status(500).json({ forceLogin: true, error_message: "Invalid Account, please login again." });
     }
-    next()
+    next();
 }
-
-
 
 // Function to format date
-function formatDate(dateString) { 
-    const date = new Date(dateString)
-    const year = date.getFullYear()
-    const month = ('0' + (date.getMonth() + 1)).slice(-2)
-    const day = ('0' + date.getDate()).slice(-2)
-    return `${year}-${month}-${day}`
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const day = ('0' + date.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
 }
 
-// LOGIN RAINNAND
+// LOGIN
 app.post('/login', async (req, res) => {
-    const {adminId, password} = req.body
+    const { adminId, password } = req.body;
 
     try {
-        const admins = await verifyAdminId(adminId)
-        if (admins.length === 0){
-            return res.status(401).send("Admin Id not found")
+        const admins = await verifyAdminId(adminId);
+        if (admins.length === 0) {
+            return res.status(401).send("Admin Id not found");
         }
-        const adminData = admins[0]
-    
-        if (adminData.password !== password){
-            return res.status(401).send("Incorrect Password")
+        const adminData = admins[0];
+
+        if (adminData.password !== password) {
+            return res.status(401).send("Incorrect Password");
         }
 
-        
-
-        req.session.adminId = adminData.admin_id
-        res.status(200).send("Login Successful")
+        req.session.adminId = adminData.admin_id;
+        res.status(200).send("Login Successful");
     } catch (error) {
-        res.status(500).send("there was an error on the server admin verification")
+        res.status(500).send("There was an error on the server admin verification");
     }
-})
+});
 
-// LOGOUT RAINNAND
+// LOGOUT
 app.post('/logout', (req, res) => {
-    req.session.destroy( err => {
-        if (err){
-            res.status(500).send("Logout Failed")
+    req.session.destroy(err => {
+        if (err) {
+            res.status(500).send("Logout Failed");
         }
-        res.clearCookie('connect.sid')
-        res.status(200).send("Logged out successfully")
-    }
-
-    )
-})
-
+        res.clearCookie('connect.sid');
+        res.status(200).send("Logged out successfully");
+    });
+});
 
 // [DASHBOARD RELATED QUERY]
-// fetch data for dashboard
 app.get("/dashboard", checkAdminIdSession, async (req, res) => {
-    
     try {
-        // Fetch all required data
-        const rooms = await getRoom()   //select all rooms
-        const computers = await getComputer()   //select all computers
-        const reports = await getReport()   //select all reports
-        const buildings = await getBuilding()   //select all buildings
-        const pending_report_count = await getReportCount()    //get the count of pending reports
+        const rooms = await getRoom();
+        const computers = await getComputer();
+        const reports = await getReport();
+        const buildings = await getBuilding();
+        const pending_report_count = await getReportCount();
 
-
-        //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
         const formatted_report = reports.map(report => ({
-            ...report, date_submitted: formatDate(report.date_submitted) 
-        }))
+            ...report, date_submitted: formatDate(report.date_submitted)
+        }));
 
-        // Store all data in a dictionary
         const dashboard_dictionary = {
             rooms,
             computers,
@@ -114,7 +101,6 @@ app.get("/dashboard", checkAdminIdSession, async (req, res) => {
             pending_report_count
         };
 
-        // Respond with the dictionary
         res.status(200).json(dashboard_dictionary);
     } catch (error) {
         console.error(error);
@@ -122,79 +108,71 @@ app.get("/dashboard", checkAdminIdSession, async (req, res) => {
     }
 });
 
-//[LABORATORIES TABLE RELATED QUERY]
-
-//get all rooms
+// [LABORATORIES TABLE RELATED QUERY]
 app.get("/laboratories", checkAdminIdSession, async (req, res) => {
-    const get_room = await getRoom()
-    res.send(get_room)
-})
+    const get_room = await getRoom();
+    res.send(get_room);
+});
 
-// RAINNAND : FOR GUESTS / STUDENT 
+// FOR GUESTS / STUDENT
 app.get("/guest/laboratories", async (req, res) => {
-    const get_room = await getRoom()
-    res.send(get_room)
-})
-//get specific room
+    const get_room = await getRoom();
+    res.send(get_room);
+});
+
 app.get("/laboratories/:room_id", checkAdminIdSession, async (req, res) => {
-    const room_id = req.params.room_id
+    const room_id = req.params.room_id;
+    const get_room = await getRoom(room_id);
+    res.send(get_room ? get_room : `Room id: ${room_id} doesn't exist`);
+});
 
-    const get_room = await getRoom(room_id)
-
-    res.send(get_room ? get_room : `Room id: ${room_id} doesn't exist`)
-})
-
-//create room
 app.post("/create/room", checkAdminIdSession, async (req, res) => {
-    const {room, building_code} = req.body
-    const create_room = await createRoom(room, building_code)
-    res.status(201).send(create_room)
-})
+    const { room, building_code } = req.body;
+    const create_room = await createRoom(room, building_code);
+    res.status(201).send(create_room);
+});
 
-
-//[COMPUTERS TABLE RELATED QUERY]
-
-//get all computers
+// [COMPUTERS TABLE RELATED QUERY]
 app.get("/rooms/all_computers", checkAdminIdSession, async (req, res) => {
-    const get_computer = await getComputer()
-
-    res.send(get_computer)
-})
-
-//create computer
+    const get_computer = await getComputer();
+    res.send(get_computer);
+});
 
 app.post("/create/computer", checkAdminIdSession, async (req, res) => {
-    const {room, building_code, system_unit, monitor} = req.body
+    const { room, building_code, system_unit, monitor } = req.body;
 
-    try{    
-        const create_computer = await createComputer(room, building_code, system_unit, monitor)
-        res.status(201).send(create_computer)
-    }catch(error) {
-        // Check for duplication error (probably in 'system_unit' and 'monitor' column)
+    try {
+        const create_computer = await createComputer(room, building_code, system_unit, monitor);
+        const create_component_condition = await createComponentCondition(create_computer.computer_id);
+        const location = `${room}${building_code}`;
+        const update_non_consumable_component = await updateNonConsumableComponent(location, system_unit, monitor);
+
+        res.status(201).json({
+            create_computer,
+            create_component_condition,
+            update_non_consumable_component
+        });
+    } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' already in use.`);
         }
-        // Check if 'system_unit' or 'monitor' doesn't exist
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res.status(404).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' doesn't exists.`);
         }
     }
-})
- 
-//get all computers in specific rooms based in req.body (array format)
+});
+
 app.post("/rooms/computers", checkAdminIdSession, async (req, res) => {
     const { rooms } = req.body;
-    // console.log("BACKEND ROOMS: ", rooms)
-    //check if the input is an array
+
     if (!Array.isArray(rooms)) {
         return res.status(400).send("Invalid array format.");
     }
-    
+
     try {
         const results = await Promise.all(
             rooms.map(async ({ roomnum, building_code }) => {
                 const roomData = await getRoomComputer(roomnum, building_code);
-                
                 return roomData;
             })
         );
@@ -203,27 +181,25 @@ app.post("/rooms/computers", checkAdminIdSession, async (req, res) => {
             return res.status(404).send("No computers in the given room/s.");
         }
 
-        res.status(200).json(results.flat());// .flat() make 2d array into 1d
+        res.status(200).json(results.flat());
     } catch (error) {
         console.error(error);
         res.status(500).send("An error occurred while fetching room data.");
     }
 });
 
-// RAINNAND : FOR GUESTS / STUDENT
+// FOR GUESTS / STUDENT
 app.post("/guest/rooms/computers", async (req, res) => {
     const { rooms } = req.body;
-    // console.log("BACKEND ROOMS: ", rooms)
-    //check if the input is an array
+
     if (!Array.isArray(rooms)) {
         return res.status(400).send("Invalid array format.");
     }
-    
+
     try {
         const results = await Promise.all(
             rooms.map(async ({ roomnum, building_code }) => {
                 const roomData = await getRoomComputer(roomnum, building_code);
-                
                 return roomData;
             })
         );
@@ -232,156 +208,151 @@ app.post("/guest/rooms/computers", async (req, res) => {
             return res.status(404).send("No computers in the given room/s.");
         }
 
-        res.status(200).json(results.flat());// .flat() make 2d array into 1d
+        res.status(200).json(results.flat());
     } catch (error) {
         console.error(error);
         res.status(500).send("An error occurred while fetching room data.");
     }
 });
 
-//[NON-CONSUMABLE-COMPONENT TABLE RELATED QUERY]
-
-//get non consumable component
+// [NON-CONSUMABLE-COMPONENT TABLE RELATED QUERY]
 app.get("/non_consum_comp", checkAdminIdSession, async (req, res) => {
-    const get_non_consumable_component = await getNonConsumableComponent()
+    const get_non_consumable_component = await getNonConsumableComponent();
+    res.send(get_non_consumable_component);
+});
 
-    res.send(get_non_consumable_component)
-})
-
-//create non_consumable_component
 app.post("/create/non_consum_comp", checkAdminIdSession, async (req, res) => {
-    const {component_id, reference_id, location, specs} = req.body
+    const { component_id, reference_id, location, specs } = req.body;
 
-    try{    
-        const create_non_consumable_component = await createNonConsumableComponent(component_id, reference_id, location, specs)
-        res.status(201).send(create_non_consumable_component)
-    }catch(error) {
-        // Check for duplication error (probably in 'system_unit' and 'monitor' column)
+    try {
+        const create_non_consumable_component = await createNonConsumableComponent(component_id, reference_id, location, specs);
+        res.status(201).send(create_non_consumable_component);
+    } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Component id '${component_id}' already exist`);
         }
     }
-})
+});
 
-
-//[CONSUMABLE-COMPONENT TABLE RELATED QUERY]
-
-//get consumable component
+// [CONSUMABLE-COMPONENT TABLE RELATED QUERY]
 app.get("/consum_comp", checkAdminIdSession, async (req, res) => {
-    const get_consumable_component = await getConsumableComponent()
+    const get_consumable_component = await getConsumableComponent();
+    res.send(get_consumable_component);
+});
 
-    res.send(get_consumable_component)
-})
-
-//create non_consumable_component
-// app.post("/create/consum_comp", async (req, res) => {
-//     const {component_id, reference_id, location, specs} = req.body
-
-//     try{    
-//         const create_non_consumable_component = await createNonConsumableComponent(component_id, reference_id, location, specs)
-//         res.status(201).send(create_non_consumable_component)
-//     }catch(error) {
-//         // Check for duplication error (probably in 'system_unit' and 'monitor' column)
-//         if (error.code === "ER_DUP_ENTRY") {
-//             return res.status(409).send(`Component id '${component_id}' already exist`);
-//         }
-//     }
-// })
-
-
-
-//[REPORT TABLE RELATED QUERY]
-
-// get reports
+// [REPORT TABLE RELATED QUERY]
 app.get('/report', checkAdminIdSession, async (req, res) => {
-    const get_report = await getReport()
-
-    //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
+    const get_report = await getReport();
     const formatted_report = get_report.map(report => ({
-        ...report, date_submitted: formatDate(report.date_submitted) 
-    }))
-    res.send(formatted_report)
-})
+        ...report, date_submitted: formatDate(report.date_submitted)
+    }));
+    res.send(formatted_report);
+});
 
-// RAINNAND POST SELECTED REPORT
 app.post('/report/selected', checkAdminIdSession, async (req, res) => {
     const { pcIds } = req.body;
-    //check if the input is an array
     if (!Array.isArray(pcIds)) {
         return res.status(400).send("Invalid array format.");
     }
 
-    const report_count = await selectedReportAll(pcIds)
-    res.send({report_count: report_count})
-})
+    const report_count = await selectedReportAll(pcIds);
+    res.send({ report_count: report_count });
+});
 
-// RAINNAND: ARCHIVED REPORT
 app.get('/archived_report', checkAdminIdSession, async (req, res) => {
-    const get_report = await getArchivedReport()
- 
-    //format the date (example: from "2024-12-12T16:00:00.000Z" to "2024-12-13")
+    const get_report = await getArchivedReport();
     const formatted_report = get_report.map(report => ({
         ...report, date_submitted: formatDate(report.date_submitted), date_resolve: formatDate(report.date_resolve)
-    }))
-    res.status(200).send(formatted_report)
-})
+    }));
+    res.status(200).send(formatted_report);
+});
 
-
-// create report
 app.post("/create/report", checkAdminIdSession, async (req, res) => {
-    const {room, building_code, computer_id, components, report_comment, reported_condition, submittee} = req.body
+    const { room, building_code, computer_id, components, report_comment, reported_condition, submittee } = req.body;
 
-    try{    
-        const create_report = await createReport(room, building_code, computer_id, components, report_comment, reported_condition, submittee)
-        res.status(201).send(create_report)
-    }catch(error) {
-        // Check if 'computer_id' doesn't exist
+    try {
+        const create_report = await createReport(room, building_code, computer_id, components, report_comment, reported_condition, submittee);
+        res.status(201).send(create_report);
+    } catch (error) {
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
         }
     }
-})
+});
 
-// get number of report based in status
 app.get('/report_count/:status', checkAdminIdSession, async (req, res) => {
-    const report_status = req.params.status
-    const get_report = await getReportCount(report_status)
-
-    res.send(get_report)
-})
-
+    const report_status = req.params.status;
+    const get_report = await getReportCount(report_status);
+    res.send(get_report);
+});
 
 // [REFERENCES TABLE RELATED QUERY]
-
-// get building
 app.get("/building", checkAdminIdSession, async (req, res) => {
-    const get_building = await getBuilding()
+    const get_building = await getBuilding();
+    res.send(get_building);
+});
 
-    res.send(get_building)
-})
-
-// create building
 app.post("/create/building", checkAdminIdSession, async (req, res) => {
-    const {building_code, building_name} = req.body
+    const { building_code, building_name } = req.body;
 
-    try{    
-        const create_building = await createBuilding(building_code, building_name)
-        res.status(201).send(create_building)
-    }catch(error) {
-        // Check for duplication error.
+    try {
+        const create_building = await createBuilding(building_code, building_name);
+        res.status(201).send(create_building);
+    } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Building code '${building_code}' already exist`);
         }
     }
-})
+});
 
+// [ADMIN RELATED QUERY]
+app.get("/admin", checkAdminIdSession, async (req, res) => {
+    const get_admin = await getAdmin();
+    if (!get_admin || get_admin.length === 0) {
+        return res.status(404).send(`Admin empty`);
+    }
+    res.send(get_admin);
+});
 
+app.get("/admin/:id", checkAdminIdSession, async (req, res) => {
+    const admin_id = req.params.id;
+    const get_admin = await getAdmin(admin_id);
+    if (!get_admin) {
+        return res.status(404).send(`Admin id: ${admin_id} not found`);
+    }
+    res.send(get_admin);
+});
+
+app.post("/create/admin", checkAdminIdSession, async (req, res) => {
+    const { admin_id, password, first_name, last_name } = req.body;
+
+    try {
+        const create_admin = await createAdmin(admin_id, password, first_name, last_name);
+        res.status(201).send(create_admin);
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Admin id '${admin_id}' already exist`);
+        }
+    }
+});
+
+// [UPDATE ROOM]
+app.get("/update/room", checkAdminIdSession, async (req, res) => {
+    try {
+        const update_room = await updateRoom();
+        res.status(201).send(update_room);
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Room id '${room_id}' already exist`);
+        }
+    }
+});
 
 app.use((err, req, res, next) => {
-    console.error(err.stack)
-    res.status(500).send('Something broke!')
-})
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
 
-app.listen(process.env.PORT || 8080, () =>{
-    console.log('Server is running on port 8080 ' + process.env.PORT)
-})
+app.listen(process.env.PORT || 8080, () => {
+    console.log('Server is running on port 8080 ' + process.env.PORT);
+});
