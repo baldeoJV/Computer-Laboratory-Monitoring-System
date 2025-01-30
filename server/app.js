@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import {
     getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
+    getComponentCondition, createComponentCondition,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
     getBuilding, createBuilding, getConsumableComponent,
@@ -128,8 +129,17 @@ app.get("/laboratories/:room_id", checkAdminIdSession, async (req, res) => {
 
 app.post("/create/room", checkAdminIdSession, async (req, res) => {
     const { room, building_code } = req.body;
-    const create_room = await createRoom(room, building_code);
-    res.status(201).send(create_room);
+
+    try {
+        console.log(room, building_code);
+        const create_room = await createRoom(room, building_code);
+        res.status(201).send(create_room);
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Room '${room}' in building '${building_code}' already exists.`);
+        }
+        res.status(500).send("An error occurred while creating the room.");
+    }
 });
 
 // [COMPUTERS TABLE RELATED QUERY]

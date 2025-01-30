@@ -168,6 +168,14 @@ export async function getComponentCondition(computer_id){
 
 // create a room
 export async function createRoom(room, building_code){
+  // get all existing rooms
+  const room_concat = `${room}${building_code}`
+  const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
+
+  if (rooms.some(r => r.rooms === room_concat)) {
+    return "Room already exists"
+  }
+  
   const [result] = await pool.query(`
     INSERT INTO laboratories(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issue, total_minor_issue, total_reports)
     VALUES (?, ?, 40, 40, 0, 0, 0, 0
@@ -175,7 +183,7 @@ export async function createRoom(room, building_code){
 
   //check if successfully created a room
   const id = result.insertId
-  return getRoom()
+  return getRoom(id)
 }
 
 // create a computer
