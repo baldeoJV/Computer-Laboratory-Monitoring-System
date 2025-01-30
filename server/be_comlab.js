@@ -175,7 +175,7 @@ export async function createRoom(room, building_code){
   const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
 
   if (rooms.some(r => r.rooms === room_concat)) {
-    return `Room ${room}-${building_code} already exists`
+    throw new Error(``); 
   }
   
   const [result] = await pool.query(`
@@ -223,7 +223,7 @@ export async function createNonConsumableComponent(component_id, reference_id, l
 
   //returns the created component
   const id = component_id
-  return getNonConsumableComponent(id)
+  return getNonConsumableComponent()
 }
 
 // create report

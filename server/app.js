@@ -133,13 +133,13 @@ app.post("/create/room", checkAdminIdSession, async (req, res) => {
     try {
         // console.log(room, building_code);
         const create_room = await createRoom(room, building_code);
-        res.status(201).send(create_room);
+        return res.status(201).send(create_room);
     } catch (error) {
         // probably will not reach this part because the room and building_code are not unique
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Room '${room}' in building '${building_code}' already exists.`);
         }
-        res.status(500).send("An error occurred while creating the room.");
+        return res.status(500).send("An error occurred while creating the room.");
     }
 });
 
@@ -242,6 +242,7 @@ app.post("/create/non_consum_comp", checkAdminIdSession, async (req, res) => {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Component id '${component_id}' already exist`);
         }
+        return res.status(400).send(error)
     }
 });
 

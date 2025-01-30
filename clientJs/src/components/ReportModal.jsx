@@ -270,30 +270,41 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
     const handleStudentIdChange = (e) => {
         setStudentId(e.target.value)
     }
-    const submitReport = () => {
-        axios.post('/api/create/report', {
-            pcId: reportedPcID,
-            room: reportedRoom,
-            building_code: reportedBuilding,
-            reported_conditions: {
-                mouse : partsStatuses['mouse'].condition,
-                internet : partsStatuses['internet'].condition,
-                monitor : partsStatuses['monitor'].condition,
-                other : partsStatuses['other'].condition,
-                software : partsStatuses['software'].condition,
-                keyboard : partsStatuses['keyboard'].condition,
-                system_unit : partsStatuses['systemunit'].condition,
-            },
-            report_comment: commentValue,
-            submittee: studentId
-        }).then( dt => {
-            alert(dt.status)
-            return true
-        }).catch(err => {
-            console.error("Error on report: ", err)
-            alert(err.response.data)
-            return false
-        })
+    const submitReport = async (toDownload = false) => {
+        try {
+            const response = await axios.post('/api/create/report', {
+                pcId: reportedPcID,
+                room: reportedRoom,
+                building_code: reportedBuilding,
+                reported_conditions: {
+                    mouse : partsStatuses['mouse'].condition,
+                    internet : partsStatuses['internet'].condition,
+                    monitor : partsStatuses['monitor'].condition,
+                    other : partsStatuses['other'].condition,
+                    software : partsStatuses['software'].condition,
+                    keyboard : partsStatuses['keyboard'].condition,
+                    system_unit : partsStatuses['systemunit'].condition,
+                },
+                report_comment: commentValue,
+                submittee: studentId
+            });
+            alert(response.status);
+            if (toDownload) {
+                const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v);
+                const blob = await pdf(<ReportDocument 
+                    reportedBuilding={reportedBuilding}
+                    reportedPcID={reportedPcID}
+                    reportedRoom={reportedRoom}
+                    comment={commentValue}
+                    submittee={studentId}
+                    partsCondition={partConArray}
+                />).toBlob();
+                saveAs(blob, `${studentId}-report-form.pdf`);
+            }
+        } catch (err) {
+            console.error("Error on report: ", err);
+            alert(err.response.data);
+        }
     }
     return (
         <div>
@@ -431,11 +442,11 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
                     <Button 
-                        onClick={() => {
+                        onClick={async () => {
                             if (isClosable){
                                 setOpen(false)
                             }
-                            submitReport()
+                            await submitReport()
                         }} 
 
                         color="primary" 
@@ -459,21 +470,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         }} 
                         startIcon={<PictureAsPdfIcon sx={{color:palette.badFont}}/>}
                         onClick={async () => {
-                            const proceedDownload = submitReport() || false;
-                            
-                            if (proceedDownload){
-                                const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v)
-                                console.log(partConArray)
-                                const blob = await pdf(<ReportDocument 
-                                    reportedBuilding={reportedBuilding}
-                                    reportedPcID={reportedPcID}
-                                    reportedRoom={reportedRoom}
-                                    comment={commentValue}
-                                    submittee={studentId}
-                                    partsCondition={partConArray}
-                                />).toBlob()
-                                saveAs(blob, `${studentId}-report-form.pdf`)
-                            } 
+                            await submitReport(true)
                         }}
                     >
                         Submit Report & Download PDF

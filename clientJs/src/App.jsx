@@ -198,7 +198,7 @@ function App()  {
     }
     let reportLabel = mr ? rd.total_reports+" pending reports" : "No pending reports"
     let bdLabel = bdMap[rd.building_code].replace("Building", "Bd.")
-    elms.push(<Card key={`rd - ${rd.room}`} sx={{border:'1px solid '+palette.strokeMain , m:0, p:1.5, borderRadius: '12px', width:'136px', cursor:'pointer'}}>
+    elms.push(<Card key={`rd - ${rd.room} - ${rd.building_code}`} sx={{border:'1px solid '+palette.strokeMain , m:0, p:1.5, borderRadius: '12px', width:'136px', cursor:'pointer'}}>
       <Stack direction={'row'} width={'100%'}>
       <Stack mb={0.4}>
         <Typography sx={{color: 'text.secondary', fontSize:'12px',fontFamily:'Inter'}}>

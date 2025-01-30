@@ -235,6 +235,108 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
 RoomBox.propTypes = {
     rooms: PropTypes.array
 }
+function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomCards, handleSnackBarClick}){
+
+
+    // FORM SUBMISSION 
+    const {register, handleSubmit, formState: {errors}} = useForm()
+    
+    const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+    return <>
+                <Modal
+            open={createRoomModalOpen}
+            onClose={()=>setcreateRoomModalOpen(false)}
+        >
+            <form noValidate onSubmit={handleSubmit((dta)=> {
+                axios.post('/api/create/room', {
+                    room: dta.room, 
+                    building_code: dta.building_code,
+                }).then(res=> {
+                    mapRoomCards(res.data)
+                    handleSnackBarClick('success', "Successfully Created a Room")
+                    setcreateRoomModalOpen(false)
+                }).catch(err => {
+                    console.error("CONSOLE ERROR ", err)
+                    handleSnackBarClick('error', err.response.data)
+                    
+                })
+            })}>
+                <Box 
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        <TextField
+                            required
+                            label={'Room Number'}
+                            {...register("room", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />
+                        <AnimatePresence>
+                            {errors.room?.type === 'required' && 
+                                <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
+                            }
+                        </AnimatePresence>
+                        <TextField
+                            required
+                            label={'Building (MB, ANB, MND'}
+                            {...register("building_code", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />      
+                            <AnimatePresence>
+                                {errors.building_code?.type === 'required' && 
+                                    <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
+                                }
+                            </AnimatePresence>            
+                    </Stack>
+                    <Button
+                        type='submit'
+                        sx={{
+                            color: 'white',
+                            textTransform:'none',
+                            fontFamily:'Inter',
+                            minWidth:'100%',
+                            p:1.3,
+                            mt:2.5,
+                            bgcolor:'#323e8a',
+                        }}
+                    >
+                        Add Room
+                    </Button>
+                </Box>
+            </form>
+        </Modal>
+        <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
+    </>
+
+}
 function Laboratory() {
     const [computerTable_addReportModalOpen, setComputerTable_AddReportModalOpen] = useState(false);
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
@@ -253,18 +355,6 @@ function Laboratory() {
     const [computerDetailsModalOpen , setComputerDetailsModalOpen ] = useState(false)
     const [computerDetailsItems, setComputerDetailsItems] = useState({})
 
-
-    // FORM SUBMISSION 
-    const {register, handleSubmit, formState: {errors}} = useForm()
-    
-    const ModalMotion = ({alertComponent}) => <motion.div
-        key={"modal"} 
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0 }}
-    >
-        {alertComponent}
-    </motion.div>
     // FORMS SNACK BAR
     const handleSnackBarClick = (variant, err_msg) => {
         enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
@@ -741,88 +831,12 @@ function Laboratory() {
             setOpen={setComputerDetailsModalOpen}
             items={computerDetailsItems}
         />
-        <Modal
-            open={createRoomModalOpen}
-            onClose={()=>setcreateRoomModalOpen(false)}
-        >
-            <form noValidate onSubmit={handleSubmit((dta)=> {
-                axios.post('/api/create/room', {
-                    room: dta.room, 
-                    building_code: dta.building_code,
-                }).then(res=> {
-                    mapRoomCards(res.data)
-                }).catch(err => {
-                    console.error("CONSOLE ERROR ", err)
-                    handleSnackBarClick('error', err.response.data)
-                    
-                })
-            })}>
-                <Box 
-                    sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 400,
-                        bgcolor: 'background.paper',
-                        boxShadow: 24,
-                        p: 4,
-                    }}
-                >
-                    <Stack>
-                        <TextField
-                            required
-                            label={'Room Number'}
-                            {...register("room", {
-                                    required: true,
-                            })}
-                            fullWidth
-                            sx={{
-                                my:1, 
-                                mt:2,
-                            }}
-                        />
-                        <AnimatePresence>
-                            {errors.room?.type === 'required' && 
-                                <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
-                            }
-                        </AnimatePresence>
-                        <TextField
-                            required
-                            label={'Building (MB, ANB, MND'}
-                            {...register("building_code", {
-                                    required: true,
-                            })}
-                            fullWidth
-                            sx={{
-                                my:1, 
-                                mt:2,
-                            }}
-                        />      
-                            <AnimatePresence>
-                                {errors.building_code?.type === 'required' && 
-                                    <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
-                                }
-                            </AnimatePresence>            
-                    </Stack>
-                    <Button
-                        type='submit'
-                        sx={{
-                            color: 'white',
-                            textTransform:'none',
-                            fontFamily:'Inter',
-                            minWidth:'100%',
-                            p:1.3,
-                            mt:2.5,
-                            bgcolor:'#323e8a',
-                        }}
-                    >
-                        Add Room
-                    </Button>
-                </Box>
-            </form>
-        </Modal>
-        <SnackbarProvider maxSnack={2} autoHideDuration={800}/>
+        <Form_Create_Room
+            createRoomModalOpen={createRoomModalOpen}
+            setcreateRoomModalOpen={setcreateRoomModalOpen}
+            mapRoomCards={mapRoomCards}
+            handleSnackBarClick={handleSnackBarClick}
+        />
         
         
     </div>
