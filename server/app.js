@@ -84,7 +84,7 @@ app.post('/logout', (req, res) => {
 // [DASHBOARD RELATED QUERY]
 app.get("/dashboard", checkAdminIdSession, async (req, res) => {
     try {
-        const rooms = await getRoom();
+        const rooms = await updateRoom();  // replaced the getRoom() to update room data
         const computers = await getComputer();
         const reports = await getReport();
         const buildings = await getBuilding();
@@ -131,10 +131,11 @@ app.post("/create/room", checkAdminIdSession, async (req, res) => {
     const { room, building_code } = req.body;
 
     try {
-        console.log(room, building_code);
+        // console.log(room, building_code);
         const create_room = await createRoom(room, building_code);
         res.status(201).send(create_room);
     } catch (error) {
+        // probably will not reach this part because the room and building_code are not unique
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Room '${room}' in building '${building_code}' already exists.`);
         }
@@ -278,10 +279,17 @@ app.get('/archived_report', checkAdminIdSession, async (req, res) => {
 });
 
 app.post("/create/report", checkAdminIdSession, async (req, res) => {
-    const { room, building_code, computer_id, components, report_comment, reported_condition, submittee } = req.body;
+    const { pcId, room, building_code, reported_conditions, report_comment, submittee } = req.body;
+    //const { mouse, keyboard, software, internet, monitor, other } = req.body.reported_conditions;
+
 
     try {
-        const create_report = await createReport(room, building_code, computer_id, components, report_comment, reported_condition, submittee);
+        //get date
+        const date = new Date();
+        const date_submitted = formatDate(date);
+        console.log(date_submitted);
+
+        const create_report = await createReport(room, building_code, pcId, report_comment, date_submitted, submittee, reported_conditions);
         res.status(201).send(create_report);
     } catch (error) {
         if (error.code === "ER_NO_REFERENCED_ROW_2") {

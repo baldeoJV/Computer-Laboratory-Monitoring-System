@@ -23,7 +23,7 @@ export async function verifyAdminId(adminId) {
 export async function getRoom(room_id = ''){
   const [rows] = await pool.query(
     room_id ? `SELECT * FROM laboratories WHERE room_id = ?` :
-    `SELECT * FROM laboratories`, [room_id])
+    `SELECT * FROM laboratories ORDER BY building_code ASC, room`, [room_id])
   return room_id ? rows[0] : rows
 }
 
@@ -36,7 +36,9 @@ export async function getComputer(computer_id = ''){
 }
 
 async function selectedReport(pcIds) {
+  // the (sql) error occus when the pcIds is empty (probably because room doesn't have any computer)
   const q = `SELECT * FROM REPORTS WHERE computer_id IN (${[...pcIds].join(', ')})`
+  console.log(q)
   const [rows] = await pool.query(q)
   return rows
 }
@@ -51,7 +53,7 @@ export async function getRoomComputer(room, building_code){
   const pcIds = []
   rows.forEach(pcr => pcIds.push(pcr.computer_id))
   
-  const eachReport = await selectedReport(pcIds)
+  const eachReport = pcIds.length > 0 ? await selectedReport(pcIds) : []
   rows = rows.map(r => ({...r, report_count: eachReport.filter(c => c.computer_id === r.computer_id ).length }))
   
   return rows
@@ -173,17 +175,17 @@ export async function createRoom(room, building_code){
   const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
 
   if (rooms.some(r => r.rooms === room_concat)) {
-    return "Room already exists"
+    return `Room ${room}-${building_code} already exists`
   }
   
   const [result] = await pool.query(`
     INSERT INTO laboratories(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issue, total_minor_issue, total_reports)
-    VALUES (?, ?, 40, 40, 0, 0, 0, 0
+    VALUES (?, ?, 0, 0, 0, 0, 0, 0
     )`, [room, building_code])
 
   //check if successfully created a room
   const id = result.insertId
-  return getRoom(id)
+  return getRoom()
 }
 
 // create a computer
@@ -225,17 +227,48 @@ export async function createNonConsumableComponent(component_id, reference_id, l
 }
 
 // create report
-export async function createReport(room, building_code, computer_id, components, report_comment, reported_condition, submittee){
+export async function createReport(room, building_code, computer_id, report_comment, date_submitted, submittee, reported_conditions){
   const [result] = await pool.query(`
-    INSERT INTO reports(room, building_code, computer_id, components, report_comment, reported_condition, submittee)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [room, building_code, computer_id, components, report_comment, reported_condition, submittee])
+    INSERT INTO reports(room, building_code, computer_id, report_comment, date_submitted, submittee)
+    VALUES (?, ?, ?, ?, ?, ?)`,
+    [room, building_code, computer_id, report_comment, date_submitted, submittee])
+
+  await pool.query(`
+    INSERT INTO reported_components(report_id, mouse, keyboard, system_unit, monitor, software, internet, other)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    //if the conversion is made in the front end, remove the conversion here
+    [result.insertId, 
+     reported_conditions.mouse === "Minor Issue" ? 1 : reported_conditions.mouse === "Major Issue" ? 2 : reported_conditions.mouse === "Bad Condition" ? 3 : 0,
+     reported_conditions.keyboard === "Minor Issue" ? 1 : reported_conditions.keyboard === "Major Issue" ? 2 : reported_conditions.keyboard === "Bad Condition" ? 3 : 0,
+     reported_conditions.system_unit === "Minor Issue" ? 1 : reported_conditions.system_unit === "Major Issue" ? 2 : reported_conditions.system_unit === "Bad Condition" ? 3 : 0,
+     reported_conditions.monitor === "Minor Issue" ? 1 : reported_conditions.monitor === "Major Issue" ? 2 : reported_conditions.monitor === "Bad Condition" ? 3 : 0,
+     reported_conditions.software === "Minor Issue" ? 1 : reported_conditions.software === "Major Issue" ? 2 : reported_conditions.software === "Bad Condition" ? 3 : 0,
+     reported_conditions.internet === "Minor Issue" ? 1 : reported_conditions.internet === "Major Issue" ? 2 : reported_conditions.internet === "Bad Condition" ? 3 : 0,
+     reported_conditions.other === "Minor Issue" ? 1 : reported_conditions.other === "Major Issue" ? 2 : reported_conditions.other === "Bad Condition" ? 3 : 0])
 
   //check if successfully created a room
-  const id = result.insertId
-  return getReport(id)
+  // const id = result.insertId
+  return getReport()
+}
+/*
+
+{
+	"pcId": 20,
+	"room": 408,
+	"building_code": "MB",
+	"reported_conditions": {
+		"mouse":"Bad Condition",
+		"keyboard":"Minor Issue",
+		"software":"Major Issue",
+		"internet":"",
+		"monitor":"Bad Condition",
+		"other" : "Minor Issue",
+	}
+	"comment": "not working",
+	"submittee":"2022-106672",
 }
 
+*/
 // create building
 export async function createBuilding(building_code, building_name){
   const [result] = await pool.query(`
@@ -302,8 +335,8 @@ export async function updateRoom(){
       WHERE room = ? AND building_code = ?`,
       [room_data[0].total_pc, room_data[0].total_active_pc, room_data[0].total_inactive_pc, room_data[0].total_major_issue, room_data[0].total_minor_issue, 0, room_number, building_code])
 
-    //add the room to the list
-    console.log("new room")
+    // //add the room to the list
+    // console.log("new room")
   }
 
   return getRoom()  // to be changed
