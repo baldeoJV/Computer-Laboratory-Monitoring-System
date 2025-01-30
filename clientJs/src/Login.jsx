@@ -46,8 +46,9 @@ function Login() {
         }).then(dt => {
             navigate('/dashboard')
         }).catch(err => {
-            handleSnackBarClick('error', err.response.data)
             console.error("CONSOLE ERROR ", err)
+            handleSnackBarClick('error', err.response.data)
+            
         })
 
     }

@@ -175,7 +175,7 @@ export async function createRoom(room, building_code){
 
   //check if successfully created a room
   const id = result.insertId
-  return getRoom(id)
+  return getRoom()
 }
 
 // create a computer

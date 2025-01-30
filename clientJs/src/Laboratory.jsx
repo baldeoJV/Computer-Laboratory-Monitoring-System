@@ -752,8 +752,9 @@ function Laboratory() {
                 }).then(res=> {
                     mapRoomCards(res.data)
                 }).catch(err => {
-                    handleSnackBarClick('error', err.response.data)
                     console.error("CONSOLE ERROR ", err)
+                    handleSnackBarClick('error', err.response.data)
+                    
                 })
             })}>
                 <Box 
