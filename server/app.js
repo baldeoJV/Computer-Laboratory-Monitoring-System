@@ -278,7 +278,7 @@ app.get('/archived_report', checkAdminIdSession, async (req, res) => {
     res.status(200).send(formatted_report);
 });
 
-app.post("/create/report", checkAdminIdSession, async (req, res) => {
+app.post("/create/report",  async (req, res) => {
     const { pcId, room, building_code, reported_conditions, report_comment, submittee } = req.body;
     //const { mouse, keyboard, software, internet, monitor, other } = req.body.reported_conditions;
 

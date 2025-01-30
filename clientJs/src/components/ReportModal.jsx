@@ -207,9 +207,6 @@ const gridPreset = {
   };
 
 const ReportGridItem = ({ icon: Icon, label, partsStatuses, setPartsStatuses }) => {
-    const partKey = label.toLowerCase().replaceAll(" ", "");
-    const partStatus = partsStatuses[partKey].background;
-
     return (
         <Grid2 {...gridPreset}>
             <ReportIconButton 
@@ -272,6 +269,31 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
 
     const handleStudentIdChange = (e) => {
         setStudentId(e.target.value)
+    }
+    const submitReport = () => {
+        axios.post('/api/create/report', {
+            pcId: reportedPcID,
+            room: reportedRoom,
+            building_code: reportedBuilding,
+            reported_conditions: {
+                mouse : partsStatuses['mouse'].condition,
+                internet : partsStatuses['internet'].condition,
+                monitor : partsStatuses['monitor'].condition,
+                other : partsStatuses['other'].condition,
+                software : partsStatuses['software'].condition,
+                keyboard : partsStatuses['keyboard'].condition,
+                system_unit : partsStatuses['systemunit'].condition,
+            },
+            report_comment: commentValue,
+            submittee: studentId
+        }).then( dt => {
+            alert(dt.status)
+            return true
+        }).catch(err => {
+            console.error("Error on report: ", err)
+            alert(err.response.data)
+            return false
+        })
     }
     return (
         <div>
@@ -408,7 +430,16 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                     />
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
-                    <Button onClick={() => isClosable ? setOpen(false) : null} color="primary" variant='contained' 
+                    <Button 
+                        onClick={() => {
+                            if (isClosable){
+                                setOpen(false)
+                            }
+                            submitReport()
+                        }} 
+
+                        color="primary" 
+                        variant='contained' 
                         sx={{ 
                             fontFamily: 'Inter',
                             ...smallButtonStyle
@@ -428,17 +459,21 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         }} 
                         startIcon={<PictureAsPdfIcon sx={{color:palette.badFont}}/>}
                         onClick={async () => {
-                            const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v)
-                            console.log(partConArray)
-                            const blob = await pdf(<ReportDocument 
-                                reportedBuilding={reportedBuilding}
-                                reportedPcID={reportedPcID}
-                                reportedRoom={reportedRoom}
-                                comment={commentValue}
-                                submittee={studentId}
-                                partsCondition={partConArray}
-                            />).toBlob()
-                            saveAs(blob, `${studentId}-report-form.pdf`)
+                            const proceedDownload = submitReport() || false;
+                            
+                            if (proceedDownload){
+                                const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v)
+                                console.log(partConArray)
+                                const blob = await pdf(<ReportDocument 
+                                    reportedBuilding={reportedBuilding}
+                                    reportedPcID={reportedPcID}
+                                    reportedRoom={reportedRoom}
+                                    comment={commentValue}
+                                    submittee={studentId}
+                                    partsCondition={partConArray}
+                                />).toBlob()
+                                saveAs(blob, `${studentId}-report-form.pdf`)
+                            } 
                         }}
                     >
                         Submit Report & Download PDF
