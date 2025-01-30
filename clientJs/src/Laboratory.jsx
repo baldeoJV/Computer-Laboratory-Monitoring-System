@@ -8,7 +8,8 @@ import ITable from './components/ITable';
 // import rooms_data from './assets/rooms_data.json'
 
 // 
-import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem } from '@mui/material';
+import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem, Modal, TextField, Alert, FormControl } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -32,6 +33,10 @@ import { getComputersByRoom, getRoomsByBuilding } from './customMethods.js';
 import ReportModal from './components/ReportModal';
 import { useNavigate } from 'react-router-dom';
 import SharedModal from './components/SharedModal.jsx';
+import { useForm } from 'react-hook-form';
+import { motion, AnimatePresence } from 'motion/react';
+import {SnackbarProvider, enqueueSnackbar} from 'notistack'
+
 const COMPUTERS_DOWNLOAD_FILE_NAME = ''
 
 function createData(computer_id, room, building_code, system_unit, monitor, status, condition, pending_reports, has_mouse, has_keyboard, has_internet, has_software){
@@ -50,7 +55,7 @@ function LabelTop() {
     <div className="text-wrapper">Laboratory</div>
     </div>
 }
-function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable, onContextMenu}) {
+function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms, handleOpenPCTable, onContextMenu}) {
 
     const handleCheckRoomBox = (e, r)=> {
         if (e.target.checked){
@@ -81,10 +86,8 @@ function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable, onC
     }
     const res = () => {
         
-        return rooms.map(r => {
-
-            return (
-                <Grid2 md={6} lg={6} xl={6} key={r.room}>
+        return [rooms.map(r => {
+            return <Grid2 md={6} lg={6} xl={6} key={r.room}>
                     <CardContent 
                         onContextMenu={(e)=>onContextMenu(e, r)}
                         key={r.room} 
@@ -206,10 +209,24 @@ function RoomBox({rooms, setSelectedRooms, selectedRooms, handleOpenPCTable, onC
                         </Box>
 
                     </CardContent>
-                </Grid2>
-            );
-            
-        })
+            </Grid2>;  
+        }), <Grid2 md={6} lg={6} xl={6} key={'r-add'} sx={{height:'180px'}}>
+            <CardContent 
+                sx={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='${encodeURIComponent("#4C64D9")}' stroke-width='2' stroke-dasharray='16' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e")`,
+                    borderRadius: '16px',
+                    width: '270px', 
+                    height: '100%',
+                    alignContent: 'center',
+                    textAlign: 'center',
+                    color:'#4C64D9'
+                }}
+                onClick={()=>setcreateRoomModalOpen(true)}
+            >
+                <AddIcon/> <br/>
+                Add Room
+            </CardContent>
+        </Grid2>]
     }
 
 
@@ -230,10 +247,28 @@ function Laboratory() {
     const [totalReports, setTotalReports] = useState(0)
     const [pcIds, setPcIds] = useState([]);
     const [roomAnchorPosition, setRoomAnchorPosition] = useState(null)
+    const [createRoomModalOpen, setcreateRoomModalOpen] = useState(false) 
 
     // COMPUTER DETAILS MODAL
     const [computerDetailsModalOpen , setComputerDetailsModalOpen ] = useState(false)
     const [computerDetailsItems, setComputerDetailsItems] = useState({})
+
+
+    // FORM SUBMISSION 
+    const {register, handleSubmit, formState: {errors}} = useForm()
+    
+    const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+    // FORMS SNACK BAR
+    const handleSnackBarClick = (variant, err_msg) => {
+        enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
+    } 
 
     const navigate= useNavigate()
     const {
@@ -266,61 +301,6 @@ function Laboratory() {
     useEffect(() => {
         fetchLabRooms()
       }, [fetchLabRooms]);
-    // const roomCards = rooms_data.map((rd) => getRoomData(
-    //     rd.room,
-    //     rd.building_code,
-    //     rd.total_pc,
-    //     rd.total_active_pc,
-    //     rd.total_inactive_pc,
-    //     rd.total_major_issues,
-    //     rd.total_minor_issues,
-    //     rd.total_reports
-    // ))
-
-    const headCells = [
-        {
-            id: "computer_id",
-            numeric: false,
-            disablePadding: true,
-            label: "Computer ID",
-        },
-        {
-            id: "room",
-            numeric: false,
-            disablePadding: true,
-            label: "Room",
-        },
-        {
-            id: "system_unit",
-            numeric: false,
-            disablePadding: true,
-            label: "System Unit Tag",
-        },
-        {
-            id: "monitor",
-            numeric: false,
-            disablePadding: true,
-            label: "Monitor Tag",
-        },
-        {
-            id: "condition",
-            numeric: false,
-            disablePadding: true,
-            label: "Condition",
-        },
-        {
-            id: "status",
-            numeric: false,
-            disablePadding: true,
-            label: "Status",
-        },
-        {
-            id: "pending_reports",
-            numeric: true,
-            disablePadding: false,
-            label: "Pending Reports",
-        },
-    ]
     const headCellsV2 = useMemo(() => [
         {
             accessorKey: "computer_id",
@@ -716,7 +696,7 @@ function Laboratory() {
                         </AccordionSummary>
                         <AccordionDetails>
                         <Grid2 container spacing={2}>
-                            <RoomBox rooms={filtered_rooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} handleOpenPCTable={handleOpenPCTable} onContextMenu={handleRoomCardMenuOpen}/>
+                            <RoomBox setcreateRoomModalOpen={setcreateRoomModalOpen} rooms={filtered_rooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} handleOpenPCTable={handleOpenPCTable} onContextMenu={handleRoomCardMenuOpen}/>
                         </Grid2>
                     </AccordionDetails>
                     </Accordion>
@@ -761,7 +741,88 @@ function Laboratory() {
             setOpen={setComputerDetailsModalOpen}
             items={computerDetailsItems}
         />
-
+        <Modal
+            open={createRoomModalOpen}
+            onClose={()=>setcreateRoomModalOpen(false)}
+        >
+            <form noValidate onSubmit={handleSubmit((dta)=> {
+                axios.post('/api/create/room', {
+                    room: dta.room, 
+                    building_code: dta.building_code,
+                }).then(res=> {
+                    mapRoomCards(res.data)
+                }).catch(err => {
+                    handleSnackBarClick('error', err.response.data)
+                    console.error("CONSOLE ERROR ", err)
+                })
+            })}>
+                <Box 
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        <TextField
+                            required
+                            label={'Room Number'}
+                            {...register("room", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />
+                        <AnimatePresence>
+                            {errors.room?.type === 'required' && 
+                                <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
+                            }
+                        </AnimatePresence>
+                        <TextField
+                            required
+                            label={'Building (MB, ANB, MND'}
+                            {...register("building_code", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />      
+                            <AnimatePresence>
+                                {errors.building_code?.type === 'required' && 
+                                    <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
+                                }
+                            </AnimatePresence>            
+                    </Stack>
+                    <Button
+                        type='submit'
+                        sx={{
+                            color: 'white',
+                            textTransform:'none',
+                            fontFamily:'Inter',
+                            minWidth:'100%',
+                            p:1.3,
+                            mt:2.5,
+                            bgcolor:'#323e8a',
+                        }}
+                    >
+                        Add Room
+                    </Button>
+                </Box>
+            </form>
+        </Modal>
+        <SnackbarProvider maxSnack={2} autoHideDuration={800}/>
+        
         
     </div>
 }
