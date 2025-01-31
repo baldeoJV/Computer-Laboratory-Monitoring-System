@@ -424,8 +424,9 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         renderInput={params => 
                             <TextField
                                 {...params}
-                                label="Computer ID *"
+                                label={`Computer ID * \t\t    The Computer ID can be found on the top of the system unit`}
                                 sx={{ fontFamily: 'Inter' }}
+                                placeholder='The Computer ID can be found on the top of the system unit'
                             />
                         }
                     />

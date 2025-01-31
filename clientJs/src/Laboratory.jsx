@@ -333,7 +333,6 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
                 </Box>
             </form>
         </Modal>
-        <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
     </>
 
 }
@@ -598,6 +597,11 @@ function Laboratory() {
             
         } catch (error) {
             console.error("error ", error)
+            setComputersData([])
+            setPcDCond([])
+            setPcDStat([])
+            enqueueSnackbar("error", "THERE IS NO COMPUTER IN THIS ROOM")
+
         }
     }
 
@@ -837,7 +841,8 @@ function Laboratory() {
             mapRoomCards={mapRoomCards}
             handleSnackBarClick={handleSnackBarClick}
         />
-        
+        <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
+
         
     </div>
 }
