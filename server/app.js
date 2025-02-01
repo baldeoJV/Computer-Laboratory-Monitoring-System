@@ -8,7 +8,7 @@ import {
     getComponentCondition, createComponentCondition,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
-    getBuilding, createBuilding, getConsumableComponent,
+    getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId,
     updateRoom, updateNonConsumableComponent
 } from './be_comlab.js';
@@ -111,20 +111,39 @@ app.get("/dashboard", checkAdminIdSession, async (req, res) => {
 
 // [LABORATORIES TABLE RELATED QUERY]
 app.get("/laboratories", checkAdminIdSession, async (req, res) => {
-    const get_room = await getRoom();
-    res.send(get_room);
+    try {
+        const get_room = await getRoom();
+        res.status(200).send(get_room);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching laboratories.");
+    }
 });
 
 // FOR GUESTS / STUDENT
 app.get("/guest/laboratories", async (req, res) => {
-    const get_room = await getRoom();
-    res.send(get_room);
+    try {
+        const get_room = await getRoom();
+        res.status(200).send(get_room);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching laboratories.");
+    }
 });
 
 app.get("/laboratories/:room_id", checkAdminIdSession, async (req, res) => {
     const room_id = req.params.room_id;
-    const get_room = await getRoom(room_id);
-    res.send(get_room ? get_room : `Room id: ${room_id} doesn't exist`);
+    try {
+        const get_room = await getRoom(room_id);
+        if (get_room) {
+            res.status(200).send(get_room);
+        } else {
+            res.status(404).send(`Room id: ${room_id} doesn't exist`);
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching the laboratory.");
+    }
 });
 
 app.post("/create/room", checkAdminIdSession, async (req, res) => {
@@ -145,8 +164,13 @@ app.post("/create/room", checkAdminIdSession, async (req, res) => {
 
 // [COMPUTERS TABLE RELATED QUERY]
 app.get("/rooms/all_computers", checkAdminIdSession, async (req, res) => {
-    const get_computer = await getComputer();
-    res.send(get_computer);
+    try {
+        const get_computer = await getComputer();
+        res.status(201).send(get_computer);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching computers.");
+    }
 });
 
 app.post("/create/computer", checkAdminIdSession, async (req, res) => {
@@ -254,11 +278,16 @@ app.get("/consum_comp", checkAdminIdSession, async (req, res) => {
 
 // [REPORT TABLE RELATED QUERY]
 app.get('/report', checkAdminIdSession, async (req, res) => {
-    const get_report = await getReport();
-    const formatted_report = get_report.map(report => ({
-        ...report, date_submitted: formatDate(report.date_submitted)
-    }));
-    res.send(formatted_report);
+    try {
+        const get_report = await getReport();
+        const formatted_report = get_report.map(report => ({
+            ...report, date_submitted: formatDate(report.date_submitted)
+        }));
+        res.status(200).send(formatted_report);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching reports.");
+    }
 });
 
 app.post('/report/selected', checkAdminIdSession, async (req, res) => {
@@ -296,6 +325,7 @@ app.post("/create/report",  async (req, res) => {
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
         }
+        return res.status(400).send(error);
     }
 });
 
@@ -307,8 +337,13 @@ app.get('/report_count/:status', checkAdminIdSession, async (req, res) => {
 
 // [REFERENCES TABLE RELATED QUERY]
 app.get("/building", checkAdminIdSession, async (req, res) => {
-    const get_building = await getBuilding();
-    res.send(get_building);
+    try {
+        const get_building = await getBuilding();
+        res.status(200).send(get_building);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching buildings.");
+    }
 });
 
 app.post("/create/building", checkAdminIdSession, async (req, res) => {
@@ -326,11 +361,16 @@ app.post("/create/building", checkAdminIdSession, async (req, res) => {
 
 // [ADMIN RELATED QUERY]
 app.get("/admin", checkAdminIdSession, async (req, res) => {
-    const get_admin = await getAdmin();
-    if (!get_admin || get_admin.length === 0) {
-        return res.status(404).send(`Admin empty`);
+    try {
+        const get_admin = await getAdmin();
+        if (!get_admin || get_admin.length === 0) {
+            return res.status(404).send("Admin empty");
+        }
+        res.status(200).send(get_admin);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching admins.");
     }
-    res.send(get_admin);
 });
 
 app.get("/admin/:id", checkAdminIdSession, async (req, res) => {
@@ -352,6 +392,7 @@ app.post("/create/admin", checkAdminIdSession, async (req, res) => {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Admin id '${admin_id}' already exist`);
         }
+        return res.status(400).send(error);
     }
 });
 
@@ -364,6 +405,19 @@ app.get("/update/room", checkAdminIdSession, async (req, res) => {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Room id '${room_id}' already exist`);
         }
+        return res.status(400).send(error);
+    }
+});
+
+// update consumable component
+app.post("/update/consum_comp", checkAdminIdSession, async (req, res) => {
+    const { component_name, stock_count } = req.body;
+
+    try {
+        const update_consumable_component = await updateConsumableComponent(component_name, stock_count);
+        res.status(201).send(update_consumable_component);
+    } catch (error) {
+        return res.status(400).send(error);
     }
 });
 

@@ -38,7 +38,6 @@ export async function getComputer(computer_id = ''){
 async function selectedReport(pcIds) {
   // the (sql) error occus when the pcIds is empty (probably because room doesn't have any computer)
   const q = `SELECT * FROM REPORTS WHERE computer_id IN (${[...pcIds].join(', ')})`
-  console.log(q)
   const [rows] = await pool.query(q)
   return rows
 }
@@ -103,7 +102,7 @@ export async function getReport(report_id=''){
   const [rows] = await pool.query(
     report_id 
       ? `SELECT * FROM reports WHERE report_id = ?` 
-      : `SELECT * FROM reports`, [report_id]
+      : `SELECT * FROM reports ORDER BY report_id DESC`, [report_id]
   )
   let crm = await getCrm(rows, "reported_components", true)
 
@@ -199,9 +198,11 @@ export async function createComputer(room, building_code, system_unit, monitor){
   const location = `${room}${building_code}`;
   const update_non_consumable_component = await updateNonConsumableComponent(location, system_unit, monitor);
 
-  //check if successfully created a room
-  const id = result.insertId
-  return getComputer(id)
+  /*
+   update the comsumable components
+  */
+
+  return getComputer()
 }
 
 // create component condition
@@ -224,6 +225,21 @@ export async function createNonConsumableComponent(component_id, reference_id, l
   //returns the created component
   const id = component_id
   return getNonConsumableComponent()
+}
+
+// create consumable component (just incase the client wants to add consumable components)
+export async function createConsumableComponent(reference_id, stock_count){
+  /* 
+    add a component in component reference
+  */
+
+  // add the consumable component
+  const [result] = await pool.query(`
+    INSERT INTO consumable_components(reference_id, stock_count)
+    VALUES (?, ?)`, 
+    [reference_id, stock_count])
+
+  return getConsumableComponent()
 }
 
 // create report
@@ -350,4 +366,17 @@ export async function updateNonConsumableComponent(location, system_unit, monito
     [location, system_unit, monitor])
 
   return getNonConsumableComponent()
+}
+
+// update consumable component
+export async function updateConsumableComponent(component_name, stock_count){
+  // tentative code, will be change if will update multiple consumable components
+  const [update_consum] = await pool.query(`
+    UPDATE consumable_components
+    JOIN components_reference ON consumable_components.reference_id = components_reference.reference_id
+    SET consumable_components.stock_count = ?
+    WHERE components_reference.component_name LIKE ?`,
+    [stock_count, component_name])
+
+  return getConsumableComponent()
 }
