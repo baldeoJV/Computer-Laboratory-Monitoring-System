@@ -202,7 +202,8 @@ export async function createComputer(room, building_code, system_unit, monitor){
    update the comsumable components
   */
 
-  return getComputer()
+  // return getComputer()
+  return { computer_id: result.insertId, computers: getComputer() }
 }
 
 // create component condition

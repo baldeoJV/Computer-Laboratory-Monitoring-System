@@ -181,11 +181,13 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
         const create_component_condition = await createComponentCondition(create_computer.computer_id);
         const location = `${room}${building_code}`;
         const update_non_consumable_component = await updateNonConsumableComponent(location, system_unit, monitor);
+        const update_room = await updateRoom();
 
         res.status(201).json({
-            create_computer,
+            computers: create_computer.computers,
             create_component_condition,
-            update_non_consumable_component
+            update_non_consumable_component,
+            update_room
         });
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
@@ -402,9 +404,6 @@ app.get("/update/room", checkAdminIdSession, async (req, res) => {
         const update_room = await updateRoom();
         res.status(201).send(update_room);
     } catch (error) {
-        if (error.code === "ER_DUP_ENTRY") {
-            return res.status(409).send(`Room id '${room_id}' already exist`);
-        }
         return res.status(400).send(error);
     }
 });
