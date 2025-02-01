@@ -165,6 +165,77 @@ export async function getComponentCondition(computer_id){
   return computer_id ? rows[0] : rows
 }
 
+// [GET COMPONENTS FOR CREATING A COMPUTER]
+
+// get rooms list
+async function getRoomsArray(){
+  const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
+  return rooms.map(room => room.rooms)
+}
+
+//get avaliable system unit
+export async function getAvailableSystemUnit(){
+  const rooms_list = await getRoomsArray()
+
+  // if roomArray is empty, return all available components
+  if (rooms_list.length === 0) {
+    const [monitors] = await pool.query(`SELECT component_id FROM non_consumable_components WHERE flagged = 0 AND reference_id = 1`) // 1 is the reference_id for system units
+    console.log(monitors)
+    return monitors
+  }
+
+  console.log('has rooms')
+  // if roomArray is not empty, return all available components except the ones in the rooms and flagged
+  let monitor_query = `SELECT component_id FROM non_consumable_components WHERE location NOT LIKE ?`
+  for (let i = 1; i < rooms_list.length; i++) {
+    console.log(rooms_list[i])
+    monitor_query += ` AND location NOT LIKE ?`
+  } monitor_query += ` AND flagged = 0 AND reference_id = 1` // 1 is the reference_id for system units
+
+  const [monitors] = await pool.query(monitor_query, rooms_list)
+
+  return monitors.map(monitor => monitor.component_id); // converted to array of component_id
+}
+
+//get avaliable monitors
+export async function getAvailableMonitor(){
+  const rooms_list = await getRoomsArray()
+
+  // if rooms_list is empty, return all available components
+  if (rooms_list.length === 0) {
+    const [monitors] = await pool.query(`SELECT component_id FROM non_consumable_components WHERE flagged = 0 AND reference_id = 2`) // 2 is the reference_id for monitors
+    return monitors
+  }
+
+  // if rooms_list is not empty, return all available components except the ones in the rooms and flagged
+  let monitor_query = `SELECT component_id FROM non_consumable_components WHERE location NOT LIKE ?`
+  for (let i = 1; i < rooms_list.length; i++) {
+    monitor_query += ` AND location NOT LIKE ?`
+  } monitor_query += ` AND flagged = 0 AND reference_id = 2` // 2 is the reference_id for monitors
+
+  const [monitors] = await pool.query(monitor_query, rooms_list)
+
+  return monitors.map(monitor => monitor.component_id); // converted to array of component_id
+}
+
+// get available consumable components
+export async function getAvailableConsumableComponents(){
+  const [consumable_components] = await pool.query(`
+    SELECT components_reference.component_name, consumable_components.stock_count
+    FROM consumable_components 
+    JOIN components_reference ON consumable_components.reference_id = components_reference.reference_id
+    WHERE stock_count > 0`)
+  
+  const result = {}
+  consumable_components.forEach(component => {
+    result[component.component_name] = component.stock_count
+  })
+  
+  return result
+}
+
+
+
 //[CREATE QUERY]
 
 // create a room
@@ -189,25 +260,34 @@ export async function createRoom(room, building_code){
 
 // create a computer
 export async function createComputer(room, building_code, system_unit, monitor){
+
+  // check if the room exists
+  const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
+
+  if (!rooms.some(r => r.rooms === `${room}${building_code}`)) {
+    return "Room does not exist"
+  }
+
   const [result] = await pool.query(`
     INSERT INTO computers(room, building_code, system_unit, monitor, has_mouse, has_keyboard, has_internet, has_software, computer_status, condition_id)
     VALUES (?, ?, ?, ?, 1, 1, 1, 1, 1, 0)`,
     [room, building_code, system_unit, monitor])
 
+  // create the component condition
+  await createComponentCondition(result.insertId)
+
   // update the non consumable components location
   const location = `${room}${building_code}`;
   const update_non_consumable_component = await updateNonConsumableComponent(location, system_unit, monitor);
 
-  /*
-   update the comsumable components
-  */
+  //update the comsumable components (decrement the stock count by 1 for each component)
+  await pool.query(`UPDATE consumable_components SET stock_count = (stock_count - 1)`)
 
-  // return getComputer()
-  return { computer_id: result.insertId, computers: getComputer() }
+  return getComputer()
 }
 
 // create component condition
-export async function createComponentCondition(computer_id){
+async function createComponentCondition(computer_id){
   const [result] = await pool.query(`
      INSERT INTO components_condition(computer_id, system_unit_condition, monitor_condition, mouse_condition, keyboard_condition, network_condition, software_condition)
       VALUES (?, 0, 0, 0, 0, 0, 0)`,
@@ -381,3 +461,4 @@ export async function updateConsumableComponent(component_name, stock_count){
 
   return getConsumableComponent()
 }
+

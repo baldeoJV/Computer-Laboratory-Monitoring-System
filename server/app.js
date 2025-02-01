@@ -5,12 +5,13 @@ import cookieParser from 'cookie-parser';
 import {
     getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
-    getComponentCondition, createComponentCondition,
+    getComponentCondition,
     getNonConsumableComponent, createNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId,
-    updateRoom, updateNonConsumableComponent
+    updateRoom, updateNonConsumableComponent,
+    getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents
 } from './be_comlab.js';
 
 const app = express();
@@ -178,17 +179,13 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
 
     try {
         const create_computer = await createComputer(room, building_code, system_unit, monitor);
-        const create_component_condition = await createComponentCondition(create_computer.computer_id);
         const location = `${room}${building_code}`;
-        const update_non_consumable_component = await updateNonConsumableComponent(location, system_unit, monitor);
-        const update_room = await updateRoom();
 
-        res.status(201).json({
-            computers: create_computer.computers,
-            create_component_condition,
-            update_non_consumable_component,
-            update_room
-        });
+        // await createComponentCondition(create_computer.computer_id);
+        await updateNonConsumableComponent(location, system_unit, monitor);
+        await updateRoom();
+
+        res.status(201).send(create_computer);
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' already in use.`);
@@ -277,6 +274,38 @@ app.get("/consum_comp", checkAdminIdSession, async (req, res) => {
     const get_consumable_component = await getConsumableComponent();
     res.send(get_consumable_component);
 });
+
+app.get("/available_monitor", checkAdminIdSession, async (req, res) => {
+    try {
+        const get_available_monitor = await getAvailableMonitor();
+        res.status(200).send(get_available_monitor);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching available monitors.");
+    }
+});
+
+app.get("/available_sysu", checkAdminIdSession, async (req, res) => {
+    try {
+        const get_available_system_unit = await getAvailableSystemUnit();
+        res.status(200).send(get_available_system_unit);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching available system unit.");
+    }
+});
+
+app.get("/available_consumables", checkAdminIdSession, async (req, res) => {
+    try {
+        const get_available_consumable_components = await getAvailableConsumableComponents();
+        res.status(200).send(get_available_consumable_components);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching available consumable components.");
+    }
+});
+
+
 
 // [REPORT TABLE RELATED QUERY]
 app.get('/report', checkAdminIdSession, async (req, res) => {
