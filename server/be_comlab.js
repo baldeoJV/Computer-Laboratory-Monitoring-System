@@ -184,11 +184,9 @@ export async function getAvailableSystemUnit(){
     return monitors
   }
 
-  console.log('has rooms')
   // if roomArray is not empty, return all available components except the ones in the rooms and flagged
   let monitor_query = `SELECT component_id FROM non_consumable_components WHERE location NOT LIKE ?`
   for (let i = 1; i < rooms_list.length; i++) {
-    console.log(rooms_list[i])
     monitor_query += ` AND location NOT LIKE ?`
   } monitor_query += ` AND flagged = 0 AND reference_id = 1` // 1 is the reference_id for system units
 
@@ -235,7 +233,6 @@ export async function getAvailableConsumableComponents(){
 }
 
 
-
 //[CREATE QUERY]
 
 // create a room
@@ -258,7 +255,7 @@ export async function createRoom(room, building_code){
   return getRoom()
 }
 
-// create a computer
+// create a computer (to be edited since waiting for the front end to be done)
 export async function createComputer(room, building_code, system_unit, monitor){
 
   // check if the room exists
@@ -462,3 +459,28 @@ export async function updateConsumableComponent(component_name, stock_count){
   return getConsumableComponent()
 }
 
+// update non consumable component flag
+export async function updateNonConsumableComponentFlag(component_list, flag){
+  let query = `UPDATE non_consumable_components SET flagged = ? WHERE component_id LIKE ?`;
+
+  for (let i = 1; i < component_list.length; i++){
+    query += ` OR component_id LIKE ?`;
+  }
+
+  await pool.query(query, [flag, ...component_list])
+  return getNonConsumableComponent()
+}
+
+//[DELETE QUERY]
+
+// delete non consumable component
+export async function deleteNonConsumbaleComponent(component_list){
+  let query = `DELETE FROM non_consumable_components WHERE component_id LIKE ?`;
+
+  for (let i = 1; i < component_list.length; i++){
+    query += ` OR component_id LIKE ?`;
+  }
+
+  await pool.query(query, component_list)
+  return getNonConsumableComponent()
+}

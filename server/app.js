@@ -6,13 +6,17 @@ import {
     getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getComponentCondition,
-    getNonConsumableComponent, createNonConsumableComponent,
+    getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumbaleComponent,
+    updateNonConsumableComponentFlag,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId,
     updateRoom, updateNonConsumableComponent,
     getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents
 } from './be_comlab.js';
+
+// import dotenv from 'dotenv';
+// dotenv.config();
 
 const app = express();
 
@@ -52,6 +56,8 @@ function formatDate(dateString) {
 // LOGIN
 app.post('/login', async (req, res) => {
     const { adminId, password } = req.body;
+    // const adminId = process.env.adminId;
+    // const password = process.env.password;
 
     try {
         const admins = await verifyAdminId(adminId);
@@ -269,6 +275,34 @@ app.post("/create/non_consum_comp", checkAdminIdSession, async (req, res) => {
     }
 });
 
+app.post("/update/non_consum_comp_flag", checkAdminIdSession, async (req, res) => {
+    const { component_id, flag } = req.body;
+    // flag values: 0 - available, 1 - defective
+
+    try {
+        const update_non_consumable_component_flag = await updateNonConsumableComponentFlag(component_id, flag);
+        res.status(201).send(update_non_consumable_component_flag);
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+});
+
+app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
+    const component_id  = req.body;
+
+    try {
+        const delete_non_consumable_component = await deleteNonConsumbaleComponent(component_id);
+        res.status(201).send(delete_non_consumable_component);
+    } catch (error) {
+        if (error.code === "ER_ROW_IS_REFERENCED_2"){
+            return res.status(409).send(`A component is still in use.`);
+        }
+        return res.status(400).send(error);
+    }
+});
+
+
+
 // [CONSUMABLE-COMPONENT TABLE RELATED QUERY]
 app.get("/consum_comp", checkAdminIdSession, async (req, res) => {
     const get_consumable_component = await getConsumableComponent();
@@ -427,7 +461,7 @@ app.post("/create/admin", checkAdminIdSession, async (req, res) => {
     }
 });
 
-// [UPDATE ROOM]
+// update room (just refreshes the room data)
 app.get("/update/room", checkAdminIdSession, async (req, res) => {
     try {
         const update_room = await updateRoom();
@@ -437,7 +471,7 @@ app.get("/update/room", checkAdminIdSession, async (req, res) => {
     }
 });
 
-// update consumable component
+// update consumable component 
 app.post("/update/consum_comp", checkAdminIdSession, async (req, res) => {
     const { component_name, stock_count } = req.body;
 
