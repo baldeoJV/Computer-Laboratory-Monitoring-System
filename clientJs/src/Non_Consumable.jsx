@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Alert, Button, FormControl, Grid2, InputLabel, MenuItem, Modal, Select, Stack, TextField } from '@mui/material';
 import DrawerMenu from './components/DrawerMenu';
@@ -23,11 +23,12 @@ import palette from './assets/palette';
 import { AnimatePresence, motion } from 'motion/react';
 import { enqueueSnackbar, SnackbarProvider } from 'notistack';
 import { useForm } from 'react-hook-form';
+import CircleIcon from '@mui/icons-material/Circle';
 function createData(component_id, reference_id, location, specs, flagged){
     return {component_id, reference_id, location, specs, flagged}
 }
 function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen, handleSnackBarClick, setNonConsumData}) {
-    const {register, handleSubmit, formState: {errors}} = useForm()
+    const {register, handleSubmit, formState: {errors}, reset} = useForm()
     const ModalMotion = ({alertComponent}) => <motion.div
         key={"modal"} 
         initial={{ opacity: 0, scale: 0 }}
@@ -61,6 +62,158 @@ function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen
                     setNonConsumData(rows)
                     handleSnackBarClick('success', "Successfully Added Component")
                     setcreateComponentOpen(false)
+                    reset()
+                }).catch(err => {
+                    console.error("CONSOLE ERROR ", err)
+                    handleSnackBarClick('error', err.response.data)
+                    
+                })
+            })}>
+                <Box 
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        <TextField
+                            required
+                            label={'Componend ID'}
+                            {...register("component_id", {
+                                    required: true,
+                            })}
+                            placeholder='e.g SYU-001 / MON-001'
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />
+                        <AnimatePresence>
+                            {errors.component_id?.type === 'required' && (
+                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Component ID</Alert>} />
+                            )}
+                        </AnimatePresence>
+                        <FormControl fullWidth sx={{ my: 1, mt: 2 }}>
+                            <InputLabel id="reference-id-label">Type</InputLabel>
+                            <Select
+                                labelId="reference-id-label"
+                                label="Type"
+                                {...register("reference_id", {
+                                    required: true,
+                                })}
+                                defaultValue={""}
+                            >
+                                <MenuItem value={2}>Monitor</MenuItem>
+                                <MenuItem value={1}>System Unit</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <AnimatePresence>
+                            {errors.reference_id?.type === 'required' && (
+                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a type</Alert>} />
+                            )}
+                        </AnimatePresence>
+                        <FormControl fullWidth sx={{ my: 1, mt: 2 }}>
+                            <InputLabel id="reference-id-label">Location</InputLabel>
+                            <Select
+                                labelId="reference-id-label"
+                                label="location"
+                                {...register("location", {
+                                    required: true,
+                                })}
+                                defaultValue={""}
+                            >
+                                <MenuItem value="Location 1">Location 1</MenuItem>
+                                <MenuItem value="Location 2">Location 2</MenuItem>
+                                <MenuItem value="Storage Room">Storage Room 1</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <AnimatePresence>
+                            {errors.location?.type === 'required' && (
+                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a location</Alert>} />
+                            )}
+                        </AnimatePresence>
+                        <TextField
+                            required
+                            label={'Specs'}
+                            {...register("specs", {
+                                    required: true,
+                            })}
+                            placeholder='e.g SYU-001 / MON-001'
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />
+                        <AnimatePresence>
+                            {errors.specs?.type === 'required' && (
+                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Specification</Alert>} />
+                            )}
+                        </AnimatePresence>
+                    </Stack>
+                    <Button
+                        type='submit'
+                        sx={{
+                            color: 'white',
+                            textTransform:'none',
+                            fontFamily:'Inter',
+                            minWidth:'100%',
+                            p:1.3,
+                            mt:2.5,
+                            bgcolor:'#323e8a',
+                        }}
+                    >
+                        Add Component
+                    </Button>
+                </Box>
+            </form>
+        </Modal>
+        <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
+    </>
+}
+function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen, handleSnackBarClick, setNonConsumData}) {
+    const {register, handleSubmit, formState: {errors}, reset} = useForm()
+    const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+    
+    return <>
+        <Modal
+            open={updateComponentOpen}
+            onClose={()=>setupdateComponentOpen(false)}
+        >
+            <form noValidate onSubmit={handleSubmit((dta)=> {
+                // console.log(dta)
+                axios.post('/api/create/non_consum_comp', {
+                    component_id: dta.component_id, 
+                    reference_id: dta.reference_id,
+                    location: dta.location,
+                    specs: dta.specs,
+                }).then(res=> {
+                    const data = res.data
+                    const rows = data.map((ncd) => createData( 
+                        ncd.component_id,
+                        ncd.component_name,
+                        ncd.location,
+                        ncd.specs,
+                        ncd.flagged,
+                    ))
+                    setNonConsumData(rows)
+                    handleSnackBarClick('success', "Successfully Added Component")
+                    setupdateComponentOpen(false)
+                    reset()
                 }).catch(err => {
                     console.error("CONSOLE ERROR ", err)
                     handleSnackBarClick('error', err.response.data)
@@ -177,11 +330,16 @@ function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen
     </>
 }
 
+
 function Non_Consumable() {
     const [nonConsumData, setNonConsumData] = useState([]);
 
     // FORMS AND MODAL FOR CREATE COMPONENT
     const [createComponentOpen, setcreateComponentOpen] = useState(false);
+    const [deleteComponentOpen, setdeleteComponentOpen] = useState(false);
+    // const [updateComponentOpen, setupdateComponentOpen] = useState(false);
+    // const [flagComponentOpen, setflagComponentOpen] = useState(false);
+    // const [unflagComponentOpen, setunflagComponentOpen] = useState(false);
     
 
     // FORMS SNACK BAR
@@ -189,20 +347,23 @@ function Non_Consumable() {
         enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
     } 
     const navigate = useNavigate()
-    useEffect(()=> {
-        axios.get('/api/non_consum_comp').then( res => {
-            const data = res.data
-            const rows = data.map((ncd) => createData( 
+    const fetchNonConsumableComponents = useCallback(()=> {
+        axios.get('/api/non_consum_comp').then(res => {
+            const data = res.data;
+            const rows = data.map((ncd) => createData(
                 ncd.component_id,
                 ncd.component_name,
                 ncd.location,
                 ncd.specs,
-                ncd.flagged,
-            ))
-            setNonConsumData(rows)
-            
-        }).catch(err => handleErrorFetch(err, navigate))
+                ncd.flagged
+            ));
+            setNonConsumData(rows);
+
+        }).catch(err => handleErrorFetch(err, navigate));
     }, [navigate])
+    useEffect(()=> {
+        fetchNonConsumableComponents();
+    }, [])
     const headCellsV2 = useMemo(() => [
         {
             accessorKey: "component_id",
@@ -229,6 +390,10 @@ function Non_Consumable() {
         {
             accessorKey: "flagged",
             header: "Flag",
+            Cell: ({cell}) => {
+                const value = cell.getValue()
+                return <CircleIcon sx={{color: (value === 0) ? "gray": "green"}}/>
+            }
         },
     ], []);
 
@@ -241,7 +406,7 @@ function Non_Consumable() {
                 <div className="label">
                     <div className="text-wrapper">Inventory</div>
                 </div>
-                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}} 
+                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}}  
                     onClick={()=> setcreateComponentOpen(true)}
                 >
                     Add Monitor / System Unit
@@ -268,6 +433,7 @@ function Non_Consumable() {
                                 label='Delete'
                                 table={table}
                                 onClick={() => {
+                                    setdeleteComponentOpen(true)
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
                             />,
@@ -307,6 +473,40 @@ function Non_Consumable() {
         handleSnackBarClick = {handleSnackBarClick}
         setNonConsumData = {setNonConsumData}
     />
+    {/* <Forms_Update_NonConsumable
+        updateComponentOpen= {updateComponentOpen} 
+        setupdateComponentOpen = {setupdateComponentOpen}
+        handleSnackBarClick = {handleSnackBarClick}
+        setNonConsumData = {setNonConsumData}
+    /> */}
+    <Modal
+        open={deleteComponentOpen}
+        onClose={()=> setdeleteComponentOpen(false)}
+    >
+        <Box 
+            sx={{
+                alignContent:'center',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 400,
+                bgcolor: 'background.paper',
+                boxShadow: 24,
+                p: 4,
+            }}
+        >
+            <Typography sx={{mb:2, fontFamily:'Inter'}} variant='h6'>Do you want to delete this component?</Typography>
+            <Stack
+                direction={'row'}
+                sx={{width:'100%', justifyContent:'end'}}    
+            >
+                <Button>Delete</Button>
+                <Button onClick={()=>setdeleteComponentOpen(false)}>Cancel</Button>
+            </Stack>
+        </Box>
+    </Modal>
+
 </div>;
 }
 

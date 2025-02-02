@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Alert, Box, Button, FormControl, Grid2, InputLabel, MenuItem, Modal, Select, Stack, TextField } from '@mui/material';
 import DrawerMenu from './components/DrawerMenu';
@@ -23,8 +23,7 @@ import { useForm } from 'react-hook-form';
 function createData(reference_id, stock_count){
     return {reference_id, stock_count}
 }
-function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, handleSnackBarClick, setNonConsumData}) {
-    const {register, handleSubmit, formState: {errors}} = useForm()
+function Forms_Edit_Consumable({openEditConsumableModal, setopenEditConsumableModal, handleSnackBarClick, fetchConsumable, register, handleSubmit, errors, reset}) {
     const ModalMotion = ({alertComponent}) => <motion.div
         key={"modal"} 
         initial={{ opacity: 0, scale: 0 }}
@@ -36,32 +35,20 @@ function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, h
     
     return <>
         <Modal
-            open={createComponentOpen}
-            onClose={()=>setcreateComponentOpen(false)}
+            open={openEditConsumableModal}
+            onClose={()=>setopenEditConsumableModal(false)}
         >
             <form noValidate onSubmit={handleSubmit((dta)=> {
-                // console.log(dta)
-                axios.post('/api/create/non_consum_comp', {
-                    component_id: dta.component_id, 
-                    reference_id: dta.reference_id,
-                    location: dta.location,
-                    specs: dta.specs,
-                }).then(res=> {
-                    const data = res.data
-                    const rows = data.map((ncd) => createData( 
-                        ncd.component_id,
-                        ncd.component_name,
-                        ncd.location,
-                        ncd.specs,
-                        ncd.flagged,
-                    ))
-                    setNonConsumData(rows)
-                    handleSnackBarClick('success', "Successfully Added Component")
-                    setcreateComponentOpen(false)
-                }).catch(err => {
-                    console.error("CONSOLE ERROR ", err)
-                    handleSnackBarClick('error', err.response.data)
-                    
+                axios.post('/api/update/consum_comp', {
+                    component_name: dta.component_name,
+                    stock_count: dta.stock_count,
+                }).then(res => {
+                    fetchConsumable()
+                    handleSnackBarClick("success", "Successfully Updated Component")
+                    setopenEditConsumableModal(false)
+                }).catch( err => {
+                    console.error("ERROR: ", err.response.data)
+                    handleSnackBarClick("error", err.response.data)
                 })
             })}>
                 <Box
@@ -79,68 +66,25 @@ function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, h
                     <Stack>
                         <TextField
                             required
-                            label={'Componend ID'}
-                            {...register("component_id", {
+                            disabled
+                            label={'Component'}
+                            {...register("component_name", {
                                     required: true,
                             })}
-                            placeholder='e.g SYU-001 / MON-001'
+
                             fullWidth
-                            sx={{
-                                my:1, 
-                                mt:2,
-                            }}
+                            sx={{mt:2,}}
                         />
                         <AnimatePresence>
-                            {errors.component_id?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Component ID</Alert>} />
-                            )}
-                        </AnimatePresence>
-                        <FormControl fullWidth sx={{ my: 1, mt: 2 }}>
-                            <InputLabel id="reference-id-label">Type</InputLabel>
-                            <Select
-                                labelId="reference-id-label"
-                                label="Type"
-                                {...register("reference_id", {
-                                    required: true,
-                                })}
-                                defaultValue={""}
-                            >
-                                <MenuItem value={2}>Monitor</MenuItem>
-                                <MenuItem value={1}>System Unit</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <AnimatePresence>
-                            {errors.reference_id?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a type</Alert>} />
-                            )}
-                        </AnimatePresence>
-                        <FormControl fullWidth sx={{ my: 1, mt: 2 }}>
-                            <InputLabel id="reference-id-label">Location</InputLabel>
-                            <Select
-                                labelId="reference-id-label"
-                                label="location"
-                                {...register("location", {
-                                    required: true,
-                                })}
-                                defaultValue={""}
-                            >
-                                <MenuItem value="Location 1">Location 1</MenuItem>
-                                <MenuItem value="Location 2">Location 2</MenuItem>
-                                <MenuItem value="Storage Room">Storage Room 1</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <AnimatePresence>
-                            {errors.location?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a location</Alert>} />
-                            )}
+                            {errors.component_name?.type === 'required' && (<ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Select Component</Alert>} />)}
                         </AnimatePresence>
                         <TextField
                             required
-                            label={'Specs'}
-                            {...register("specs", {
+                            label={'Stock Count'}
+                            {...register("stock_count", {
                                     required: true,
                             })}
-                            placeholder='e.g SYU-001 / MON-001'
+                            placeholder='e.g 200'
                             fullWidth
                             sx={{
                                 my:1, 
@@ -148,9 +92,7 @@ function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, h
                             }}
                         />
                         <AnimatePresence>
-                            {errors.specs?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Specification</Alert>} />
-                            )}
+                            {errors.stock_count?.type === 'required' && (<ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter a valid stock count</Alert>} />)}
                         </AnimatePresence>
                     </Stack>
                     <Button
@@ -165,7 +107,7 @@ function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, h
                             bgcolor:'#323e8a',
                         }}
                     >
-                        Add Component
+                        Update Component
                     </Button>
                 </Box>
             </form>
@@ -174,14 +116,19 @@ function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, h
     </>
 }
 function Consumable() {
+    const {register, handleSubmit, formState: {errors}, reset} = useForm()
+
     const [consumData, setConsumData] = useState([]);
     const navigate = useNavigate()
     const [openEditConsumableModal, setopenEditConsumableModal] = useState(false);
-
-    useEffect(()=> {
+    const [targetedConsumable, settargetedConsumable] = useState('');
+    const handleSnackBarClick = (variant, err_msg) => {
+        enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
+    } 
+    const fetchConsumable = useCallback(()=>{
         axios.get('/api/consum_comp').then( res => {
             const data = res.data
-            console.log(data)
+            // console.log(data)
             const rows = data.map((cd) => createData( 
                 cd.component_name,
                 cd.stock_count
@@ -190,6 +137,10 @@ function Consumable() {
             
         }).catch(err => handleErrorFetch(err, navigate))
     }, [navigate])
+    
+    useEffect(()=> {
+        fetchConsumable()
+    }, [])
     const headCellsV2 = [
         {
             accessorKey: "reference_id",
@@ -226,18 +177,11 @@ function Consumable() {
                             const menuRow = row.original
                             return [
                             <MRT_ActionMenuItem
-                                key={"Delete"}
-                                label='Delete'
-                                table={table}
-                                onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
-                                }}
-                            />,
-                            <MRT_ActionMenuItem
                                 key={"edit"}
                                 label='Edit'
                                 table={table}
                                 onClick={() => {
+                                    reset({component_name: menuRow.reference_id})
                                     setopenEditConsumableModal(true)
                                 }}
                             />,
@@ -246,14 +190,16 @@ function Consumable() {
                 />
         </div>
     </Stack>
-    <Modal
-        open={openEditConsumableModal}
-        onClose={()=>setopenEditConsumableModal(false)}
-    >
-        <Box>
-            Hi
-        </Box>
-    </Modal>
+    <Forms_Edit_Consumable
+        handleSnackBarClick={handleSnackBarClick}
+        openEditConsumableModal={openEditConsumableModal}
+        setopenEditConsumableModal={setopenEditConsumableModal}
+        fetchConsumable={fetchConsumable}
+        register={register}
+        handleSubmit={handleSubmit}
+        errors={errors}
+        reset={reset}
+    />
 </div>;
 }
 

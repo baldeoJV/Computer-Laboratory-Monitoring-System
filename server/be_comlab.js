@@ -62,7 +62,7 @@ export async function getRoomComputer(room, building_code){
 export async function getNonConsumableComponent(component_id = ''){
   const [rows] = await pool.query(
     component_id ? `SELECT * FROM non_consumable_components as nonconsum JOIN components_reference as conref ON conref.reference_id = nonconsum.reference_id WHERE component_id = ?` :
-    `SELECT * FROM non_consumable_components as nonconsum JOIN components_reference as conref ON conref.reference_id = nonconsum.reference_id`, [component_id])
+    `SELECT * FROM non_consumable_components as nonconsum JOIN components_reference as conref ON conref.reference_id = nonconsum.reference_id ORDER BY nonconsum.flagged DESC`, [component_id])
   return component_id ? rows[0] : rows
 }
 
@@ -456,7 +456,7 @@ export async function updateConsumableComponent(component_name, stock_count){
     WHERE components_reference.component_name LIKE ?`,
     [stock_count, component_name])
 
-  return getConsumableComponent()
+  return
 }
 
 // update non consumable component flag
@@ -474,7 +474,7 @@ export async function updateNonConsumableComponentFlag(component_list, flag){
 //[DELETE QUERY]
 
 // delete non consumable component
-export async function deleteNonConsumbaleComponent(component_list){
+export async function deleteNonConsumableComponent(component_list){
   let query = `DELETE FROM non_consumable_components WHERE component_id LIKE ?`;
 
   for (let i = 1; i < component_list.length; i++){

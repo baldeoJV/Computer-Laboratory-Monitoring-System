@@ -6,7 +6,7 @@ import {
     getRoom, createRoom,
     getComputer, createComputer, getRoomComputer,
     getComponentCondition,
-    getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumbaleComponent,
+    getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumableComponent,
     updateNonConsumableComponentFlag,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
@@ -291,7 +291,7 @@ app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
     const component_id  = req.body;
 
     try {
-        const delete_non_consumable_component = await deleteNonConsumbaleComponent(component_id);
+        const delete_non_consumable_component = await deleteNonConsumableComponent(component_id);
         res.status(201).send(delete_non_consumable_component);
     } catch (error) {
         if (error.code === "ER_ROW_IS_REFERENCED_2"){
@@ -476,8 +476,8 @@ app.post("/update/consum_comp", checkAdminIdSession, async (req, res) => {
     const { component_name, stock_count } = req.body;
 
     try {
-        const update_consumable_component = await updateConsumableComponent(component_name, stock_count);
-        res.status(201).send(update_consumable_component);
+        await updateConsumableComponent(component_name, stock_count);
+        res.status(201).send("Successfully updated");
     } catch (error) {
         return res.status(400).send(error);
     }

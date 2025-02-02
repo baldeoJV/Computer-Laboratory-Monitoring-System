@@ -248,7 +248,7 @@ function Form_Create_Computer({createComputerModalOpen, setcreateComputerModalOp
     const [loadingMonitor, setloadingMonitor] = useState(false);
     const [loadingSysu, setloadingSysu] = useState(false);
     // FORM SUBMISSION 
-    const {register, handleSubmit, formState: {errors}} = useForm()
+    const {register, handleSubmit, formState: {errors}, reset} = useForm()
     const fetchMonitor = () => {
         axios.get('/api/available_monitor').then(dta =>
             setavailable_monitors(dta.data)
@@ -285,7 +285,7 @@ function Form_Create_Computer({createComputerModalOpen, setcreateComputerModalOp
             await fetchLabRooms()
             handleSnackBarClick('success', "Successfully Created a Computer")
             setcreateComputerModalOpen(false)
-    
+            reset()
             
         } catch (err) {
             console.error("CONSOLE ERROR ", err)
@@ -410,7 +410,7 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
 
 
     // FORM SUBMISSION 
-    const {register, handleSubmit, formState: {errors}} = useForm()
+    const {register, handleSubmit, formState: {errors}, reset} = useForm()
     
     const ModalMotion = ({alertComponent}) => <motion.div
         key={"modal"} 
@@ -433,11 +433,13 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
                     mapRoomCards(res.data)
                     handleSnackBarClick('success', "Successfully Created a Room")
                     setcreateRoomModalOpen(false)
+                    reset()
                 }).catch(err => {
                     console.error("CONSOLE ERROR ", err)
                     handleSnackBarClick('error', err.response.data)
                     
                 })
+                
             })}>
                 <Box 
                     sx={{
