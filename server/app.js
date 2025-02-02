@@ -184,14 +184,14 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
     const { room, building_code, system_unit, monitor } = req.body;
 
     try {
-        const create_computer = await createComputer(room, building_code, system_unit, monitor);
+        await createComputer(room, building_code, system_unit, monitor);
         const location = `${room}${building_code}`;
 
         // await createComponentCondition(create_computer.computer_id);
         await updateNonConsumableComponent(location, system_unit, monitor);
         await updateRoom();
 
-        res.status(201).send(create_computer);
+        res.status(201).send('Created Computer Successfully');
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' already in use.`);

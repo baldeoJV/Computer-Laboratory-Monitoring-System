@@ -280,7 +280,7 @@ export async function createComputer(room, building_code, system_unit, monitor){
   //update the comsumable components (decrement the stock count by 1 for each component)
   await pool.query(`UPDATE consumable_components SET stock_count = (stock_count - 1)`)
 
-  return getComputer()
+  return
 }
 
 // create component condition

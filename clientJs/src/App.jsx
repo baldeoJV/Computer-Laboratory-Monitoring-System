@@ -198,27 +198,39 @@ function App()  {
     }
     let reportLabel = mr ? rd.total_reports+" pending reports" : "No pending reports"
     let bdLabel = bdMap[rd.building_code].replace("Building", "Bd.")
-    elms.push(<Card key={`rd - ${rd.room} - ${rd.building_code}`} sx={{border:'1px solid '+palette.strokeMain , m:0, p:1.5, borderRadius: '12px', width:'136px', cursor:'pointer'}}>
-      <Stack direction={'row'} width={'100%'}>
-      <Stack mb={0.4}>
+    elms.push(
+      <NavLink
+      key={`nl - ${rd.room} - ${rd.building_code}`} 
+      to={'/laboratory'}
+      state={{
+        urlRoom: rd.room, 
+        urlBuilding: rd.building_code
+      }}
+      style={{ textDecoration: 'none' }}
+      >
+      <Card  sx={{border:'1px solid '+palette.strokeMain , m:0, p:1.5, borderRadius: '12px', width:'136px', cursor:'pointer'}}>
+        <Stack direction={'row'} width={'100%'}>
+        <Stack mb={0.4}>
         <Typography sx={{color: 'text.secondary', fontSize:'12px',fontFamily:'Inter'}}>
           {bdLabel}
         </Typography>
         <Typography variant='h6' component='div' sx={{fontFamily:'Inter'}} >
           {`${rd.room}${rd.building_code}`}
         </Typography>
-      </Stack>
-      <div style={{width:'100%', textAlign:'right'}}>
+        </Stack>
+        <div style={{width:'100%', textAlign:'right'}}>
         {mr ? <GppMaybeRoundedIcon sx={iconsx} fontSize='medium'/>:<GppGoodRoundedIcon sx={iconsx} fontSize='medium'/>}
-      </div>
-      
-      </Stack>
+        </div>
+        
+        </Stack>
 
 
-      <Typography fontSize={'11px'} sx={{color:mr? palette.badFont : palette.darkBlueFont,fontFamily:'Inter'}}>
+        <Typography fontSize={'11px'} sx={{color:mr? palette.badFont : palette.darkBlueFont,fontFamily:'Inter'}}>
         {reportLabel}
-      </Typography>
-    </Card>)
+        </Typography>
+      </Card>
+      </NavLink>
+    )
   }
   
 

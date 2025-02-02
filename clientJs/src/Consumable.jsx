@@ -176,7 +176,7 @@ function Forms_Create_Consumable({createComponentOpen, setcreateComponentOpen, h
 function Consumable() {
     const [consumData, setConsumData] = useState([]);
     const navigate = useNavigate()
-
+    const [openEditConsumableModal, setopenEditConsumableModal] = useState(false);
 
     useEffect(()=> {
         axios.get('/api/consum_comp').then( res => {
@@ -238,7 +238,7 @@ function Consumable() {
                                 label='Edit'
                                 table={table}
                                 onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
+                                    setopenEditConsumableModal(true)
                                 }}
                             />,
                         ]}
@@ -246,6 +246,14 @@ function Consumable() {
                 />
         </div>
     </Stack>
+    <Modal
+        open={openEditConsumableModal}
+        onClose={()=>setopenEditConsumableModal(false)}
+    >
+        <Box>
+            Hi
+        </Box>
+    </Modal>
 </div>;
 }
 

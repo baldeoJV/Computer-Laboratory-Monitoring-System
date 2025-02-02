@@ -15,7 +15,7 @@ import KeyboardDoubleArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardDou
 import { IconButton } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css'
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 function DesignBox(){
 
@@ -28,7 +28,7 @@ function DesignBox(){
 export default function DrawerMenu({menuType}) {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const handleCollapseChange = () => setIsCollapsed(!isCollapsed)
-
+    const navigate = useNavigate()
     return (
         <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
           <Sidebar className="sidebr" collapsed={isCollapsed}
@@ -88,14 +88,19 @@ export default function DrawerMenu({menuType}) {
                     {menuType === 'dashboard' && <DesignBox/>}
                     Dashboard
                 </MenuItem>
-                <MenuItem 
+
+                <MenuItem
+                    onClick={()=>{
+                        navigate('/laboratory')
+                        window.location.reload()
+                    }}
                     icon={<img src={laboratory_pic} alt='laboratory_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/laboratory"/>}
                 > 
                 {menuType === 'laboratory' && <DesignBox/>}
                 Laboratory 
                 </MenuItem>
+
                 <MenuItem 
                     icon={<img src={reports_pic} alt='reports_pic'/>} 
                     className='menuItem py-2'

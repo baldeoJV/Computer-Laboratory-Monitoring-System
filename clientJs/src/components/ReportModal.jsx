@@ -38,6 +38,11 @@ import { saveAs } from 'file-saver';
 import { pdf } from '@react-pdf/renderer';
 import ReportDocument from './ReportDocument';
 
+import { useForm } from 'react-hook-form';
+import { motion, AnimatePresence } from 'motion/react';
+import {SnackbarProvider, enqueueSnackbar} from 'notistack'
+
+
 function MaxHeightTextarea({textAreaValue, setTextAreaValue}) {
     const handleChange = (e) => {
         setTextAreaValue(e.target.value)
@@ -256,6 +261,8 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
         targetedComputerIDs, setTargetedComputerIDs
     } = useStore()
 
+    const [openConfirmModal, setopenConfirmModal] = useState(false);
+
     const [commentValue, setCommentValue] = useState('');
     const [studentId, setStudentId] = useState('');
     
@@ -270,6 +277,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
     const handleStudentIdChange = (e) => {
         setStudentId(e.target.value)
     }
+    
     const submitReport = async (toDownload = false) => {
         try {
             const response = await axios.post('/api/create/report', {
@@ -288,7 +296,6 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 report_comment: commentValue,
                 submittee: studentId
             });
-            alert(response.status);
             if (toDownload) {
                 const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v);
                 const blob = await pdf(<ReportDocument 
@@ -301,9 +308,12 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 />).toBlob();
                 saveAs(blob, `${studentId}-report-form.pdf`);
             }
+            console.log(response.status);
+            
+            alert("Report Submitted")
         } catch (err) {
             console.error("Error on report: ", err);
-            alert(err.response.data);
+            alert(err.response.data || err.message);
         }
     }
     return (
@@ -399,7 +409,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         onChange={(event, newRoom) => {
                             setReportedPcID(null);
                             setReportedRoom(newRoom);
-                            getComputersByRoom(newRoom, setTargetedComputerIDs, reportedBuilding, permissionType)
+                            getComputersByRoom(newRoom, setTargetedComputerIDs, reportedBuilding, permissionType, setReportedRoom)
                         }}
                         disablePortal
                         renderInput={params => 
@@ -443,13 +453,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
                     <Button 
-                        onClick={async () => {
-                            if (isClosable){
-                                setOpen(false)
-                            }
-                            await submitReport()
-                        }} 
-
+                        onClick={()=> setopenConfirmModal(true)}
                         color="primary" 
                         variant='contained' 
                         sx={{ 
@@ -516,6 +520,56 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                     }
                 </DialogActions>
             </Dialog>
+            <Modal
+                open={openConfirmModal}
+                onClose={()=>setopenConfirmModal(false)}
+            >
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        <InterTypography variant='h6' fontWeight={'400'} mb={4} alignContent={'center'} sx={{textAlign:'center', mt:2}}> Are you sure you want to submit? </InterTypography>
+                        <Button
+                        onClick={async () => {
+                            if (isClosable){
+                                setOpen(false)
+                            }
+                            if (!(reportedBuilding && reportedPcID && reportedBuilding && studentId)){
+                                alert("You must fill out all the forms")
+                            } else {
+                                await submitReport()
+                            
+                                setReportedBuilding('')
+                                setReportedRoom('')
+                                setReportedPcID('')
+                                setCommentValue('')
+                                setStudentId('')
+                                setPartsStatuses({
+                                    systemunit: { background: 'transparent', color: palette.txtStrong, condition: '', key:'System Unit',},
+                                    monitor: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Monitor',},
+                                    software: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Software',},
+                                    internet: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Internet',},
+                                    keyboard: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Keyboard',},
+                                    mouse: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Mouse',},
+                                    other: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Others',},
+                                })
+                            }
+
+                        }} 
+                        
+                        >Submit</Button>
+                    </Stack>
+                </Box>
+            </Modal>
         </div>
     );
 };

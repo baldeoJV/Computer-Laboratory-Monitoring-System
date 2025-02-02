@@ -42,7 +42,7 @@ export const getRoomsByBuilding = (reportedBuildingInner, setTargetedRooms, perm
         console.error("ERROR: ",error)
     }
 }
-export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reportedBuilding, permissionType) => {
+export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reportedBuilding, permissionType, setReportedRoom) => {
     if (reportedRoom === '' || reportedRoom === null) {
         // console.log("NULL ROOM");
         setTargetedComputerIDs([]);
@@ -56,7 +56,11 @@ export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reporte
         ]}).then(d => {
             const computersData = d.data;
             setTargetedComputerIDs(computersData.filter(cd => cd.room === reportedRoom).map(cdf => String(cdf.computer_id)));
-        }).catch(err => console.error("ERROR: ", err));
+        }).catch(err => {
+            alert(err.response.data)
+            setReportedRoom('')
+
+        });
     }
 }
 // ////////////////////////////////////////////////

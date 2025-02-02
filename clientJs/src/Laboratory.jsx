@@ -8,7 +8,7 @@ import ITable from './components/ITable';
 // import rooms_data from './assets/rooms_data.json'
 
 // 
-import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem, Modal, TextField, Alert, FormControl } from '@mui/material';
+import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem, Modal, TextField, Alert, FormControl, Autocomplete } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -31,7 +31,7 @@ import {MRT_ActionMenuItem,} from 'material-react-table';
 import useStore from './useStore';
 import { getComputersByRoom, getRoomsByBuilding } from './customMethods.js';
 import ReportModal from './components/ReportModal';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import SharedModal from './components/SharedModal.jsx';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
@@ -55,15 +55,15 @@ function LabelTop() {
     <div className="text-wrapper">Laboratory</div>
     </div>
 }
-function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms, handleOpenPCTable, onContextMenu}) {
+function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms, getPcRows, onContextMenu, setIsCompTableOpen, setComputersData, setPcDCond, setPcDStat}) {
 
     const handleCheckRoomBox = (e, r)=> {
         if (e.target.checked){
             setSelectedRooms([...selectedRooms, {"roomnum": r.room, "building_code": r.building_code}])
-            console.log("checked room: ", r.room)
-            console.log(r.building_code)
+            // console.log("checked room: ", r.room)
+            // console.log(r.building_code)
         } else {
-            console.log("unchecked room: ", r.room)
+            // console.log("unchecked room: ", r.room)
             setSelectedRooms(selectedRooms.filter(sr => sr.roomnum !== r.room && sr.building_code !== r.building_code))
         }
     }
@@ -201,7 +201,13 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
                                     </Stack>
                                 </Stack>
 
-                                <Button variant='outlined' size='small' sx={{borderRadius: '16px', marginTop: 1}} onClick={()=> handleOpenPCTable("single", [{"roomnum": r.room, "building_code": r.building_code}])}>
+                                <Button variant='outlined' size='small' sx={{borderRadius: '16px', marginTop: 1}} onClick={()=> {
+                                    setComputersData([])
+                                    setPcDCond([]) 
+                                    setPcDStat([])
+                                    getPcRows("single", [{"roomnum": r.room, "building_code": r.building_code}])
+                                    setIsCompTableOpen(true)
+                                }}>
                                     View Table
                                 </Button>
                             </Stack>
@@ -235,6 +241,171 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
 RoomBox.propTypes = {
     rooms: PropTypes.array
 }
+function Form_Create_Computer({createComputerModalOpen, setcreateComputerModalOpen, getPcRows, handleSnackBarClick, fetchLabRooms, targetedRoomsUI, typeTargetedRoomsUI}){
+    const [available_monitors, setavailable_monitors] = useState([]);
+    const [available_systemUnits, setavailable_systemUnits] = useState([]);
+    const [available_consumables, setavailable_consumables] = useState(0);
+    const [loadingMonitor, setloadingMonitor] = useState(false);
+    const [loadingSysu, setloadingSysu] = useState(false);
+    // FORM SUBMISSION 
+    const {register, handleSubmit, formState: {errors}} = useForm()
+    const fetchMonitor = () => {
+        axios.get('/api/available_monitor').then(dta =>
+            setavailable_monitors(dta.data)
+        ).catch(err =>{
+            console.log(err)
+            handleSnackBarClick('error', err.response.data)
+        })
+    }
+    const fetchSysu = () => {
+        axios.get('/api/available_sysu').then(dta =>
+            setavailable_systemUnits(dta.data)
+        ).catch(err =>{
+            console.log(err)
+            handleSnackBarClick('error', err.response.data)
+        })
+    }
+
+    const submitCreateComputer = async (dta)=> {
+        try {
+            await axios.post('/api/create/computer', {
+                room: dta.room, 
+                building_code: dta.building_code,
+                system_unit:dta.system_unit,
+                monitor: dta.monitor
+            })
+        
+            // console.log()
+            if (targetedRoomsUI.length > 0){
+                console.log(targetedRoomsUI);
+                
+                getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+            }
+            
+            await fetchLabRooms()
+            handleSnackBarClick('success', "Successfully Created a Computer")
+            setcreateComputerModalOpen(false)
+    
+            
+        } catch (err) {
+            console.error("CONSOLE ERROR ", err)
+            handleSnackBarClick('error', err.response.data)
+        }
+
+    }
+
+    const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+
+
+
+    return <>
+        <Modal
+            open={createComputerModalOpen}
+            onClose={()=>setcreateComputerModalOpen(false)}
+        >
+            <form noValidate onSubmit={handleSubmit(submitCreateComputer)}>
+                <Box 
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        {/* ROOM TEXTFIELD */}
+                        <TextField
+                            required
+                            label={'Room Number'}
+                            {...register("room", {
+                                    required: true,
+                            })}
+                            fullWidth
+                        />
+                        <AnimatePresence>
+                            {errors.room?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Room Number</Alert>}/>}
+                        </AnimatePresence>
+                        {/* BUIDLING TEXT FIELD */}
+                        <TextField
+                            required
+                            label={'Building (MB, ANB, MND'}
+                            {...register("building_code", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                mt:2, 
+                            }}
+                        />      
+                        <AnimatePresence>
+                            {errors.building_code?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Building</Alert>}/>}
+                        </AnimatePresence>
+                        {/* MONITOR AUTO COMPLETE */}
+                        <Autocomplete
+                        sx={{mt:2}}
+                            options={available_monitors }
+                            onOpen={fetchMonitor}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Monitor ID"
+                                    sx={{ fontFamily: 'Inter' }}
+                                    {...register("monitor", { required: true })}
+                                />
+                            )}                          
+                        />
+                        <AnimatePresence>
+                            {errors.monitor?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please select the available monitor</Alert>}/>}
+                        </AnimatePresence>
+                        {/* SYSU AUTO COMPLETE */}
+                        <Autocomplete
+                            sx={{mt:2}}
+                            options={available_systemUnits || ['']}
+                            onOpen={fetchSysu}
+                            renderInput={params => 
+                                <TextField
+                                    {...params}
+                                    label="System Unit ID"
+                                    sx={{ fontFamily: 'Inter', }}
+                                    {...register("system_unit", {required:true})}
+                                />
+                            }
+                        />
+                        <AnimatePresence>
+                            {errors.system_unit?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please select the available System Unit</Alert>}/>}
+                        </AnimatePresence>
+                    </Stack>
+                    <Button
+                        type='submit'
+                        sx={{
+                            color: 'white',
+                            textTransform:'none',
+                            fontFamily:'Inter',
+                            minWidth:'100%',
+                            p:1.3,
+                            mt:2.5,
+                            bgcolor:'#323e8a',
+                        }}
+                    >
+                        Add Computer
+                    </Button>
+                </Box>
+            </form>
+        </Modal>
+    </>
+
+}
 function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomCards, handleSnackBarClick}){
 
 
@@ -250,7 +421,7 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
         {alertComponent}
     </motion.div>
     return <>
-                <Modal
+        <Modal
             open={createRoomModalOpen}
             onClose={()=>setcreateRoomModalOpen(false)}
         >
@@ -295,7 +466,7 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
                         />
                         <AnimatePresence>
                             {errors.room?.type === 'required' && 
-                                <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
+                                <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Room Number</Alert>}/>
                             }
                         </AnimatePresence>
                         <TextField
@@ -312,7 +483,7 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
                         />      
                             <AnimatePresence>
                                 {errors.building_code?.type === 'required' && 
-                                    <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Administrator ID</Alert>}/>
+                                    <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Building</Alert>}/>
                                 }
                             </AnimatePresence>            
                     </Stack>
@@ -336,6 +507,102 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
     </>
 
 }
+const headCellsV2 = [
+    {
+        accessorKey: "computer_id",
+        header: "Computer ID",
+        size: 30,
+    },
+    {
+        accessorKey: "room",
+        header: "Room",
+        size: 50,
+    },
+    {
+        accessorKey: "building_code",
+        header: "Building",
+        size: 50,
+    },
+    {
+        accessorKey: "system_unit",
+        header: "System Unit Tag",
+        size: 50,
+    },
+    {
+        accessorKey: "monitor",
+        header: "Monitor Tag",
+        size: 50,
+    },
+    {
+        accessorKey: "condition",
+        header: "Condition",
+        size: 50,
+        Cell: ({cell}) => {
+            const theme = getChipTheme_condition(cell.getValue())
+            return <ThemeProvider theme={theme}>
+                <Chip
+                    variant='filled'
+                    sx={{
+                        m: 0.5,
+                        p: 0.5,
+                        backgroundColor:theme.palette.custom.main,
+                        color: theme.palette.custom.fontColor,
+                        fontWeight:'600',
+                    }}
+                    label={
+                        (cell.getValue() === 0) ? "Good" : 
+                        (cell.getValue() === 1) ? "Minor Issue" : 
+                        (cell.getValue() === 2) ? "Major Issue" : 
+                        (cell.getValue() === 3) ? "Bad" : "Unlisted"
+                    }
+                />
+
+            </ThemeProvider>
+        }
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+        size: 50,
+        Cell:({cell}) => {
+            const status = cell.getValue()
+            return <Typography                    
+                sx={{
+                    fontFamily:'Inter',
+                    fontWeight:'600', 
+                    color:(status === 0) ? palette.badFont : palette.darkBlueFont 
+                }}
+                >
+                {(status === 0) ? "Inactive" : "Active" }
+            </Typography>
+        }
+    },
+    {
+        accessorKey: "pending_reports",
+        header: "Pending Reports",
+        size: 30,
+    },
+    {
+        accessorKey: "has_mouse",
+        header: "Mouse",
+        size:30,
+    },
+    {
+        accessorKey: "has_keyboard",
+        header: "Keyboard",
+        size:30,
+    },
+    {
+        accessorKey: "has_internet",
+        header: "Internet",
+        size:30,
+    },
+    {
+        accessorKey: "has_software",
+        header: "Software",
+        size:30,
+    }
+]
 function Laboratory() {
     const [computerTable_addReportModalOpen, setComputerTable_AddReportModalOpen] = useState(false);
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
@@ -350,14 +617,26 @@ function Laboratory() {
     const [roomAnchorPosition, setRoomAnchorPosition] = useState(null)
     const [createRoomModalOpen, setcreateRoomModalOpen] = useState(false) 
 
+    // IN THE CASE OF PASSING PROPS IN LINK OR REDIRECT
+    const location = useLocation()
+    const {urlRoom, urlBuilding} = location.state || {}
+
     // COMPUTER DETAILS MODAL
     const [computerDetailsModalOpen , setComputerDetailsModalOpen ] = useState(false)
     const [computerDetailsItems, setComputerDetailsItems] = useState({})
+
+    // CREATE COMPUTER MODAL
+    const [createComputerModalOpen, setcreateComputerModalOpen] = useState(false);
 
     // FORMS SNACK BAR
     const handleSnackBarClick = (variant, err_msg) => {
         enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
     } 
+
+    // TARGETED ROOMS IN UI INCASE IF NEEDED
+    const [targetedRoomsUI, settargetedRoomsUI] = useState([]);
+    const [typeTargetedRoomsUI, settypeTargetedRoomsUI] = useState('');
+    
 
     const navigate= useNavigate()
     const {
@@ -380,112 +659,17 @@ function Laboratory() {
             rd.total_reports
         ))
         setRoomcards(roomCards_data)
-        setAllRooms(roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}}))
+        const allr = roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}})
+        // console.log("ALL ROOM: ", allr);
+        
+        setAllRooms(allr)
     }
     const fetchLabRooms = useCallback(() => {
         axios.get('/api/laboratories').then(res => {
             mapRoomCards(res.data)
         }).catch(err => handleErrorFetch(err, navigate))
     }, [navigate])
-    useEffect(() => {
-        fetchLabRooms()
-      }, [fetchLabRooms]);
-    const headCellsV2 = useMemo(() => [
-        {
-            accessorKey: "computer_id",
-            header: "Computer ID",
-            size: 30,
-        },
-        {
-            accessorKey: "room",
-            header: "Room",
-            size: 50,
-        },
-        {
-            accessorKey: "building_code",
-            header: "Building",
-            size: 50,
-        },
-        {
-            accessorKey: "system_unit",
-            header: "System Unit Tag",
-            size: 50,
-        },
-        {
-            accessorKey: "monitor",
-            header: "Monitor Tag",
-            size: 50,
-        },
-        {
-            accessorKey: "condition",
-            header: "Condition",
-            size: 50,
-            Cell: ({cell}) => {
-                const theme = getChipTheme_condition(cell.getValue())
-                return <ThemeProvider theme={theme}>
-                    <Chip
-                        variant='filled'
-                        sx={{
-                            m: 0.5,
-                            p: 0.5,
-                            backgroundColor:theme.palette.custom.main,
-                            color: theme.palette.custom.fontColor,
-                            fontWeight:'600',
-                        }}
-                        label={
-                            (cell.getValue() === 0) ? "Good" : 
-                            (cell.getValue() === 1) ? "Minor Issue" : 
-                            (cell.getValue() === 2) ? "Major Issue" : 
-                            (cell.getValue() === 3) ? "Bad" : "Unlisted"
-                        }
-                    />
 
-                </ThemeProvider>
-            }
-        },
-        {
-            accessorKey: "status",
-            header: "Status",
-            size: 50,
-            Cell:({cell}) => {
-                const status = cell.getValue()
-                return <Typography                    
-                    sx={{
-                        fontFamily:'Inter',
-                        fontWeight:'600', 
-                        color:(status === 0) ? palette.badFont : palette.darkBlueFont 
-                    }}
-                    >
-                    {(status === 0) ? "Inactive" : "Active" }
-                </Typography>
-            }
-        },
-        {
-            accessorKey: "pending_reports",
-            header: "Pending Reports",
-            size: 30,
-        },
-        {
-            accessorKey: "has_mouse",
-            header: "Mouse",
-            size:30,
-        },
-        {
-            accessorKey: "has_keyboard",
-            header: "Keyboard",
-            size:30,
-        },
-        {
-            accessorKey: "has_internet",
-            header: "Internet",
-            size:30,
-        },
-        {
-            accessorKey: "has_software",
-            header: "Software",
-            size:30,
-        }
-    ], []);
     const ComputersSummary = (data)=> {
         let dataPc = new Map();
         for (let obj of data) {
@@ -534,7 +718,7 @@ function Laboratory() {
         setPcDCond(dataset_condition)
         setPcDStat(dataset_status)
       }
-    const getPcRows = async (type_sel, singleRoom) => {
+    const getPcRows = useCallback(async (type_sel, singleRoom) => {
         const pcIds_tmp =[]
         // FETCH
         let targetRooms = []
@@ -542,9 +726,13 @@ function Laboratory() {
             targetRooms = singleRoom
         } else if (type_sel === "all") {
             targetRooms = allRooms
+            // console.log(allRooms);
+            
         } else {
             targetRooms = selectedRooms
         }
+        settypeTargetedRoomsUI(type_sel)
+        settargetedRoomsUI(targetRooms)
         try {
             const fetched_computers = await axios({
                     url: "/api/rooms/computers",
@@ -576,7 +764,7 @@ function Laboratory() {
             ))
             setComputersData(pcRes)
             
-            console.log("PCROWS: ",pcRes)
+            // console.log("PCROWS: ",pcRes)
             ComputersSummary(dataPc)
                 
             
@@ -600,26 +788,27 @@ function Laboratory() {
             setComputersData([])
             setPcDCond([])
             setPcDStat([])
-            enqueueSnackbar("error", "THERE IS NO COMPUTER IN THIS ROOM")
+            handleSnackBarClick("error", error.response.data ||error.message || "Failed to fetch computers")
 
         }
-    }
+    }, [allRooms, selectedRooms])
 
-    const handleOpenPCTable = (type_sel = "all", singleRoom = []) => {
-        
-        getPcRows(type_sel, singleRoom)
-        
-        setIsCompTableOpen(true)
-    }
     const handleRoomCardMenuClose= () => {
         setRoomAnchorPosition(null)
     }
     const handleRoomCardMenuOpen= (e, r) => {
         e.preventDefault()
         setRoomAnchorPosition({top: e.clientY, left: e.clientX})
-        console.log(r.room)
+        // console.log(r.room)
     }
+    useEffect(() => {
+        fetchLabRooms()
+        // console.log("ROOOO: ", ({urlRoom, urlBuilding}));
 
+        if (urlRoom && urlBuilding){
+            getPcRows("single", [{roomnum: urlRoom, building_code: urlBuilding}])
+        }
+      }, []);
     const building_data = [{building_code: 'MB', building_name:'Main Building'}, {building_code: 'ANB', building_name:'Annex Building'}, {building_code: 'MND', building_name:'Mendiola Building'}]
     const buildings = building_data.map((bd) => getBuildingData(bd.building_code, bd.building_name))
 
@@ -633,23 +822,48 @@ function Laboratory() {
             <div>
             {!isCompTableOpen && <>
                 <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} 
-                onClick={()=> handleOpenPCTable("all")}>
+                    onClick={()=> {
+                        setComputersData([])
+                        setPcDCond([])
+                        setPcDStat([])
+                        getPcRows("all")
+                        setIsCompTableOpen(true)
+                    }}
+                >
                 View all
             </Button>
             <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}} 
-                onClick={()=> handleOpenPCTable("select")}>
+                onClick={()=> {
+                        setComputersData([])
+                        setPcDCond([])
+                        setPcDStat([])
+                        getPcRows("select")
+                        setIsCompTableOpen(true)
+                }}
+            >
                 View selected
             </Button>
             </>}
-
-            {isCompTableOpen && <Button variant='outlined' color="primary" style={{marginLeft:12, borderRadius:'24px',fontSize:'16px', textTransform: 'inherit'}} 
-                onClick={()=> {
-                    setIsCompTableOpen(false) 
-                    setSelectedRooms([])
-                }}
+            <Button
+                variant='outlined' 
+                style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}}
+                onClick={()=> setcreateComputerModalOpen(true)}
             >
-                View Rooms List
-            </Button>}
+                Add Computer
+            </Button>
+            {isCompTableOpen && <>
+                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} 
+                    onClick={()=> {
+                        setIsCompTableOpen(false) 
+                        setSelectedRooms([])
+                        settargetedRoomsUI([])
+                        settypeTargetedRoomsUI('')
+                    }}
+                >
+                    View Rooms List
+                </Button>
+
+            </>}
 
             </div>
 
@@ -790,7 +1004,18 @@ function Laboratory() {
                         </AccordionSummary>
                         <AccordionDetails>
                         <Grid2 container spacing={2}>
-                            <RoomBox setcreateRoomModalOpen={setcreateRoomModalOpen} rooms={filtered_rooms} selectedRooms={selectedRooms} setSelectedRooms={setSelectedRooms} handleOpenPCTable={handleOpenPCTable} onContextMenu={handleRoomCardMenuOpen}/>
+                            <RoomBox 
+                                setcreateRoomModalOpen={setcreateRoomModalOpen} 
+                                rooms={filtered_rooms} 
+                                selectedRooms={selectedRooms} 
+                                setSelectedRooms={setSelectedRooms} 
+                                getPcRows={getPcRows} 
+                                onContextMenu={handleRoomCardMenuOpen}
+                                setIsCompTableOpen={setIsCompTableOpen}
+                                setComputersData={setComputersData}
+                                setPcDCond={setPcDCond}
+                                setPcDStat={setPcDStat}
+                            />
                         </Grid2>
                     </AccordionDetails>
                     </Accordion>
@@ -835,6 +1060,15 @@ function Laboratory() {
             setOpen={setComputerDetailsModalOpen}
             items={computerDetailsItems}
         />
+        <Form_Create_Computer
+            createComputerModalOpen={createComputerModalOpen}
+            setcreateComputerModalOpen={setcreateComputerModalOpen}
+            getPcRows={getPcRows}
+            handleSnackBarClick={handleSnackBarClick}
+            fetchLabRooms={fetchLabRooms}
+            targetedRoomsUI={targetedRoomsUI}
+            typeTargetedRoomsUI={typeTargetedRoomsUI}
+        />
         <Form_Create_Room
             createRoomModalOpen={createRoomModalOpen}
             setcreateRoomModalOpen={setcreateRoomModalOpen}
@@ -842,8 +1076,6 @@ function Laboratory() {
             handleSnackBarClick={handleSnackBarClick}
         />
         <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
-
-        
     </div>
 }
 
