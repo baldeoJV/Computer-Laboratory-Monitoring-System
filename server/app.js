@@ -297,7 +297,7 @@ app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
         if (error.code === "ER_ROW_IS_REFERENCED_2"){
             return res.status(409).send(`A component is still in use.`);
         }
-        return res.status(400).send(error);
+        return res.status(400).send(error.code);
     }
 });
 

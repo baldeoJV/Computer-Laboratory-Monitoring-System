@@ -475,11 +475,11 @@ export async function updateNonConsumableComponentFlag(component_list, flag){
 
 // delete non consumable component
 export async function deleteNonConsumableComponent(component_list){
-  let query = `DELETE FROM non_consumable_components WHERE component_id LIKE ?`;
+  let query = `DELETE FROM non_consumable_components WHERE component_id IN (${component_list.map((c)=>'?').join(', ')})`;
 
-  for (let i = 1; i < component_list.length; i++){
-    query += ` OR component_id LIKE ?`;
-  }
+  // for (let i = 1; i < component_list.length; i++){
+  //   query += ` OR component_id LIKE ?`;
+  // }
 
   await pool.query(query, component_list)
   return getNonConsumableComponent()

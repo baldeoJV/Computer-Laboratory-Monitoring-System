@@ -337,11 +337,12 @@ function Non_Consumable() {
     // FORMS AND MODAL FOR CREATE COMPONENT
     const [createComponentOpen, setcreateComponentOpen] = useState(false);
     const [deleteComponentOpen, setdeleteComponentOpen] = useState(false);
-    // const [updateComponentOpen, setupdateComponentOpen] = useState(false);
-    // const [flagComponentOpen, setflagComponentOpen] = useState(false);
-    // const [unflagComponentOpen, setunflagComponentOpen] = useState(false);
+    const [updateComponentOpen, setupdateComponentOpen] = useState(false);
+    const [flagComponentOpen, setflagComponentOpen] = useState(false);
+    const [unflagComponentOpen, setunflagComponentOpen] = useState(false);
     
-
+    const [selectedComponents, setselectedComponents] = useState({});
+    const [selectedSingleComponent, setselectedSingleComponent] = useState('');
     // FORMS SNACK BAR
     const handleSnackBarClick = (variant, err_msg) => {
         enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
@@ -364,6 +365,24 @@ function Non_Consumable() {
     useEffect(()=> {
         fetchNonConsumableComponents();
     }, [])
+    const deleteNonConsumableComponent = ()=>{
+        const selectedList= Object.keys(selectedComponents)
+        let tobeDeletedComponents = (selectedList.length > 0) ? selectedList : [selectedSingleComponent];
+        console.log(tobeDeletedComponents);
+        
+        axios.post("/api/delete/non_consum_comp", {
+            component_id: tobeDeletedComponents,
+        }).then(res => {
+            fetchNonConsumableComponents()
+            handleSnackBarClick("success", "Component Successfully Deleted")
+            setdeleteComponentOpen(false)
+            setselectedSingleComponent('')
+            setselectedComponents([])
+        }).catch(err => {
+            console.error("ERROR: ", err);
+            handleSnackBarClick("error", err.response.data);
+        })
+    }
     const headCellsV2 = useMemo(() => [
         {
             accessorKey: "component_id",
@@ -406,11 +425,28 @@ function Non_Consumable() {
                 <div className="label">
                     <div className="text-wrapper">Inventory</div>
                 </div>
+                <Stack direction={'row'}>
+                <Button 
+                    variant='contained'
+                    color='error'
+                    disabled={Object.entries(selectedComponents).length===0}
+                    style={{
+                        marginLeft:12, 
+                        borderRadius:'24px',
+                        fontSize:'14px', 
+                        textTransform: 'inherit', 
+                    }}  
+                    onClick={()=> setdeleteComponentOpen(true)}
+                >
+                    Delete Selected Components
+                </Button>
                 <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}}  
                     onClick={()=> setcreateComponentOpen(true)}
                 >
                     Add Monitor / System Unit
                 </Button>
+
+                </Stack>
             </Stack>
 
             {/* <ITable headCells={headCells} rows={nonConsumData} type='non_consumableTable'/> */}
@@ -419,9 +455,13 @@ function Non_Consumable() {
                     data={nonConsumData} 
                     type={'non_consumableTable'} 
                     extraActionsTable={{
+                        
                         initialState: { density: 'comfortable' },
                         enableRowSelection: true,
                         enableRowActions: true, 
+                        onRowSelectionChange: setselectedComponents,
+                        state: {rowSelection: selectedComponents},
+                        getRowId: (originalRow)=>originalRow.component_id,
                         positionActionsColumn:'last',
                         muiTableContainerProps: { sx: { maxHeight: '600px', minHeight:'600px' } },
                         renderRowActionMenuItems:({row, table})=>{
@@ -433,6 +473,7 @@ function Non_Consumable() {
                                 label='Delete'
                                 table={table}
                                 onClick={() => {
+                                    setselectedSingleComponent(menuRow.component_id)
                                     setdeleteComponentOpen(true)
                                     // console.log(Object.entries(row), row.getValue)
                                 }}
@@ -481,7 +522,10 @@ function Non_Consumable() {
     /> */}
     <Modal
         open={deleteComponentOpen}
-        onClose={()=> setdeleteComponentOpen(false)}
+        onClose={()=> {
+            setselectedSingleComponent('')
+            setdeleteComponentOpen(false)
+        }}
     >
         <Box 
             sx={{
@@ -496,13 +540,16 @@ function Non_Consumable() {
                 p: 4,
             }}
         >
-            <Typography sx={{mb:2, fontFamily:'Inter'}} variant='h6'>Do you want to delete this component?</Typography>
+            <Typography sx={{mb:2, fontFamily:'Inter'}} variant='h6'>{Object.entries(selectedComponents).length === 0 ? "Do you want to delete this component?": "Delete selected components?"}</Typography>
             <Stack
                 direction={'row'}
                 sx={{width:'100%', justifyContent:'end'}}    
             >
-                <Button>Delete</Button>
-                <Button onClick={()=>setdeleteComponentOpen(false)}>Cancel</Button>
+                <Button onClick={deleteNonConsumableComponent}>Delete</Button>
+                <Button onClick={()=>{
+                    setdeleteComponentOpen(false)
+                    setselectedSingleComponent('')
+                }}>Cancel</Button>
             </Stack>
         </Box>
     </Modal>
