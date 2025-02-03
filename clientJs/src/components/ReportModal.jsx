@@ -262,13 +262,17 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
     } = useStore()
 
     const [openConfirmModal, setopenConfirmModal] = useState(false);
-
+    const [toDownload, settoDownload] = useState(false);
     const [commentValue, setCommentValue] = useState('');
     const [studentId, setStudentId] = useState('');
     
     // const [building, setBuilding] = useState('');
     // const [room, setRoom] = useState(null);
     // const [computerId, setComputerId] = useState(null);
+    const handleSnackBarClick = (variant, err_msg) => {
+        enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
+    } 
+
 
     const handleCommentChange = (e) => {
         setCommentValue(e.target.value)
@@ -278,7 +282,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
         setStudentId(e.target.value)
     }
     
-    const submitReport = async (toDownload = false) => {
+    const submitReport = async () => {
         try {
             const response = await axios.post('/api/create/report', {
                 pcId: reportedPcID,
@@ -308,13 +312,13 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 />).toBlob();
                 saveAs(blob, `${studentId}-report-form.pdf`);
             }
-            console.log(response.status);
-            
-            alert("Report Submitted")
+            handleSnackBarClick("success", "Report Submitted")
         } catch (err) {
-            console.error("Error on report: ", err);
-            alert(err.response.data || err.message);
+            console.error("Error on report: ", err);            
+            handleSnackBarClick("error", err.response.data || err.message)
         }
+        setopenConfirmModal(false)
+        settoDownload(false)
     }
     return (
         <div>
@@ -453,7 +457,10 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
                     <Button 
-                        onClick={()=> setopenConfirmModal(true)}
+                        onClick={()=> {
+                            settoDownload(false)
+                            setopenConfirmModal(true)
+                        }}
                         color="primary" 
                         variant='contained' 
                         sx={{ 
@@ -475,6 +482,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         }} 
                         startIcon={<PictureAsPdfIcon sx={{color:palette.badFont}}/>}
                         onClick={async () => {
+                            settoDownload(true)
                             await submitReport(true)
                         }}
                     >
@@ -543,8 +551,9 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                             if (isClosable){
                                 setOpen(false)
                             }
-                            if (!(reportedBuilding && reportedPcID && reportedBuilding && studentId)){
+                            if (!(reportedBuilding && reportedPcID && reportedBuilding && (studentId? studentId : true))){
                                 alert("You must fill out all the forms")
+                                setopenConfirmModal(false)
                             } else {
                                 await submitReport()
                             
@@ -570,6 +579,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                     </Stack>
                 </Box>
             </Modal>
+            <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
         </div>
     );
 };

@@ -8,7 +8,7 @@ import ITable from './components/ITable';
 // import rooms_data from './assets/rooms_data.json'
 
 // 
-import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem, Modal, TextField, Alert, FormControl, Autocomplete } from '@mui/material';
+import { Accordion, AccordionDetails, Button, CardContent, Grid2, Paper, Stack, Typography, Box, Menu, Chip, ListItemIcon, MenuItem, Modal, TextField, Alert, FormControl, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import StatBox from './components/StatBox';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -33,7 +33,7 @@ import { getComputersByRoom, getRoomsByBuilding } from './customMethods.js';
 import ReportModal from './components/ReportModal';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SharedModal from './components/SharedModal.jsx';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
 import {SnackbarProvider, enqueueSnackbar} from 'notistack'
 
@@ -64,7 +64,8 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
             // console.log(r.building_code)
         } else {
             // console.log("unchecked room: ", r.room)
-            setSelectedRooms(selectedRooms.filter(sr => sr.roomnum !== r.room && sr.building_code !== r.building_code))
+            setSelectedRooms(selectedRooms.filter((sr) => sr.roomnum !== r.room || sr.building_code !== r.building_code))
+
         }
     }
     const stacksx = {
@@ -277,7 +278,7 @@ function Form_Create_Computer({createComputerModalOpen, setcreateComputerModalOp
         
             // console.log()
             if (targetedRoomsUI.length > 0){
-                console.log(targetedRoomsUI);
+                // console.log(targetedRoomsUI);
                 
                 getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
             }
@@ -406,7 +407,7 @@ function Form_Create_Computer({createComputerModalOpen, setcreateComputerModalOp
     </>
 
 }
-function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomCards, handleSnackBarClick}){
+function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomCards, handleSnackBarClick, }){
 
 
     // FORM SUBMISSION 
@@ -502,6 +503,395 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
                         }}
                     >
                         Add Room
+                    </Button>
+                </Box>
+            </form>
+        </Modal>
+    </>
+
+}
+function Form_Update_Room({open, setopen, fetchLabRooms, handleSnackBarClick, register, handleSubmit, errors, reset, fetchNonConsumableComponents}){
+    // FORM SUBMISSION 
+    const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+    return <>
+        <Modal
+            open={open}
+            onClose={()=>setopen(false)}
+        >
+            <form noValidate onSubmit={handleSubmit((dta)=> {
+                // axios.post('/api/update/room', {
+                //     room: dta.room, 
+                //     building_code: dta.building_code,
+                // }).then(res=> {
+                //     fetchLabRooms()
+                //     handleSnackBarClick('success', "Successfully Created a Room")
+                //     setopen(false)
+                //     reset()
+                // }).catch(err => {
+                //     console.error("CONSOLE ERROR ", err)
+                //     handleSnackBarClick('error', err.response.data)
+                // })
+                
+            })}>
+                <Box 
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        <TextField
+                            required
+                            label={'Room Number'}
+                            {...register("room", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />
+                        <AnimatePresence>
+                            {errors.room?.type === 'required' && 
+                                <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Room Number</Alert>}/>
+                            }
+                        </AnimatePresence>
+                        <TextField
+                            required
+                            label={'Building (MB, ANB, MND'}
+                            {...register("building_code", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />      
+                            <AnimatePresence>
+                                {errors.building_code?.type === 'required' && 
+                                    <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Building</Alert>}/>
+                                }
+                            </AnimatePresence>            
+                    </Stack>
+                    <Button
+                        type='submit'
+                        sx={{
+                            color: 'white',
+                            textTransform:'none',
+                            fontFamily:'Inter',
+                            minWidth:'100%',
+                            p:1.3,
+                            mt:2.5,
+                            bgcolor:'#323e8a',
+                        }}
+                    >
+                        Update Room
+                    </Button>
+                </Box>
+            </form>
+        </Modal>
+    </>
+
+}
+function Form_Update_Computer({open, setopen, getPcRows, handleSnackBarClick, fetchLabRooms, targetedRoomsUI, typeTargetedRoomsUI, register, handleSubmit, errors, reset, currentMonitor, currentSysu, control}){
+    const [available_monitors, setavailable_monitors] = useState([]);
+    const [available_systemUnits, setavailable_systemUnits] = useState([]);
+    const [available_consumables, setavailable_consumables] = useState(0);
+    const [loadingMonitor, setloadingMonitor] = useState(false);
+    const [loadingSysu, setloadingSysu] = useState(false);
+    // FORM SUBMISSION 
+    const fetchMonitor = () => {
+        axios.get('/api/available_monitor').then(dta =>
+            setavailable_monitors(dta.data)
+        ).catch(err =>{
+            console.log(err)
+            handleSnackBarClick('error', err.response.data)
+        })
+    }
+    const fetchSysu = () => {
+        axios.get('/api/available_sysu').then(dta =>
+            setavailable_systemUnits(dta.data)
+        ).catch(err =>{
+            console.log(err)
+            handleSnackBarClick('error', err.response.data)
+        })
+    }
+
+    const submitUpdateComputer = async (dta)=> {
+        console.log(dta)
+        try {
+            // await axios.post('/api/create/computer', {
+            //     room: dta.room, 
+            //     building_code: dta.building_code,
+            //     system_unit:dta.system_unit,
+            //     monitor: dta.monitor,
+            //     has_internet:dta.has_internet,
+            //     has_keyboard:dta.has_keyboard,
+            //     has_mouse:dta.has_mouse,
+            //     has_software:dta.has_software,
+            // })
+        
+            // // console.log()
+            // if (targetedRoomsUI.length > 0){
+            //     console.log(targetedRoomsUI);
+                
+            //     getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+            // }
+            
+            await fetchLabRooms()
+            handleSnackBarClick('success', "Successfully Created a Computer")
+            setopen(false)
+            reset()
+            
+        } catch (err) {
+            console.error("CONSOLE ERROR ", err)
+            handleSnackBarClick('error', err.response.data)
+        }
+
+    }
+
+    const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+
+
+
+    return <>
+        <Modal
+            open={open}
+            onClose={()=>setopen(false)}
+        >
+            <form noValidate onSubmit={handleSubmit(submitUpdateComputer)}>
+                <Box 
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        boxShadow: 24,
+                        p: 4,
+                    }}
+                >
+                    <Stack>
+                        {/* ROOM TEXTFIELD */}
+                        <TextField
+                            required
+                            label={'Room Number'}
+                            {...register("room", {
+                                    required: true,
+                            })}
+                            fullWidth
+                        />
+                        <AnimatePresence>{errors.room?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Room Number</Alert>}/>}</AnimatePresence>
+                        {/* BUIDLING TEXT FIELD */}
+                        <TextField
+                            required
+                            label={'Building (MB, ANB, MND'}
+                            {...register("building_code", {
+                                    required: true,
+                            })}
+                            fullWidth
+                            sx={{
+                                mt:2, 
+                            }}
+                        />      
+                        <AnimatePresence>
+                            {errors.building_code?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate Building</Alert>}/>}
+                        </AnimatePresence>
+
+                        {/* MONITOR AUTO COMPLETE */}
+                        <TextField
+                            disabled
+                            {...register("old_monitor")}
+                            sx={{ fontFamily: 'Inter', mt:2}}
+                            label={"Current Monitor"}
+                        />
+                        <Autocomplete
+                            sx={{mt:2}}
+                            options={available_monitors }
+                            onOpen={fetchMonitor}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="New Monitor ID"
+                                    sx={{ fontFamily: 'Inter' }}
+                                    {...register("monitor", { required: true })}
+                                />
+                            )}                          
+                        />
+                        <AnimatePresence>
+                            {errors.monitor?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please select the available monitor</Alert>}/>}
+                        </AnimatePresence>
+                        {/* SYSU AUTO COMPLETE */}
+                        <TextField
+                            disabled
+                            {...register("old_system_unit")}
+                            sx={{ fontFamily: 'Inter', mt:2}}
+                            label={"Current System Unit"}
+                        />
+                        <Autocomplete
+                            sx={{mt:2}}
+                            options={available_systemUnits || ['']}
+                            onOpen={fetchSysu}
+                            renderInput={params => 
+                                <TextField
+                                    {...params}
+                                    label="New System Unit ID"
+                                    sx={{ fontFamily: 'Inter', }}
+                                    {...register("system_unit", {required:true})}
+                                />
+                            }
+                        />
+                        <AnimatePresence>
+                            {errors.system_unit?.type === 'required' && <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please select the available System Unit</Alert>}/>}
+                        </AnimatePresence>
+
+                        {/* PC PARTS */}
+    <Stack spacing={2} sx={{mt:2}}>
+    <Grid2 container spacing={2} >
+        {/* Has Keyboard */}
+        <Grid2 xs={6}>
+            <FormControl component="fieldset" error={!!errors.has_keyboard}>
+                <FormLabel component="legend">Has Keyboard?</FormLabel>
+                <Controller
+                    name="has_keyboard"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "This field is required" }}
+                    render={({ field }) => (
+                        <RadioGroup {...field} row>
+                            <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                            <FormControlLabel value={0} control={<Radio />} label="No" />
+                        </RadioGroup>
+                    )}
+                />
+                <AnimatePresence>
+                    {errors.has_keyboard && (
+                        <Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>
+                            {errors.has_keyboard.message}
+                        </Alert>
+                    )}
+                </AnimatePresence>
+            </FormControl>
+        </Grid2>
+
+        {/* Has Mouse */}
+        <Grid2 xs={6}>
+            <FormControl component="fieldset" error={!!errors.has_mouse}>
+                <FormLabel component="legend">Has Mouse?</FormLabel>
+                <Controller
+                    name="has_mouse"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "This field is required" }}
+                    render={({ field }) => (
+                        <RadioGroup {...field} row>
+                            <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                            <FormControlLabel value={0} control={<Radio />} label="No" />
+                        </RadioGroup>
+                    )}
+                />
+                <AnimatePresence>
+                    {errors.has_mouse && (
+                        <Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>
+                            {errors.has_mouse.message}
+                        </Alert>
+                    )}
+                </AnimatePresence>
+            </FormControl>
+        </Grid2>
+
+        {/* Has Software */}
+        <Grid2 xs={6}>
+            <FormControl component="fieldset" error={!!errors.has_software}>
+                <FormLabel component="legend">Has Software?</FormLabel>
+                <Controller
+                    name="has_software"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "This field is required" }}
+                    render={({ field }) => (
+                        <RadioGroup {...field} row>
+                            <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                            <FormControlLabel value={0} control={<Radio />} label="No" />
+                        </RadioGroup>
+                    )}
+                />
+                <AnimatePresence>
+                    {errors.has_software && (
+                        <Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>
+                            {errors.has_software.message}
+                        </Alert>
+                    )}
+                </AnimatePresence>
+            </FormControl>
+        </Grid2>
+
+        {/* Has Internet */}
+        <Grid2 xs={6}>
+            <FormControl component="fieldset" error={!!errors.has_internet}>
+                <FormLabel component="legend">Has Internet?</FormLabel>
+                <Controller
+                    name="has_internet"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "This field is required" }}
+                    render={({ field }) => (
+                        <RadioGroup {...field} row>
+                            <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                            <FormControlLabel value={0} control={<Radio />} label="No" />
+                        </RadioGroup>
+                    )}
+                />
+                <AnimatePresence>
+                    {errors.has_internet && (
+                        <Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>
+                            {errors.has_internet.message}
+                        </Alert>
+                    )}
+                </AnimatePresence>
+            </FormControl>
+        </Grid2>
+    </Grid2>
+</Stack>
+
+                        
+                    </Stack>
+                    <Button
+                        type='submit'
+                        sx={{
+                            color: 'white',
+                            textTransform:'none',
+                            fontFamily:'Inter',
+                            minWidth:'100%',
+                            p:1.3,
+                            mt:2.5,
+                            bgcolor:'#323e8a',
+                        }}
+                    >
+                        Update
                     </Button>
                 </Box>
             </form>
@@ -608,7 +998,10 @@ const headCellsV2 = [
 function Laboratory() {
     const [computerTable_addReportModalOpen, setComputerTable_AddReportModalOpen] = useState(false);
     const [isCompTableOpen, setIsCompTableOpen] = useState(false);
+
+    // STATE FOR ROOM CHECKBOX
     const [selectedRooms, setSelectedRooms] = useState([]);
+
     const [roomcards, setRoomcards] = useState([]);
     const [allRooms, setAllRooms] = useState([])
     const [computersData, setComputersData] = useState([])
@@ -616,7 +1009,12 @@ function Laboratory() {
     const [pcDStat, setPcDStat] = useState([]);
     const [totalReports, setTotalReports] = useState(0)
     const [pcIds, setPcIds] = useState([]);
+
+    // WHEN RIGHT CLICKED
     const [roomAnchorPosition, setRoomAnchorPosition] = useState(null)
+    const [rightClickedRoom, setrightClickedRoom] = useState(null);
+
+
     const [createRoomModalOpen, setcreateRoomModalOpen] = useState(false) 
 
     // IN THE CASE OF PASSING PROPS IN LINK OR REDIRECT
@@ -630,6 +1028,15 @@ function Laboratory() {
     // CREATE COMPUTER MODAL
     const [createComputerModalOpen, setcreateComputerModalOpen] = useState(false);
 
+    // UPDATE STATES ANF FORMS
+    const {register, handleSubmit, formState: {errors}, reset, control} = useForm()
+    const [updateComputerModal, setupdateComputerModal] = useState(false);
+    const [updateRoomModal, setupdateRoomModal] = useState(false);
+
+    // ROOM OR PC DELETE
+    const [confirmDeleteRoomModalSelected, setconfirmDeleteRoomModalSelected] = useState(false);
+    const [confirmDeleteRoomModalSingle, setconfirmDeleteRoomModalSingle] = useState(false);
+
     // FORMS SNACK BAR
     const handleSnackBarClick = (variant, err_msg) => {
         enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
@@ -639,7 +1046,6 @@ function Laboratory() {
     const [targetedRoomsUI, settargetedRoomsUI] = useState([]);
     const [typeTargetedRoomsUI, settypeTargetedRoomsUI] = useState('');
     
-
     const navigate= useNavigate()
     const {
         tableType, setTableType,
@@ -801,6 +1207,7 @@ function Laboratory() {
     const handleRoomCardMenuOpen= (e, r) => {
         e.preventDefault()
         setRoomAnchorPosition({top: e.clientY, left: e.clientX})
+        setrightClickedRoom({room: r.room, building_code: r.building_code})
         // console.log(r.room)
     }
     useEffect(() => {
@@ -823,18 +1230,24 @@ function Laboratory() {
             <LabelTop/>
             <div>
             {!isCompTableOpen && <>
-                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} 
-                    onClick={()=> {
-                        setComputersData([])
-                        setPcDCond([])
-                        setPcDStat([])
-                        getPcRows("all")
-                        setIsCompTableOpen(true)
-                    }}
-                >
-                View all
+            <Button
+                variant='contained'
+                color='error'
+                disabled={selectedRooms.length === 0 ? true : false}
+                style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit'}}
+                onClick={()=>setconfirmDeleteRoomModalSelected(true)}
+            >
+                Delete Selected
             </Button>
-            <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:palette.darkBlueFont, backgroundColor:palette.darkBlueFont, color:"white"}} 
+            <Button
+                variant='contained'
+                disabled={selectedRooms.length === 0 ? true : false}
+                style={{
+                    marginLeft:12, 
+                    borderRadius:'24px',
+                    fontSize:'14px', 
+                    textTransform: 'inherit',
+                }}
                 onClick={()=> {
                         setComputersData([])
                         setPcDCond([])
@@ -844,6 +1257,26 @@ function Laboratory() {
                 }}
             >
                 View selected
+            </Button>
+            <Button variant='outlined' 
+                style={{
+                    marginLeft:12, 
+                    borderRadius:'24px',
+                    fontSize:'14px', 
+                    textTransform: 'inherit', 
+                    borderColor:palette.darkBlueFont, 
+                    backgroundColor:palette.darkBlueFont, 
+                    color:"white"
+                }}
+                onClick={()=> {
+                    setComputersData([])
+                    setPcDCond([])
+                    setPcDStat([])
+                    getPcRows("all")
+                    setIsCompTableOpen(true)
+                }}
+            >
+                View all
             </Button>
             </>}
             <Button
@@ -911,7 +1344,19 @@ function Laboratory() {
                                 label='Edit Details'
                                 table={table}
                                 onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
+                                    // console.log(menuRow)
+                                    const reset_config_pc = {
+                                        room:menuRow.room,
+                                        building_code:menuRow.building_code,
+                                        has_mouse:menuRow.has_mouse,
+                                        has_keyboard:menuRow.has_keyboard,
+                                        has_internet:menuRow.has_internet,
+                                        has_software:menuRow.has_software,
+                                        old_monitor: menuRow.monitor,
+                                        old_system_unit: menuRow.system_unit
+                                    }
+                                    reset(reset_config_pc)
+                                    setupdateComputerModal(true)
                                 }}
                             />,
                             <MRT_ActionMenuItem
@@ -1037,6 +1482,7 @@ function Laboratory() {
             <MenuItem
                 onClick={()=>{
                     // TODO
+                    setconfirmDeleteRoomModalSingle(true)
                     handleRoomCardMenuClose()
                 }}
             >
@@ -1045,11 +1491,14 @@ function Laboratory() {
             <MenuItem 
                 onClick={()=>{
                     // TODO
+                    setupdateRoomModal(true)
+                    // console.log({room: rightClickedRoom.room, building_code:rightClickedRoom.building_code})
+                    reset({room: rightClickedRoom.room, building_code:rightClickedRoom.building_code})
                     handleRoomCardMenuClose()
                 }}
             >
 
-                Rename
+                Edit / Update
             </MenuItem>
         </Menu>
         <ReportModal
@@ -1071,12 +1520,133 @@ function Laboratory() {
             targetedRoomsUI={targetedRoomsUI}
             typeTargetedRoomsUI={typeTargetedRoomsUI}
         />
+        {/* UPDATE COMPUTER */}
+        <Form_Update_Computer
+            open={updateComputerModal}
+            setopen={setupdateComputerModal}
+            getPcRows={getPcRows}
+            handleSnackBarClick={handleSnackBarClick}
+            fetchLabRooms={fetchLabRooms}
+            targetedRoomsUI={targetedRoomsUI}
+            typeTargetedRoomsUI={typeTargetedRoomsUI}
+            register={register}
+            handleSubmit={handleSubmit}
+            errors={errors}
+            reset={reset}
+            control={control}
+
+        />
+
+
         <Form_Create_Room
             createRoomModalOpen={createRoomModalOpen}
             setcreateRoomModalOpen={setcreateRoomModalOpen}
             mapRoomCards={mapRoomCards}
             handleSnackBarClick={handleSnackBarClick}
         />
+        {/* UPDATE ROOM */}
+        <Form_Update_Room
+            open={updateRoomModal}
+            setopen={setupdateRoomModal}
+            fetchLabRooms={fetchLabRooms}
+            handleSnackBarClick={handleSnackBarClick}
+            register={register}
+            handleSubmit={handleSubmit}
+            errors={errors}
+            reset={reset}
+        />
+
+        {/* DELETE MODAL ROOM (SELECTED)*/}
+        <Modal open={confirmDeleteRoomModalSelected} onClose={()=>setconfirmDeleteRoomModalSelected(false)}>
+            <Box 
+                sx={{
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 400, bgcolor: 'background.paper',
+                    boxShadow: 24, p: 4,
+                }}
+            >
+                <Typography sx={{mb:2, fontFamily:'Inter'}} variant="h6">Are you sure you want to delete these rooms?</Typography>
+                <Stack direction={'row'} sx={{justifyContent:'end'}}>
+                    <Button
+                        onClick={()=>{
+                            const resselected =selectedRooms.map(sr=> ({room:sr.roomnum, building_code:sr.building_code}))
+                            // console.log("SelectedRoom: ",resselected)
+                            // axios.post('/api/delete/room', {rooms: resselected})
+                            // .then(res => {
+                            //     fetchLabRooms()
+                            //     handleSnackBarClick("success", "Room Successfully edited")
+                            // }).catch((err)=>{
+                            //     const ermsg = err.response.data || err
+                            //     console.log("ERROR: ", ermsg)
+                            //     handleSnackBarClick("error", ermsg)
+                            // }).finally(()=>{
+                            //     setSelectedRooms([])
+                            //     setconfirmDeleteRoomModalSelected(false)
+                            // })
+                        }}
+                    
+                    >
+                        Delete
+                    </Button>
+                    <Button
+                        onClick={()=>setconfirmDeleteRoomModalSelected(false)}
+                    >
+                        Cancel
+                    </Button>
+                </Stack>
+            </Box>
+        </Modal>
+
+        {/* DELETE MODAL ROOM (SINGLE) */}
+        <Modal open={confirmDeleteRoomModalSingle} onClose={()=>{
+            setconfirmDeleteRoomModalSingle(false)
+            setrightClickedRoom({})
+        }}>
+            <Box 
+                sx={{
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 400, bgcolor: 'background.paper',
+                    boxShadow: 24, p: 4,
+                }}
+            >
+                <Typography sx={{mb:2, fontFamily:'Inter'}} variant="h6">Are you sure you want to delete this room?</Typography>
+                <Stack direction={'row'} sx={{justifyContent:'end'}}>
+                    <Button
+                        onClick={()=>{
+                            // console.log("Right Clicked Room: ",rightClickedRoom)
+                            // axios.post('/api/delete/room', {rooms: [rightClickedRoom]})
+                            // .then(res => {
+                            //     fetchLabRooms()
+                            //     handleSnackBarClick("success", "Room Successfully edited")
+                            // }).catch((err)=>{
+                            //     const ermsg = err.response.data || err
+                            //     console.log("ERROR: ", ermsg)
+                            //     handleSnackBarClick("error", ermsg)
+                            // }).finally(()=>{
+                            //     setrightClickedRoom({})
+                            //     setconfirmDeleteRoomModalSingle(false)
+                            // })
+                        }}
+                    
+                    >
+                        Delete
+                    </Button>
+                    <Button
+                        onClick={()=>{
+                            setrightClickedRoom({})
+                            setconfirmDeleteRoomModalSingle(false)
+                        } }
+                    >
+                        Cancel
+                    </Button>
+                </Stack>
+            </Box>
+        </Modal>
+        
         <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
     </div>
 }
