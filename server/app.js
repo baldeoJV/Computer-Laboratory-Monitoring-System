@@ -288,16 +288,17 @@ app.post("/update/non_consum_comp_flag", checkAdminIdSession, async (req, res) =
 });
 
 app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
-    const component_id  = req.body;
-
+    const {component_id}  = req.body;
     try {
         const delete_non_consumable_component = await deleteNonConsumableComponent(component_id);
         res.status(201).send(delete_non_consumable_component);
     } catch (error) {
+        console.log(error);
+        
         if (error.code === "ER_ROW_IS_REFERENCED_2"){
             return res.status(409).send(`A component is still in use.`);
         }
-        return res.status(400).send(error.code);
+        return res.status(400).send(error.code||error);
     }
 });
 
