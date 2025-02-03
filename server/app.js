@@ -3,15 +3,13 @@ import cors from 'cors';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import {
-    getRoom, createRoom,
+    getRoom, createRoom, updateRoomData, updateRoomName, deleteRoom,
     getComputer, createComputer, getRoomComputer,
-    getComponentCondition,
     getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumableComponent,
-    updateNonConsumableComponentFlag,
+    updateNonConsumableComponentFlag, updateNonConsumableComponentLocation, updateNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId,
-    updateRoom, updateNonConsumableComponent,
     getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents
 } from './be_comlab.js';
 
@@ -91,7 +89,7 @@ app.post('/logout', (req, res) => {
 // [DASHBOARD RELATED QUERY]
 app.get("/dashboard", checkAdminIdSession, async (req, res) => {
     try {
-        const rooms = await updateRoom();  // replaced the getRoom() to update room data
+        const rooms = await updateRoomData();  // replaced the getRoom() to update room data
         const computers = await getComputer();
         const reports = await getReport();
         const buildings = await getBuilding();
@@ -169,6 +167,21 @@ app.post("/create/room", checkAdminIdSession, async (req, res) => {
     }
 });
 
+app.post("/delete/room", checkAdminIdSession, async (req, res) => {
+    const { room } = req.body;
+
+    try {
+        await deleteRoom(room);
+        res.status(201).send("Room deleted successfully");
+    } catch (error) {
+        console.error(error);
+        if(error.code === "ER_ROW_IS_REFERENCED_2"){
+            return res.status(409).send(`Room/s still in use.`);
+        }
+        return res.status(500).send("An error occurred while deleting the room.");
+    }
+});
+
 // [COMPUTERS TABLE RELATED QUERY]
 app.get("/rooms/all_computers", checkAdminIdSession, async (req, res) => {
     try {
@@ -188,8 +201,8 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
         const location = `${room}${building_code}`;
 
         // await createComponentCondition(create_computer.computer_id);
-        await updateNonConsumableComponent(location, system_unit, monitor);
-        await updateRoom();
+        await updateNonConsumableComponentLocation(location, system_unit, monitor);
+        await updateRoomData();
 
         res.status(201).send('Created Computer Successfully');
     } catch (error) {
@@ -197,8 +210,9 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
             return res.status(409).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' already in use.`);
         }
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
-            return res.status(404).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' doesn't exists.`);
+            return res.status(404).send("Invalid room or system unit/monitor tag.");
         }
+        return res.status(500).send(error);
     }
 });
 
@@ -283,7 +297,6 @@ app.post("/update/non_consum_comp_flag", checkAdminIdSession, async (req, res) =
         await updateNonConsumableComponentFlag(component_id, flag);
         res.status(201).send("success");
     } catch (error) {
-        console.log(error);
         return res.status(400).send(error);
     }
 });
@@ -303,6 +316,20 @@ app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
     }
 });
 
+// update non consumable component
+app.post("/update/non_consum_comp", checkAdminIdSession, async (req, res) => {
+    const { old_component_id, new_component_id, location, specs } = req.body;
+
+    try {
+        await updateNonConsumableComponent(old_component_id, new_component_id, location, specs);
+        res.status(201).send("Successfully updated");
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Component id '${new_component_id}' already exist`);
+        }
+        return res.status(400).send(error);
+    }
+});
 
 
 // [CONSUMABLE-COMPONENT TABLE RELATED QUERY]
@@ -384,7 +411,6 @@ app.post("/create/report",  async (req, res) => {
         //get date
         const date = new Date();
         const date_submitted = formatDate(date);
-        console.log(date_submitted);
 
         const create_report = await createReport(room, building_code, pcId, report_comment, date_submitted, submittee, reported_conditions);
         res.status(201).send(create_report);
@@ -466,7 +492,7 @@ app.post("/create/admin", checkAdminIdSession, async (req, res) => {
 // update room (just refreshes the room data)
 app.get("/update/room", checkAdminIdSession, async (req, res) => {
     try {
-        const update_room = await updateRoom();
+        const update_room = await updateRoomData();
         res.status(201).send(update_room);
     } catch (error) {
         return res.status(400).send(error);
@@ -482,6 +508,18 @@ app.post("/update/consum_comp", checkAdminIdSession, async (req, res) => {
         res.status(201).send("Successfully updated");
     } catch (error) {
         return res.status(400).send(error);
+    }
+});
+
+// update room name
+app.post("/update/room_name", checkAdminIdSession, async (req, res) => {
+    const { room_id, room, building_code } = req.body;
+
+    try{
+        await updateRoomName(room, building_code, room_id);
+        res.status(201).send("Successfully updated");
+    }catch(error){
+        res.status(400).send(error);
     }
 });
 
