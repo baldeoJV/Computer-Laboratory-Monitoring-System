@@ -280,9 +280,10 @@ app.post("/update/non_consum_comp_flag", checkAdminIdSession, async (req, res) =
     // flag values: 0 - available, 1 - defective
 
     try {
-        const update_non_consumable_component_flag = await updateNonConsumableComponentFlag(component_id, flag);
-        res.status(201).send(update_non_consumable_component_flag);
+        await updateNonConsumableComponentFlag(component_id, flag);
+        res.status(201).send("success");
     } catch (error) {
+        console.log(error);
         return res.status(400).send(error);
     }
 });

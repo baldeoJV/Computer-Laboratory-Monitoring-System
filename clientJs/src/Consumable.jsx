@@ -45,6 +45,7 @@ function Forms_Edit_Consumable({openEditConsumableModal, setopenEditConsumableMo
                 }).then(res => {
                     fetchConsumable()
                     handleSnackBarClick("success", "Successfully Updated Component")
+                    reset()
                     setopenEditConsumableModal(false)
                 }).catch( err => {
                     console.error("ERROR: ", err.response.data)

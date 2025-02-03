@@ -468,7 +468,7 @@ export async function updateNonConsumableComponentFlag(component_list, flag){
   }
 
   await pool.query(query, [flag, ...component_list])
-  return getNonConsumableComponent()
+  return
 }
 
 //[DELETE QUERY]

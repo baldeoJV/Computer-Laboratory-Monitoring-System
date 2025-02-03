@@ -178,8 +178,7 @@ function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen
         <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
     </>
 }
-function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen, handleSnackBarClick, setNonConsumData}) {
-    const {register, handleSubmit, formState: {errors}, reset} = useForm()
+function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen, handleSnackBarClick, register, handleSubmit, errors, reset, fetchNonConsumableComponents}) {
     const ModalMotion = ({alertComponent}) => <motion.div
         key={"modal"} 
         initial={{ opacity: 0, scale: 0 }}
@@ -196,29 +195,20 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
         >
             <form noValidate onSubmit={handleSubmit((dta)=> {
                 // console.log(dta)
-                axios.post('/api/create/non_consum_comp', {
-                    component_id: dta.component_id, 
-                    reference_id: dta.reference_id,
-                    location: dta.location,
-                    specs: dta.specs,
-                }).then(res=> {
-                    const data = res.data
-                    const rows = data.map((ncd) => createData( 
-                        ncd.component_id,
-                        ncd.component_name,
-                        ncd.location,
-                        ncd.specs,
-                        ncd.flagged,
-                    ))
-                    setNonConsumData(rows)
-                    handleSnackBarClick('success', "Successfully Added Component")
-                    setupdateComponentOpen(false)
-                    reset()
-                }).catch(err => {
-                    console.error("CONSOLE ERROR ", err)
-                    handleSnackBarClick('error', err.response.data)
+                // axios.post('/api/create/non_consum_comp', {
+                //     component_id: dta.component_id, 
+                //     reference_id: dta.location,
+                //     specs: dta.specs,
+                // }).then(res=> {
+                //     fetchNonConsumableComponents()
+                //     handleSnackBarClick('success', "Successfully Added Component")
+                //     setupdateComponentOpen(false)
+                //     reset()
+                // }).catch(err => {
+                //     console.error("CONSOLE ERROR ", err)
+                //     handleSnackBarClick('error', err.response.data)
                     
-                })
+                // })
             })}>
                 <Box 
                     sx={{
@@ -247,48 +237,21 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
                             }}
                         />
                         <AnimatePresence>
-                            {errors.component_id?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Component ID</Alert>} />
-                            )}
+                            {errors.component_id?.type === 'required' && (<ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Component ID</Alert>} />)}
                         </AnimatePresence>
-                        <FormControl fullWidth sx={{ my: 1, mt: 2 }}>
-                            <InputLabel id="reference-id-label">Type</InputLabel>
-                            <Select
-                                labelId="reference-id-label"
-                                label="Type"
-                                {...register("reference_id", {
-                                    required: true,
-                                })}
-                                defaultValue={""}
-                            >
-                                <MenuItem value={2}>Monitor</MenuItem>
-                                <MenuItem value={1}>System Unit</MenuItem>
-                            </Select>
-                        </FormControl>
+                        <TextField
+                            required
+                            label="location"
+                            {...register("location", {
+                                required: true,
+                            })}
+
+                            sx={{
+                                mt:2,
+                            }}
+                        />
                         <AnimatePresence>
-                            {errors.reference_id?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a type</Alert>} />
-                            )}
-                        </AnimatePresence>
-                        <FormControl fullWidth sx={{ my: 1, mt: 2 }}>
-                            <InputLabel id="reference-id-label">Location</InputLabel>
-                            <Select
-                                labelId="reference-id-label"
-                                label="location"
-                                {...register("location", {
-                                    required: true,
-                                })}
-                                defaultValue={""}
-                            >
-                                <MenuItem value="Location 1">Location 1</MenuItem>
-                                <MenuItem value="Location 2">Location 2</MenuItem>
-                                <MenuItem value="Storage Room">Storage Room 1</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <AnimatePresence>
-                            {errors.location?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a location</Alert>} />
-                            )}
+                            {errors.specs?.type === 'required' && (<ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Please select a location</Alert>} />)}
                         </AnimatePresence>
                         <TextField
                             required
@@ -296,7 +259,7 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
                             {...register("specs", {
                                     required: true,
                             })}
-                            placeholder='e.g SYU-001 / MON-001'
+                            placeholder='e.g INTEL / AMD 3.5hz DDR6 32gb'
                             fullWidth
                             sx={{
                                 my:1, 
@@ -304,9 +267,7 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
                             }}
                         />
                         <AnimatePresence>
-                            {errors.specs?.type === 'required' && (
-                                <ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Specification</Alert>} />
-                            )}
+                            {errors.specs?.type === 'required' && (<ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the Specification</Alert>} />)}
                         </AnimatePresence>
                     </Stack>
                     <Button
@@ -321,7 +282,7 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
                             bgcolor:'#323e8a',
                         }}
                     >
-                        Add Component
+                            Update Component
                     </Button>
                 </Box>
             </form>
@@ -337,9 +298,10 @@ function Non_Consumable() {
     // FORMS AND MODAL FOR CREATE COMPONENT
     const [createComponentOpen, setcreateComponentOpen] = useState(false);
     const [deleteComponentOpen, setdeleteComponentOpen] = useState(false);
+
+    // Update
     const [updateComponentOpen, setupdateComponentOpen] = useState(false);
-    const [flagComponentOpen, setflagComponentOpen] = useState(false);
-    const [unflagComponentOpen, setunflagComponentOpen] = useState(false);
+    const {register, handleSubmit, formState: {errors}, reset} = useForm()
     
     const [selectedComponents, setselectedComponents] = useState({});
     const [selectedSingleComponent, setselectedSingleComponent] = useState('');
@@ -483,7 +445,8 @@ function Non_Consumable() {
                                 label='Edit'
                                 table={table}
                                 onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
+                                    reset({component_id: menuRow.component_id, location: menuRow.location, specs: menuRow.specs})
+                                    setupdateComponentOpen(true)
                                 }}
                             />,
                             <MRT_ActionMenuItem
@@ -492,6 +455,17 @@ function Non_Consumable() {
                                 table={table}
                                 onClick={() => {
                                     // console.log(Object.entries(row), row.getValue)
+                                    const toSubmit = {component_id: [menuRow.component_id], flag: 1}
+                                    console.log(toSubmit)
+                                    axios.post('/api/update/non_consum_comp_flag', toSubmit)
+                                    .then(res => {
+                                        fetchNonConsumableComponents()
+                                        handleSnackBarClick("success", "Component successfully flagged")
+                                        
+                                    }).catch( err => {
+                                        handleSnackBarClick("error", err.response.data || err)
+                                        console.error(err.response.data || err)
+                                    })
                                 }}
                             />,
                             <MRT_ActionMenuItem
@@ -500,6 +474,15 @@ function Non_Consumable() {
                                 table={table}
                                 onClick={() => {
                                     // console.log(Object.entries(row), row.getValue)
+                                    axios.post('/api/update/non_consum_comp_flag', {component_id: [menuRow.component_id], flag: 0})
+                                    .then(res => {
+                                        fetchNonConsumableComponents()
+                                        handleSnackBarClick("success", "Component successfully unflagged")
+                                        
+                                    }).catch( err => {
+                                        handleSnackBarClick("error", err.response.data || err)
+                                        console.error(err.response.data || err)
+                                    })
                                 }}
                             />
                             
@@ -514,12 +497,16 @@ function Non_Consumable() {
         handleSnackBarClick = {handleSnackBarClick}
         setNonConsumData = {setNonConsumData}
     />
-    {/* <Forms_Update_NonConsumable
+    <Forms_Update_NonConsumable
         updateComponentOpen= {updateComponentOpen} 
         setupdateComponentOpen = {setupdateComponentOpen}
         handleSnackBarClick = {handleSnackBarClick}
-        setNonConsumData = {setNonConsumData}
-    /> */}
+        fetchNonConsumableComponents = {fetchNonConsumableComponents}
+        register={register}
+        handleSubmit={handleSubmit}
+        errors={errors}
+        reset={reset}
+    />
     <Modal
         open={deleteComponentOpen}
         onClose={()=> {
