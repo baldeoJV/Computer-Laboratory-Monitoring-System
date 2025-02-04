@@ -263,6 +263,7 @@ app.post("/guest/rooms/computers", async (req, res) => {
         if (results.flat().length === 0) {
             return res.status(404).send("No computers in the given room/s.");
         }
+        console.log(results.flat());
 
         res.status(200).json(results.flat());
     } catch (error) {

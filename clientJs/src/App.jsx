@@ -197,7 +197,7 @@ function App()  {
       borderRadius:'16px', 
     }
     let reportLabel = mr ? rd.total_reports+" pending reports" : "No pending reports"
-    let bdLabel = (bdMap[rd.building_code] || "unk Building").replace("Building", "Bd.")
+    let bdLabel = (bdMap[(rd.building_code).toUpperCase()] || "unk Building").replace("Building", "Bd.")
     elms.push(
       <NavLink
       key={`nl - ${rd.room} - ${rd.building_code}`} 

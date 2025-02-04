@@ -55,7 +55,13 @@ export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reporte
             { roomnum: Number(reportedRoom), building_code: reportedBuilding }
         ]}).then(d => {
             const computersData = d.data;
-            setTargetedComputerIDs(computersData.filter(cd => cd.room === reportedRoom).map(cdf => String(cdf.computer_id)));
+            // console.log(reportedRoom);
+            // console.log(computersData.map(c=> c));
+            
+            
+            // console.log(computersData.filter(cd => cd.room === reportedRoom).map(cdf => String(cdf.computer_id)));
+            
+            setTargetedComputerIDs(computersData.filter(cd => String(cd.room) === String(reportedRoom)).map(cdf => String(cdf.computer_id)));
         }).catch(err => {
             alert(err.response.data)
             setReportedRoom('')
