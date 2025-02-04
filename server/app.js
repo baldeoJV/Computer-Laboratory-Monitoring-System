@@ -117,6 +117,7 @@ app.get("/dashboard", checkAdminIdSession, async (req, res) => {
 // [LABORATORIES TABLE RELATED QUERY]
 app.get("/laboratories", checkAdminIdSession, async (req, res) => {
     try {
+        await updateRoomData(); // update room data
         const get_room = await getRoom();
         res.status(200).send(get_room);
     } catch (error) {
@@ -128,6 +129,7 @@ app.get("/laboratories", checkAdminIdSession, async (req, res) => {
 // FOR GUESTS / STUDENT
 app.get("/guest/laboratories", async (req, res) => {
     try {
+        await updateRoomData(); // update room data
         const get_room = await getRoom();
         res.status(200).send(get_room);
     } catch (error) {
@@ -156,12 +158,12 @@ app.post("/create/room", checkAdminIdSession, async (req, res) => {
 
     try {
         // console.log(room, building_code);
-        const create_room = await createRoom(room, building_code);
+        const create_room = await createRoom(room, building_code.toUpperCase());
         return res.status(201).send(create_room);
     } catch (error) {
         // probably will not reach this part because the room and building_code are not unique
         if (error.code === "ER_DUP_ENTRY") {
-            return res.status(409).send(`Room '${room}' in building '${building_code}' already exists.`);
+            return res.status(409).send(`Room '${room}' in building '${building_code.toUpperCase()}' already exists.`);
         }
         return res.status(500).send("An error occurred while creating the room.");
     }
@@ -197,8 +199,8 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
     const { room, building_code, system_unit, monitor } = req.body;
 
     try {
-        await createComputer(room, building_code, system_unit, monitor);
-        const location = `${room}${building_code}`;
+        await createComputer(room, building_code.toUpperCase(), system_unit, monitor);
+        const location = `${room}${building_code.toUpperCase()}`;
 
         // await createComponentCondition(create_computer.computer_id);
         await updateNonConsumableComponentLocation(location, system_unit, monitor);
@@ -226,7 +228,7 @@ app.post("/rooms/computers", checkAdminIdSession, async (req, res) => {
     try {
         const results = await Promise.all(
             rooms.map(async ({ roomnum, building_code }) => {
-                const roomData = await getRoomComputer(roomnum, building_code);
+                const roomData = await getRoomComputer(roomnum, building_code.toUpperCase());
                 return roomData;
             })
         );
@@ -253,7 +255,7 @@ app.post("/guest/rooms/computers", async (req, res) => {
     try {
         const results = await Promise.all(
             rooms.map(async ({ roomnum, building_code }) => {
-                const roomData = await getRoomComputer(roomnum, building_code);
+                const roomData = await getRoomComputer(roomnum, building_code.toUpperCase());
                 return roomData;
             })
         );
@@ -412,7 +414,7 @@ app.post("/create/report",  async (req, res) => {
         const date = new Date();
         const date_submitted = formatDate(date);
 
-        const create_report = await createReport(room, building_code, pcId, report_comment, date_submitted, submittee, reported_conditions);
+        const create_report = await createReport(room, building_code.toUpperCase(), pcId, report_comment, date_submitted, submittee, reported_conditions);
         res.status(201).send(create_report);
     } catch (error) {
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
@@ -443,11 +445,11 @@ app.post("/create/building", checkAdminIdSession, async (req, res) => {
     const { building_code, building_name } = req.body;
 
     try {
-        const create_building = await createBuilding(building_code, building_name);
+        const create_building = await createBuilding(building_code.toUpperCase(), building_name);
         res.status(201).send(create_building);
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
-            return res.status(409).send(`Building code '${building_code}' already exist`);
+            return res.status(409).send(`Building code '${building_code.toUpperCase()}' already exist`);
         }
     }
 });
@@ -516,7 +518,7 @@ app.post("/update/room_name", checkAdminIdSession, async (req, res) => {
     const { room_id, room, building_code } = req.body;
 
     try{
-        await updateRoomName(room, building_code, room_id);
+        await updateRoomName(room, building_code.toUpperCase(), room_id);
         res.status(201).send("Successfully updated");
     }catch(error){
         res.status(400).send(error);

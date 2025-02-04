@@ -194,10 +194,9 @@ export async function getAvailableSystemUnit(){
   }
 
   // if roomArray is not empty, return all available components except the ones in the rooms and flagged
-  let monitor_query = `SELECT component_id FROM non_consumable_components WHERE location NOT LIKE ?`
-  for (let i = 1; i < rooms_list.length; i++) {
-    monitor_query += ` AND location NOT LIKE ?`
-  } monitor_query += ` AND flagged = 0 AND reference_id = 1` // 1 is the reference_id for system units
+  const placeholders = rooms_list.map(() => 'location NOT LIKE ?').join(' AND ');
+  const monitor_query = `SELECT component_id FROM non_consumable_components WHERE ${placeholders}
+   AND flagged = 0 AND reference_id = 1`; // 1 is the reference_id for system units
 
   const [monitors] = await pool.query(monitor_query, rooms_list)
 
@@ -214,11 +213,9 @@ export async function getAvailableMonitor(){
     return monitors
   }
 
-  // if rooms_list is not empty, return all available components except the ones in the rooms and flagged
-  let monitor_query = `SELECT component_id FROM non_consumable_components WHERE location NOT LIKE ?`
-  for (let i = 1; i < rooms_list.length; i++) {
-    monitor_query += ` AND location NOT LIKE ?`
-  } monitor_query += ` AND flagged = 0 AND reference_id = 2` // 2 is the reference_id for monitors
+  const placeholders = rooms_list.map(() => 'location NOT LIKE ?').join(' AND ');
+  const monitor_query = `SELECT component_id FROM non_consumable_components WHERE ${placeholders}
+   AND flagged = 0 AND reference_id = 2`; // 2 is the reference_id for monitors
 
   const [monitors] = await pool.query(monitor_query, rooms_list)
 
@@ -281,6 +278,9 @@ export async function createComputer(room, building_code, system_unit, monitor){
 
   //update the comsumable components (decrement the stock count by 1 for each component)
   await pool.query(`UPDATE consumable_components SET stock_count = (stock_count - 1)`)
+
+  //update the room data
+  await updateRoomData()
 
   return getComputer()
 }
