@@ -174,7 +174,7 @@ app.post("/delete/room", checkAdminIdSession, async (req, res) => {
         await deleteRoom(room);
         res.status(201).send("Room deleted successfully");
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         if(error.code === "ER_ROW_IS_REFERENCED_2"){
             return res.status(409).send(`Room/s still in use.`);
         }
@@ -188,7 +188,7 @@ app.get("/rooms/all_computers", checkAdminIdSession, async (req, res) => {
         const get_computer = await getComputer();
         res.status(201).send(get_computer);
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).send("An error occurred while fetching computers.");
     }
 });

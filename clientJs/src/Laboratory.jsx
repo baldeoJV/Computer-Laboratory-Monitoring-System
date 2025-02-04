@@ -43,8 +43,8 @@ function createData(computer_id, room, building_code, system_unit, monitor, stat
     return {computer_id, room,building_code,system_unit, monitor, condition, status, pending_reports, has_mouse, has_keyboard, has_internet, has_software}
 }
 
-function getRoomData(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports){
-    return {room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports}
+function getRoomData(room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports, room_id){
+    return {room, building_code, total_pc, total_active_pc, total_inactive_pc, total_major_issues, total_minor_issues, total_reports, room_id}
 }
 function getBuildingData(building_code, building_name){
     return {building_code, building_name}
@@ -58,6 +58,8 @@ function LabelTop() {
 function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms, getPcRows, onContextMenu, setIsCompTableOpen, setComputersData, setPcDCond, setPcDStat}) {
 
     const handleCheckRoomBox = (e, r)=> {
+        // console.log(r);
+        
         if (e.target.checked){
             setSelectedRooms([...selectedRooms, {"roomnum": r.room, "building_code": r.building_code}])
             // console.log("checked room: ", r.room)
@@ -526,18 +528,20 @@ function Form_Update_Room({open, setopen, fetchLabRooms, handleSnackBarClick, re
             onClose={()=>setopen(false)}
         >
             <form noValidate onSubmit={handleSubmit((dta)=> {
-                // axios.post('/api/update/room', {
-                //     room: dta.room, 
-                //     building_code: dta.building_code,
-                // }).then(res=> {
-                //     fetchLabRooms()
-                //     handleSnackBarClick('success', "Successfully Created a Room")
-                //     setopen(false)
-                //     reset()
-                // }).catch(err => {
-                //     console.error("CONSOLE ERROR ", err)
-                //     handleSnackBarClick('error', err.response.data)
-                // })
+                console.log(dta)
+                axios.post('/api/update/room_name', {
+                    room: dta.room, 
+                    building_code: dta.building_code,
+                    room_id: dta.room_id,
+                }).then(res=> {
+                    fetchLabRooms()
+                    handleSnackBarClick('success', "Successfully Created a Room")
+                    setopen(false)
+                    reset()
+                }).catch(err => {
+                    console.error("CONSOLE ERROR ", err)
+                    handleSnackBarClick('error', err.response.data)
+                })
                 
             })}>
                 <Box 
@@ -1064,7 +1068,8 @@ function Laboratory() {
             rd.total_inactive_pc,
             rd.total_major_issue,
             rd.total_minor_issue,
-            rd.total_reports
+            rd.total_reports,
+            rd.room_id,
         ))
         setRoomcards(roomCards_data)
         const allr = roomCards_data.map(r => {return {roomnum: r.room, building_code: r.building_code}})
@@ -1207,7 +1212,7 @@ function Laboratory() {
     const handleRoomCardMenuOpen= (e, r) => {
         e.preventDefault()
         setRoomAnchorPosition({top: e.clientY, left: e.clientX})
-        setrightClickedRoom({room: r.room, building_code: r.building_code})
+        setrightClickedRoom({room: r.room, building_code: r.building_code, room_id:r.room_id})
         // console.log(r.room)
     }
     useEffect(() => {
@@ -1216,6 +1221,7 @@ function Laboratory() {
 
         if (urlRoom && urlBuilding){
             getPcRows("single", [{roomnum: urlRoom, building_code: urlBuilding}])
+            setIsCompTableOpen(true)
         }
       }, []);
     const building_data = [{building_code: 'MB', building_name:'Main Building'}, {building_code: 'ANB', building_name:'Annex Building'}, {building_code: 'MND', building_name:'Mendiola Building'}]
@@ -1493,7 +1499,7 @@ function Laboratory() {
                     // TODO
                     setupdateRoomModal(true)
                     // console.log({room: rightClickedRoom.room, building_code:rightClickedRoom.building_code})
-                    reset({room: rightClickedRoom.room, building_code:rightClickedRoom.building_code})
+                    reset({room: rightClickedRoom.room, building_code:rightClickedRoom.building_code, room_id:rightClickedRoom.room_id})
                     handleRoomCardMenuClose()
                 }}
             >
@@ -1572,8 +1578,8 @@ function Laboratory() {
                     <Button
                         onClick={()=>{
                             const resselected =selectedRooms.map(sr=> ({room:sr.roomnum, building_code:sr.building_code}))
-                            console.log("SelectedRoom: ",resselected)
-                            axios.post('/api/delete/room', {rooms: resselected})
+                            // console.log("SelectedRoom: ",resselected)
+                            axios.post('/api/delete/room', {room: resselected})
                             .then(res => {
                                 fetchLabRooms()
                                 handleSnackBarClick("success", "Room Successfully edited")
@@ -1618,18 +1624,18 @@ function Laboratory() {
                     <Button
                         onClick={()=>{
                             // console.log("Right Clicked Room: ",rightClickedRoom)
-                            // axios.post('/api/delete/room', {rooms: [rightClickedRoom]})
-                            // .then(res => {
-                            //     fetchLabRooms()
-                            //     handleSnackBarClick("success", "Room Successfully edited")
-                            // }).catch((err)=>{
-                            //     const ermsg = err.response.data || err
-                            //     console.log("ERROR: ", ermsg)
-                            //     handleSnackBarClick("error", ermsg)
-                            // }).finally(()=>{
-                            //     setrightClickedRoom({})
-                            //     setconfirmDeleteRoomModalSingle(false)
-                            // })
+                            axios.post('/api/delete/room', {room: [rightClickedRoom]})
+                            .then(res => {
+                                fetchLabRooms()
+                                handleSnackBarClick("success", "Room Successfully edited")
+                            }).catch((err)=>{
+                                const ermsg = err.response.data || err
+                                console.log("ERROR: ", ermsg)
+                                handleSnackBarClick("error", ermsg)
+                            }).finally(()=>{
+                                setrightClickedRoom({})
+                                setconfirmDeleteRoomModalSingle(false)
+                            })
                         }}
                     
                     >
