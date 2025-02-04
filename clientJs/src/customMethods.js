@@ -65,7 +65,7 @@ export const getComputersByRoom = (reportedRoom, setTargetedComputerIDs, reporte
         }).catch(err => {
             alert(err.response.data)
             setReportedRoom('')
-
+            setTargetedComputerIDs([]);
         });
     }
 }
