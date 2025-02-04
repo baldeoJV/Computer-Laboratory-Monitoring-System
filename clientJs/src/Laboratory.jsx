@@ -1572,19 +1572,19 @@ function Laboratory() {
                     <Button
                         onClick={()=>{
                             const resselected =selectedRooms.map(sr=> ({room:sr.roomnum, building_code:sr.building_code}))
-                            // console.log("SelectedRoom: ",resselected)
-                            // axios.post('/api/delete/room', {rooms: resselected})
-                            // .then(res => {
-                            //     fetchLabRooms()
-                            //     handleSnackBarClick("success", "Room Successfully edited")
-                            // }).catch((err)=>{
-                            //     const ermsg = err.response.data || err
-                            //     console.log("ERROR: ", ermsg)
-                            //     handleSnackBarClick("error", ermsg)
-                            // }).finally(()=>{
-                            //     setSelectedRooms([])
-                            //     setconfirmDeleteRoomModalSelected(false)
-                            // })
+                            console.log("SelectedRoom: ",resselected)
+                            axios.post('/api/delete/room', {rooms: resselected})
+                            .then(res => {
+                                fetchLabRooms()
+                                handleSnackBarClick("success", "Room Successfully edited")
+                            }).catch((err)=>{
+                                const ermsg = err.response.data || err
+                                console.log("ERROR: ", ermsg)
+                                handleSnackBarClick("error", ermsg)
+                            }).finally(()=>{
+                                setSelectedRooms([])
+                                setconfirmDeleteRoomModalSelected(false)
+                            })
                         }}
                     
                     >

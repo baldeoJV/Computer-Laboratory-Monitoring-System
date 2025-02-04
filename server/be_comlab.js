@@ -500,7 +500,7 @@ export async function deleteNonConsumableComponent(component_list){
   let query = `DELETE FROM non_consumable_components WHERE component_id IN (${component_list.map((c)=>'?').join(', ')})`;
 
   await pool.query(query, component_list)
-  return getNonConsumableComponent()
+  return
 }
 
 // delete rooms
@@ -509,5 +509,5 @@ export async function deleteRoom(rooms) {
   const queryParams = rooms.flatMap(room => [room.room, room.building_code]);
 
   await pool.query(`DELETE FROM laboratories WHERE ${roomConditions}`, queryParams);
-  return getRoom();
+  return
 }
