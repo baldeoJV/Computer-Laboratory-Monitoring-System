@@ -334,16 +334,17 @@ export async function createReport(room, building_code, computer_id, report_comm
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     //if the conversion is made in the front end, remove the conversion here
     [result.insertId, 
-     reported_conditions.mouse === "Minor Issue" ? 1 : reported_conditions.mouse === "Major Issue" ? 2 : reported_conditions.mouse === "Bad Condition" ? 3 : 0,
-     reported_conditions.keyboard === "Minor Issue" ? 1 : reported_conditions.keyboard === "Major Issue" ? 2 : reported_conditions.keyboard === "Bad Condition" ? 3 : 0,
-     reported_conditions.system_unit === "Minor Issue" ? 1 : reported_conditions.system_unit === "Major Issue" ? 2 : reported_conditions.system_unit === "Bad Condition" ? 3 : 0,
-     reported_conditions.monitor === "Minor Issue" ? 1 : reported_conditions.monitor === "Major Issue" ? 2 : reported_conditions.monitor === "Bad Condition" ? 3 : 0,
-     reported_conditions.software === "Minor Issue" ? 1 : reported_conditions.software === "Major Issue" ? 2 : reported_conditions.software === "Bad Condition" ? 3 : 0,
-     reported_conditions.internet === "Minor Issue" ? 1 : reported_conditions.internet === "Major Issue" ? 2 : reported_conditions.internet === "Bad Condition" ? 3 : 0,
-     reported_conditions.other === "Minor Issue" ? 1 : reported_conditions.other === "Major Issue" ? 2 : reported_conditions.other === "Bad Condition" ? 3 : 0])
+     reported_conditions.mouse === "Minor Issue" ? 1 : reported_conditions.mouse === "Major Issue" ? 2 : reported_conditions.mouse === "Bad Condition" ? 3 : null,
+     reported_conditions.keyboard === "Minor Issue" ? 1 : reported_conditions.keyboard === "Major Issue" ? 2 : reported_conditions.keyboard === "Bad Condition" ? 3 : null,
+     reported_conditions.system_unit === "Minor Issue" ? 1 : reported_conditions.system_unit === "Major Issue" ? 2 : reported_conditions.system_unit === "Bad Condition" ? 3 : null,
+     reported_conditions.monitor === "Minor Issue" ? 1 : reported_conditions.monitor === "Major Issue" ? 2 : reported_conditions.monitor === "Bad Condition" ? 3 : null,
+     reported_conditions.software === "Minor Issue" ? 1 : reported_conditions.software === "Major Issue" ? 2 : reported_conditions.software === "Bad Condition" ? 3 : null,
+     reported_conditions.internet === "Minor Issue" ? 1 : reported_conditions.internet === "Major Issue" ? 2 : reported_conditions.internet === "Bad Condition" ? 3 : null,
+     reported_conditions.other === "Minor Issue" ? 1 : reported_conditions.other === "Major Issue" ? 2 : reported_conditions.other === "Bad Condition" ? 3 : null])
 
-  //check if successfully created a room
-  // const id = result.insertId
+  // update the computer and components condition
+  await updateComponentsCondition()
+
   return getReport()
 }
 /*
@@ -491,6 +492,53 @@ export async function updateNonConsumableComponentFlag(component_list, flag){
 
   await pool.query(query, [flag, ...component_list])
   return
+}
+
+// update computer based on reports
+async function updateComponentsCondition(){
+  // Get distinct computer IDs from reports
+  const [pcIds] = await pool.query(`SELECT DISTINCT computer_id FROM reports`);
+  const pcIdList = pcIds.map(pc => pc.computer_id);
+
+  // Update component conditions and computer status for each computer
+  for (const pcId of pcIdList) {
+    const [reportedComponents] = await pool.query(`
+      SELECT
+        AVG(system_unit) AS system_unit_condition,
+        AVG(monitor) AS monitor_condition,
+        AVG(mouse) AS mouse_condition,
+        AVG(keyboard) AS keyboard_condition,
+        AVG(internet) AS network_condition,
+        AVG(software) AS software_condition
+      FROM reported_components
+      JOIN reports ON reported_components.report_id = reports.report_id
+      WHERE reports.computer_id = ?`, [pcId]);
+
+    const conditions = reportedComponents[0];
+
+    await pool.query(`
+      UPDATE components_condition
+      SET
+        system_unit_condition = IFNULL(?, 0),
+        monitor_condition = IFNULL(?, 0),
+        mouse_condition = IFNULL(?, 0),
+        keyboard_condition = IFNULL(?, 0),
+        network_condition = IFNULL(?, 0),
+        software_condition = IFNULL(?, 0)
+      WHERE computer_id = ?`, 
+      [conditions.system_unit_condition, conditions.monitor_condition, conditions.mouse_condition,
+       conditions.keyboard_condition, conditions.network_condition, conditions.software_condition, pcId]);
+
+    await pool.query(`
+      UPDATE computers
+      SET computer_status = (
+        IFNULL(?, 0) + IFNULL(?, 0) + IFNULL(?, 0) + 
+        IFNULL(?, 0) + IFNULL(?, 0) + IFNULL(?, 0)
+      ) / 6
+      WHERE computer_id = ?`, 
+      [conditions.system_unit_condition, conditions.monitor_condition, conditions.mouse_condition,
+       conditions.keyboard_condition, conditions.network_condition, conditions.software_condition, pcId]);
+  }
 }
 
 //[DELETE QUERY]
