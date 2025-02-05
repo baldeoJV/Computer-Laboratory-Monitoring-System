@@ -4,17 +4,17 @@ import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import {
     getRoom, createRoom, updateRoomData, updateRoomName, deleteRoom,
-    getComputer, createComputer, getRoomComputer,
+    getComputer, createComputer, getRoomComputer, updateComputer, updateComputerStatus, deleteComputer,
     getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumableComponent,
-    updateNonConsumableComponentFlag, updateNonConsumableComponentLocation, updateNonConsumableComponent,
+    updateNonConsumableComponentFlag, updateNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId,
     getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents
 } from './be_comlab.js';
 
-// import dotenv from 'dotenv';
-// dotenv.config();
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 
@@ -53,9 +53,9 @@ function formatDate(dateString) {
 
 // LOGIN
 app.post('/login', async (req, res) => {
-    const { adminId, password } = req.body;
-    // const adminId = process.env.adminId;
-    // const password = process.env.password;
+    // const { adminId, password } = req.body;
+    const adminId = process.env.adminId;
+    const password = process.env.password;
 
     try {
         const admins = await verifyAdminId(adminId);
@@ -89,7 +89,8 @@ app.post('/logout', (req, res) => {
 // [DASHBOARD RELATED QUERY]
 app.get("/dashboard", checkAdminIdSession, async (req, res) => {
     try {
-        const rooms = await updateRoomData();  // replaced the getRoom() to update room data
+        await updateRoomData(); // update room data
+        const rooms = await getRoom();
         const computers = await getComputer();
         const reports = await getReport();
         const buildings = await getBuilding();
@@ -117,7 +118,7 @@ app.get("/dashboard", checkAdminIdSession, async (req, res) => {
 // [LABORATORIES TABLE RELATED QUERY]
 app.get("/laboratories", checkAdminIdSession, async (req, res) => {
     try {
-        await updateRoomData(); // update room data
+        await updateRoomData();
         const get_room = await getRoom();
         res.status(200).send(get_room);
     } catch (error) {
@@ -129,7 +130,6 @@ app.get("/laboratories", checkAdminIdSession, async (req, res) => {
 // FOR GUESTS / STUDENT
 app.get("/guest/laboratories", async (req, res) => {
     try {
-        await updateRoomData(); // update room data
         const get_room = await getRoom();
         res.status(200).send(get_room);
     } catch (error) {
@@ -157,7 +157,6 @@ app.post("/create/room", checkAdminIdSession, async (req, res) => {
     const { room, building_code } = req.body;
 
     try {
-        // console.log(room, building_code);
         const create_room = await createRoom(room, building_code.toUpperCase());
         return res.status(201).send(create_room);
     } catch (error) {
@@ -176,7 +175,6 @@ app.post("/delete/room", checkAdminIdSession, async (req, res) => {
         await deleteRoom(room);
         res.status(201).send("Room deleted successfully");
     } catch (error) {
-        // console.error(error);
         if(error.code === "ER_ROW_IS_REFERENCED_2"){
             return res.status(409).send(`Room/s still in use.`);
         }
@@ -190,7 +188,6 @@ app.get("/rooms/all_computers", checkAdminIdSession, async (req, res) => {
         const get_computer = await getComputer();
         res.status(201).send(get_computer);
     } catch (error) {
-        // console.error(error);
         res.status(500).send("An error occurred while fetching computers.");
     }
 });
@@ -200,20 +197,20 @@ app.post("/create/computer", checkAdminIdSession, async (req, res) => {
 
     try {
         await createComputer(room, building_code.toUpperCase(), system_unit, monitor);
-        const location = `${room}${building_code.toUpperCase()}`;
-
-        // await createComponentCondition(create_computer.computer_id);
-        await updateNonConsumableComponentLocation(location, system_unit, monitor);
         await updateRoomData();
 
         res.status(201).send('Created Computer Successfully');
     } catch (error) {
+        if (error.message === 'Stock count is 0') {
+            return res.status(400).send("Some components are out of stock. Please check the consumable components inventory.");
+        }
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`System unit tag '${system_unit}' or monitor tag '${monitor}' already in use.`);
         }
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res.status(404).send("Invalid room or system unit/monitor tag.");
         }
+
         return res.status(500).send(error);
     }
 });
@@ -244,6 +241,54 @@ app.post("/rooms/computers", checkAdminIdSession, async (req, res) => {
     }
 });
 
+app.post("/update/computer", checkAdminIdSession, async (req, res) => {
+    const { new_monitor, new_system_unit, room, building_code,
+        has_mouse, has_keyboard, has_internet, has_software, computer_id } = req.body;
+
+    try {
+        await updateComputer(new_monitor, new_system_unit, room, building_code,
+            has_mouse, has_keyboard, has_internet, has_software, computer_id);
+        res.status(201).send("Successfully updated");
+    } catch (error) {
+        if (error.message === 'Computer has reports') {
+            return res.status(409).send("Computer has reports. Cannot update.");
+        }
+        if (error.code === "ER_NO_REFERENCED_ROW_2"){
+            return res.status(404).send(`Computer id '${computer_id}' doesn't exists.`)
+        }
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`System unit tag '${new_system_unit}' or monitor tag '${new_monitor}' already in use.`);
+        }
+        return res.status(400).send(error);
+    }
+});
+
+app.post("/update/computer_status", checkAdminIdSession, async (req, res) => {
+    const { computer_id, status } = req.body;
+
+    try {
+        await updateComputerStatus(computer_id, status);
+        res.status(201).send("Successfully updated");
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+});
+
+app.post("/delete/computer", checkAdminIdSession, async (req, res) => {
+    const { computer_ids } = req.body;
+
+    try {
+        await deleteComputer(computer_ids);
+        res.status(201).send("Computer deleted successfully");
+    } catch (error) {
+        console.error(error);
+        if (error.code === "ER_ROW_IS_REFERENCED_2") {
+            return res.status(409).send(`Computer still in use.`);
+        }
+        return res.status(500).send(error || error.message);
+    }
+});
+
 // FOR GUESTS / STUDENT
 app.post("/guest/rooms/computers", async (req, res) => {
     const { rooms } = req.body;
@@ -263,7 +308,6 @@ app.post("/guest/rooms/computers", async (req, res) => {
         if (results.flat().length === 0) {
             return res.status(404).send("No computers in the given room/s.");
         }
-        // console.log(results.flat());
 
         res.status(200).json(results.flat());
     } catch (error) {
@@ -418,6 +462,7 @@ app.post("/create/report",  async (req, res) => {
         const create_report = await createReport(room, building_code.toUpperCase(), pcId, report_comment, date_submitted, submittee, reported_conditions);
         res.status(201).send(create_report);
     } catch (error) {
+        console.error(error);
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
         }
