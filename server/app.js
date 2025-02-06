@@ -56,7 +56,7 @@ app.post('/login', async (req, res) => {
     // const { adminId, password } = req.body;
     const adminId = process.env.adminId;
     const password = process.env.password;
-
+    
     try {
         const admins = await verifyAdminId(adminId);
         if (admins.length === 0) {

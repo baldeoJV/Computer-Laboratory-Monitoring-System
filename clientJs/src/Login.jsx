@@ -41,7 +41,7 @@ function Login() {
     const handleLoginSubmit = (dta)=>{
         // console.log(dta);
         axios.post('/api/login', {
-            adminId: dta.admin_id, 
+            adminId: dta.adminId, 
             password: dta.password,
         }).then(dt => {
             navigate('/dashboard')
