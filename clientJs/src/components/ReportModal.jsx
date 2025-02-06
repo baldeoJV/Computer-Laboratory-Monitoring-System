@@ -282,7 +282,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
         setStudentId(e.target.value)
     }
     
-    const submitReport = async () => {
+    const submitReport = async (toDl = false) => {
         try {
             const response = await axios.post('/api/create/report', {
                 pcId: reportedPcID,
@@ -300,7 +300,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 report_comment: commentValue,
                 submittee: studentId
             });
-            if (toDownload) {
+            if (toDownload || toDl) {
                 const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v);
                 const blob = await pdf(<ReportDocument 
                     reportedBuilding={reportedBuilding}
@@ -310,6 +310,8 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                     submittee={studentId}
                     partsCondition={partConArray}
                 />).toBlob();
+                console.log("Doiwnload");
+                
                 saveAs(blob, `${studentId}-report-form.pdf`);
             }
             handleSnackBarClick("success", "Report Submitted")
