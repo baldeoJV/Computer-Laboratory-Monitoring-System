@@ -256,9 +256,6 @@ export async function createRoom(room, building_code){
     VALUES (?, ?, 0, 0, 0, 0, 0, 0
     )`, [room, building_code])
 
-  //check if successfully created a room
-  const id = result.insertId
-  console.log("room created, update room data")
   await updateRoomData()
 }
 
@@ -291,8 +288,6 @@ export async function createComputer(room, building_code, system_unit, monitor){
 
   //update the room data
   await updateRoomData()
-
-  return getComputer()
 }
 
 // create component condition
@@ -301,8 +296,6 @@ async function createComponentCondition(computer_id){
      INSERT INTO components_condition(computer_id, system_unit_condition, monitor_condition, mouse_condition, keyboard_condition, network_condition, software_condition)
       VALUES (?, 0, 0, 0, 0, 0, 0)`,
       [computer_id])
-
-  // return getComponentCondition(computer_id) //remove the 'computer_id' if you want to return all component conditions
 }
 
 // create non consumable component
@@ -312,9 +305,9 @@ export async function createNonConsumableComponent(component_id, reference_id, l
     VALUES (?, ?, ?, ?, 0)`, 
     [component_id, reference_id, location, specs])
 
-  //returns the created component
-  const id = component_id
-  return getNonConsumableComponent()
+  // //returns the created component
+  // const id = component_id
+  // return getNonConsumableComponent()
 }
 
 // create consumable component (just incase the client wants to add consumable components)
@@ -355,7 +348,7 @@ export async function createReport(room, building_code, computer_id, report_comm
   // update the computer and components condition
   await updateComponentsCondition()
 
-  return getReport()
+  // return getReport()
 }
 /*
 
@@ -383,9 +376,9 @@ export async function createBuilding(building_code, building_name){
     VALUES (? ,?)`,
     [building_code, building_name])
 
-  //check if successfully created a room
-  const id = building_code
-  return getBuilding(id)
+  // //check if successfully created a room
+  // const id = building_code
+  // return getBuilding(id)
 }
 
 // create account
@@ -394,9 +387,6 @@ export async function createAdmin(admin_id, password, first_name, last_name){
     INSERT INTO admin(admin_id, password, first_name, last_name) 
     VALUES (?, ?, ?, ?)`,
     [admin_id, password, first_name, last_name])
-
-  //check if successfully created a room
-  return getAdmin(admin_id)
 }
 
 //[UPDATE QUERY]

@@ -521,7 +521,7 @@ app.get("/admin/:id", checkAdminIdSession, async (req, res) => {
     res.send(get_admin);
 });
 
-app.post("/create/admin", checkAdminIdSession, async (req, res) => {
+app.post("/register/admin", checkAdminIdSession, async (req, res) => {
     const { admin_id, password, first_name, last_name } = req.body;
 
     try {
