@@ -639,23 +639,24 @@ function Form_Update_Computer({open, setopen, getPcRows, handleSnackBarClick, fe
     const submitUpdateComputer = async (dta)=> {
         console.log(dta)
         try {
-            // await axios.post('/api/create/computer', {
-            //     room: dta.room, 
-            //     building_code: dta.building_code,
-            //     system_unit:dta.system_unit,
-            //     monitor: dta.monitor,
-            //     has_internet:dta.has_internet,
-            //     has_keyboard:dta.has_keyboard,
-            //     has_mouse:dta.has_mouse,
-            //     has_software:dta.has_software,
-            // })
+            await axios.post('/api/update/computer', {
+                room: dta.room, 
+                building_code: dta.building_code,
+                new_system_unit:dta.system_unit,
+                new_monitor: dta.monitor,
+                has_internet:dta.has_internet,
+                has_keyboard:dta.has_keyboard,
+                has_mouse:dta.has_mouse,
+                has_software:dta.has_software,
+                computer_id:dta.computer_id
+            })
         
-            // // console.log()
-            // if (targetedRoomsUI.length > 0){
-            //     console.log(targetedRoomsUI);
+            // console.log()
+            if (targetedRoomsUI.length > 0){
+                console.log(targetedRoomsUI);
                 
-            //     getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
-            // }
+                getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+            }
             
             await fetchLabRooms()
             handleSnackBarClick('success', "Successfully Created a Computer")
@@ -677,8 +678,6 @@ function Form_Update_Computer({open, setopen, getPcRows, handleSnackBarClick, fe
     >
         {alertComponent}
     </motion.div>
-
-
 
     return <>
         <Modal
@@ -1017,8 +1016,8 @@ function Laboratory() {
     // WHEN RIGHT CLICKED
     const [roomAnchorPosition, setRoomAnchorPosition] = useState(null)
     const [rightClickedRoom, setrightClickedRoom] = useState(null);
-
-
+    const [rightClickedComputer, setrightClickedComputer] = useState('');
+    const [selectedComputersToDelete, setselectedComputersToDelete] = useState({});
     const [createRoomModalOpen, setcreateRoomModalOpen] = useState(false) 
 
     // IN THE CASE OF PASSING PROPS IN LINK OR REDIRECT
@@ -1040,6 +1039,8 @@ function Laboratory() {
     // ROOM OR PC DELETE
     const [confirmDeleteRoomModalSelected, setconfirmDeleteRoomModalSelected] = useState(false);
     const [confirmDeleteRoomModalSingle, setconfirmDeleteRoomModalSingle] = useState(false);
+    const [confirmDeleteComputerModal, setconfirmDeleteComputerModal] = useState(false);
+
 
     // FORMS SNACK BAR
     const handleSnackBarClick = (variant, err_msg) => {
@@ -1215,6 +1216,49 @@ function Laboratory() {
         setrightClickedRoom({room: r.room, building_code: r.building_code, room_id:r.room_id})
         // console.log(r.room)
     }
+
+    const handleDeleteComputer = async ()=>{
+        try{
+            const selectedList= Object.keys(selectedComputersToDelete)
+            let tobeDeletedComputers = (selectedList.length > 0) ? selectedList : [rightClickedComputer];
+            await axios.post('/api/delete/computer', {computer_ids: tobeDeletedComputers})
+            if (targetedRoomsUI.length > 0){
+                // console.log(targetedRoomsUI);
+                
+                getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+            }
+            await fetchLabRooms()
+            handleSnackBarClick('success', "Successfully updated a Computer")
+            
+
+        } catch (err) {
+            const ermsg = err.response.data || err
+            console.log("ERROR: ", ermsg)
+            handleSnackBarClick("error", ermsg)
+        }
+        setselectedComputersToDelete({})
+        setrightClickedComputer('')
+        setconfirmDeleteComputerModal(false)
+        // console.log("Right Clicked Room: ",rightClickedRoom)
+    }
+
+    const handleUpdateComputerStatus = async (computer_id, computer_status) => {
+        try{
+            await axios.post('/api/update/computer_status', {computer_id: computer_id, status: computer_status})
+            if (targetedRoomsUI.length > 0){
+                // console.log(targetedRoomsUI);
+                
+                getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+            }
+            await fetchLabRooms()
+            handleSnackBarClick('success', "Successfully updated the Computer Status")
+        } catch (err) {
+            const ermsg = err.response.data || err
+            console.log("ERROR: ", ermsg)
+            handleSnackBarClick("error", ermsg)
+        }
+    }
+
     useEffect(() => {
         fetchLabRooms()
         // console.log("ROOOO: ", ({urlRoom, urlBuilding}));
@@ -1303,7 +1347,20 @@ function Laboratory() {
                 >
                     View Rooms List
                 </Button>
-
+                <Button 
+                    variant='contained'
+                    color='error'
+                    disabled={Object.entries(selectedComputersToDelete).length===0}
+                    style={{
+                        marginLeft:12, 
+                        borderRadius:'24px',
+                        fontSize:'14px', 
+                        textTransform: 'inherit', 
+                    }}  
+                    onClick={()=> setconfirmDeleteComputerModal(true)}
+                >
+                    Delete Selected Computers
+                </Button>
             </>}
 
             </div>
@@ -1325,6 +1382,9 @@ function Laboratory() {
                         }},
                         enableRowSelection:true,
                         enableRowActions:true,
+                        onRowSelectionChange: setselectedComputersToDelete,
+                        state: {rowSelection: selectedComputersToDelete},
+                        getRowId: (originalRow)=>originalRow.computer_id,
                         positionActionsColumn: 'last',
                         renderRowActionMenuItems:({row, table})=>{
                             const menuRow = row.original
@@ -1359,7 +1419,8 @@ function Laboratory() {
                                         has_internet:menuRow.has_internet,
                                         has_software:menuRow.has_software,
                                         old_monitor: menuRow.monitor,
-                                        old_system_unit: menuRow.system_unit
+                                        old_system_unit: menuRow.system_unit,
+                                        computer_id:menuRow.computer_id,
                                     }
                                     reset(reset_config_pc)
                                     setupdateComputerModal(true)
@@ -1370,7 +1431,10 @@ function Laboratory() {
                                 label='Delete computer'
                                 table={table}
                                 onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
+                                    // MARK
+                                    setrightClickedComputer(menuRow.computer_id)
+                                    setconfirmDeleteComputerModal(true)
+
                                 }}
                             />,
                             <MRT_ActionMenuItem
@@ -1406,17 +1470,13 @@ function Laboratory() {
                                 key={"activate"}
                                 label='Activate'
                                 table={table}
-                                onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
-                                }}
+                                onClick={() => handleUpdateComputerStatus(menuRow.computer_id, 1)}
                             />,
                             <MRT_ActionMenuItem
                                 key={"deactivate"}
                                 label='Deactivate'
                                 table={table}
-                                onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
-                                }}
+                                onClick={() => handleUpdateComputerStatus(menuRow.computer_id, 0)}
                             />,
                         ]}
                     }}
@@ -1652,7 +1712,41 @@ function Laboratory() {
                 </Stack>
             </Box>
         </Modal>
-        
+
+        {/* DELETE MODAL PC (SINGLE) and selected */}
+        <Modal open={confirmDeleteComputerModal} onClose={()=>{
+            setconfirmDeleteComputerModal(false)
+            // setrightClickedRoom({})
+        }}>
+            <Box 
+                sx={{
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 400, bgcolor: 'background.paper',
+                    boxShadow: 24, p: 4,
+                }}
+            >
+                <Typography sx={{mb:2, fontFamily:'Inter'}} variant="h6">{Object.entries(selectedComputersToDelete).length === 0 ? "Do you want to delete this computer?": "Delete selected computers?"}</Typography>
+                <Stack direction={'row'} sx={{justifyContent:'end'}}>
+                    <Button
+                        onClick={handleDeleteComputer}
+                    
+                    >
+                        Delete
+                    </Button>
+                    <Button
+                        onClick={()=>{
+                            setrightClickedComputer('')
+                            // setselectedComputersToDelete({})                            
+                            setconfirmDeleteComputerModal(false)
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                </Stack>
+            </Box>
+        </Modal>
         <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
     </div>
 }
