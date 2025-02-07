@@ -364,7 +364,8 @@ app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
 // update non consumable component
 app.post("/update/non_consum_comp", checkAdminIdSession, async (req, res) => {
     const { old_component_id, new_component_id, location, specs } = req.body;
-
+    // console.log(req.body);
+    
     try {
         await updateNonConsumableComponent(old_component_id, new_component_id, location, specs);
         res.status(201).send("Successfully updated");

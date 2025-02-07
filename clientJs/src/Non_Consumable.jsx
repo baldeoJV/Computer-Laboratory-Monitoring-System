@@ -194,21 +194,22 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
             onClose={()=>setupdateComponentOpen(false)}
         >
             <form noValidate onSubmit={handleSubmit((dta)=> {
-                // console.log(dta)
-                // axios.post('/api/create/non_consum_comp', {
-                //     component_id: dta.component_id, 
-                //     reference_id: dta.location,
-                //     specs: dta.specs,
-                // }).then(res=> {
-                //     fetchNonConsumableComponents()
-                //     handleSnackBarClick('success', "Successfully Added Component")
-                //     setupdateComponentOpen(false)
-                //     reset()
-                // }).catch(err => {
-                //     console.error("CONSOLE ERROR ", err)
-                //     handleSnackBarClick('error', err.response.data)
+                // console.log("dta",dta)
+                axios.post('/api/update/non_consum_comp', {
+                    old_component_id: dta.old_component_id, 
+                    new_component_id: dta.component_id, 
+                    location: dta.location,
+                    specs: dta.specs,
+                }).then(res=> {
+                    fetchNonConsumableComponents()
+                    handleSnackBarClick('success', "Successfully Added Component")
+                    setupdateComponentOpen(false)
+                    reset()
+                }).catch(err => {
+                    console.error("CONSOLE ERROR ", err)
+                    handleSnackBarClick('error', err.response.data || err.response.data.message)
                     
-                // })
+                })
             })}>
                 <Box 
                     sx={{
@@ -225,7 +226,24 @@ function Forms_Update_NonConsumable({updateComponentOpen, setupdateComponentOpen
                     <Stack>
                         <TextField
                             required
-                            label={'Componend ID'}
+                            disabled
+                            label={'Old Component ID'}
+                            {...register("old_component_id", {
+                                    required: true,
+                            })}
+                            placeholder='e.g SYU-001 / MON-001'
+                            fullWidth
+                            sx={{
+                                my:1, 
+                                mt:2,
+                            }}
+                        />
+                        <AnimatePresence>
+                            {errors.old_component_id?.type === 'required' && (<ModalMotion alertComponent={<Alert severity="error" sx={{ p: 0.3, px: 1, m: 0 }}>Enter the old Component ID</Alert>} />)}
+                        </AnimatePresence>
+                        <TextField
+                            required
+                            label={'New Component ID'}
                             {...register("component_id", {
                                     required: true,
                             })}
@@ -445,7 +463,7 @@ function Non_Consumable() {
                                 label='Edit'
                                 table={table}
                                 onClick={() => {
-                                    reset({component_id: menuRow.component_id, location: menuRow.location, specs: menuRow.specs})
+                                    reset({old_component_id: menuRow.component_id, location: menuRow.location, specs: menuRow.specs})
                                     setupdateComponentOpen(true)
                                 }}
                             />,
