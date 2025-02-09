@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 // FAKE DATA
 import computers_data from '../assets/computers_data.json'
 import rooms_data from '../assets/rooms_data.json'
+import Countdown from 'react-countdown';
 
 import axios from 'axios'
 
@@ -39,7 +40,7 @@ import { pdf } from '@react-pdf/renderer';
 import ReportDocument from './ReportDocument';
 
 import { useForm } from 'react-hook-form';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, delay } from 'motion/react';
 import {SnackbarProvider, enqueueSnackbar} from 'notistack'
 
 
@@ -260,12 +261,12 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
         targetedRooms, setTargetedRooms,
         targetedComputerIDs, setTargetedComputerIDs
     } = useStore()
-
+    const wantedDelay = 10000
     const [openConfirmModal, setopenConfirmModal] = useState(false);
     const [toDownload, settoDownload] = useState(false);
     const [commentValue, setCommentValue] = useState('');
     const [studentId, setStudentId] = useState('');
-    
+    const [timer, settimer] = useState({date: Date.now(), delay: 0});
     // const [building, setBuilding] = useState('');
     // const [room, setRoom] = useState(null);
     // const [computerId, setComputerId] = useState(null);
@@ -322,6 +323,21 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
         setopenConfirmModal(false)
         settoDownload(false)
     }
+    const getLocalStorageValue = (s) => localStorage.getItem(s);
+    useEffect(()=> {
+        const savedDate = getLocalStorageValue("end_date")
+        // IF THERE IS EXISTING TIMER
+        if (savedDate != null && !isNaN(savedDate)){
+            const currentTime = Date.now()
+            // GET REMAINING TIME OF THE TIMER
+            const delta = parseInt(savedDate, 10) - currentTime
+
+            // IF THE SAVED TIMER ALREADY EXPIRED
+            if (delta > wantedDelay){
+
+            }
+        }
+    }, [])
     return (
         <div>
             <Dialog
@@ -458,21 +474,35 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                     />
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
-                    <Button 
-                        onClick={()=> {
-                            settoDownload(false)
-                            setopenConfirmModal(true)
+                    <Countdown
+                        date={timer.date + timer.delay}
+                        onComplete={()=>{
+                            // IF THE TIMER EXPIRED, remove the timer
+                            if(getLocalStorageValue("end_date") != null){
+                                localStorage.removeItem("end_date")
+                            }
                         }}
-                        color="primary" 
-                        variant='contained' 
-                        sx={{ 
-                            fontFamily: 'Inter',
-                            ...smallButtonStyle
-                        }} 
-                        startIcon={<SendIcon/>}
-                    >
-                        Submit Report
-                    </Button>
+                        renderer={({hours, minutes, seconds, completed, total})=> <>
+                            <Button 
+                                disabled={!completed}
+                                onClick={()=> {
+                                    settoDownload(false)
+                                    setopenConfirmModal(true)
+                                }}
+                                color="primary" 
+                                variant='contained' 
+                                sx={{ 
+                                    fontFamily: 'Inter',
+                                    ...smallButtonStyle
+                                }} 
+                                startIcon={completed ? <SendIcon/> : null}
+                            >
+                                
+                                {completed ? 'Submit Report' : `${hours} : ${minutes} : ${seconds}`}
+                            </Button>
+                        </>}
+                    />
+
                     <Button 
                         disabled={!(reportedBuilding && reportedPcID && reportedRoom && (permissionType === "admin" ? true : studentId))}
                         sx={{ 
@@ -587,23 +617,3 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
 };
 
 export default ReportModal;
-
-
-
-
-// {parts.map((part) => (
-//     <FormControl fullWidth sx={{ mt: 2 }} key={part}>
-//         <InputLabel id={`${part}-condition-label`} sx={{ fontFamily: 'Inter' }}>{`${part} Condition`}</InputLabel>
-//         <Select
-//             labelId={`${part}-condition-label`}
-//             value={conditions[part] || ''}
-//             label={`${part} Condition`}
-//             onChange={handleConditionChange(part)}
-//             sx={{ fontFamily: 'Inter' }}
-//         >
-//             <MenuItem value="Minor Issue" sx={{ fontFamily: 'Inter' }}>Minor Issue</MenuItem>
-//             <MenuItem value="Major Issue" sx={{ fontFamily: 'Inter' }}>Major Issue</MenuItem>
-//             <MenuItem value="Critical Issue" sx={{ fontFamily: 'Inter' }}>Critical Issue</MenuItem>
-//         </Select>
-//     </FormControl>
-// ))}
