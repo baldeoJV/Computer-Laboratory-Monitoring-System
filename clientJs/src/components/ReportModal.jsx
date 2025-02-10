@@ -245,7 +245,7 @@ const smallButtonStyle = {
     textTransform: 'none'
 }
 
-const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, toRefresh = false, fetchReport = null}) => {
+const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, toRefresh = false, fetchReport = null, toRefreshPc = false, fetchLaboratoryData = null}) => {
     const [partsStatuses, setPartsStatuses] = useState({
         systemunit: { background: 'transparent', color: palette.txtStrong, condition: '', key:'System Unit',},
         monitor: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Monitor',},
@@ -262,12 +262,13 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
         targetedRooms, setTargetedRooms,
         targetedComputerIDs, setTargetedComputerIDs
     } = useStore()
-    const wantedDelay = 10000
+    const wantedDelay = 30000
     const [openConfirmModal, setopenConfirmModal] = useState(false);
     const [toDownload, settoDownload] = useState(false);
     const [commentValue, setCommentValue] = useState('');
     const [studentId, setStudentId] = useState('');
     const [timer, settimer] = useState({date: Date.now(), delay: 0});
+    const [countdownstate, setcountdownstate] = useState({});
     // const [building, setBuilding] = useState('');
     // const [room, setRoom] = useState(null);
     // const [computerId, setComputerId] = useState(null);
@@ -318,6 +319,13 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
             }
             if (toRefresh){
                 fetchReport()
+            } else if (toRefreshPc){
+                fetchLaboratoryData()
+            }
+            if (permissionType==="guest"){
+                const newEndTime = Date.now() + wantedDelay;
+                localStorage.setItem("end_date", newEndTime);
+                settimer({date: Date.now(), delay: wantedDelay})
             }
             handleSnackBarClick("success", "Report Submitted")
         } catch (err) {
@@ -339,7 +347,12 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
     
                 // IF THE SAVED TIMER ALREADY EXPIRED
                 if (delta > wantedDelay){
-                    true
+                    if (localStorage.getItem("end_date").length > 0){
+                        localStorage.removeItem("end_date")
+                    }
+                } else {
+                    // THE CURRENT TIME IS THE DATE, delay is the remaining time
+                    settimer({date: currentTime, delay: delta})
                 }
             }
         }
@@ -522,17 +535,29 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                 </DialogContent>
                 <DialogActions sx={{mx:4}}>
                     <Countdown
+                        key={timer.date + timer.delay}
                         date={timer.date + timer.delay}
+                        onStart={(delta) => {
+                        //Save the end date
+                        if (localStorage.getItem("end_date") == null)
+                            localStorage.setItem(
+                            "end_date",
+                            JSON.stringify(timer.date + timer.delay)
+                            );
+                        }}
                         onComplete={()=>{
                             // IF THE TIMER EXPIRED, remove the timer
                             if(getLocalStorageValue("end_date") != null){
                                 localStorage.removeItem("end_date")
                             }
                         }}
-                        renderer={({hours, minutes, seconds, completed, total})=> <>
+                        
+                        renderer={({hours, minutes, seconds, completed, total})=> {
+                            return <>
                             <Button 
-                                disabled={!completed}
+                                disabled={!(completed && reportedBuilding && reportedPcID && reportedRoom && (permissionType === "admin" ? true : studentId))}
                                 onClick={()=> {
+                                    // console.log(!(completed&& reportedBuilding && reportedPcID && reportedRoom && (permissionType === "admin" ? true : studentId)))
                                     settoDownload(false)
                                     setopenConfirmModal(true)
                                 }}
@@ -547,26 +572,28 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                                 
                                 {completed ? 'Submit Report' : `${hours} : ${minutes} : ${seconds}`}
                             </Button>
-                        </>}
+                            <Button 
+                                disabled={!(completed && reportedBuilding && reportedPcID && reportedRoom && (permissionType === "admin" ? true : studentId))}
+                                sx={{ 
+                                    padding: '6px 16px',
+                                    fontFamily: 'Inter',
+                                    ...smallButtonStyle,
+                                    color:palette.badFont,
+                                    border:'1px solid '+palette.badFont
+                                }} 
+                                startIcon={completed ? <PictureAsPdfIcon sx={{color:palette.badFont}}/> : null}
+                                onClick={async () => {
+                                    settoDownload(true)
+                                    await submitReport(true)
+                                }}
+                            >
+                                    {completed ? 'Submit Report & Download PDF' : `${hours} : ${minutes} : ${seconds}`}           
+                            </Button>
+                            </>
+                        }}
                     />
 
-                    <Button 
-                        disabled={!(reportedBuilding && reportedPcID && reportedRoom && (permissionType === "admin" ? true : studentId))}
-                        sx={{ 
-                            padding: '6px 16px',
-                            fontFamily: 'Inter',
-                            ...smallButtonStyle,
-                            color:palette.badFont,
-                            border:'1px solid '+palette.badFont
-                        }} 
-                        startIcon={<PictureAsPdfIcon sx={{color:palette.badFont}}/>}
-                        onClick={async () => {
-                            settoDownload(true)
-                            await submitReport(true)
-                        }}
-                    >
-                        Submit Report & Download PDF
-                    </Button>
+
                     {isClosable 
                         ? ( 
                             <Button onClick={() => isClosable ? setOpen(false) : null} color="default" variant='outlined' 

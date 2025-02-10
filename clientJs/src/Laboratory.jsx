@@ -1258,6 +1258,14 @@ function Laboratory() {
             handleSnackBarClick("error", ermsg)
         }
     }
+    const handleReportComputerRefresh = async () => {
+        if (targetedRoomsUI.length > 0){
+            // console.log(targetedRoomsUI);
+            
+            getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+        }
+        await fetchLabRooms()
+    }
 
     useEffect(() => {
         fetchLabRooms()
@@ -1571,6 +1579,9 @@ function Laboratory() {
             open={computerTable_addReportModalOpen}
             setOpen={setComputerTable_AddReportModalOpen}
             permissionType={"admin"}
+            toRefreshPc = {true}
+            fetchLaboratoryData={handleReportComputerRefresh}
+
         />
         <SharedModal
             open={computerDetailsModalOpen}
