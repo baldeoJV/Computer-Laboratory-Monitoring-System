@@ -12,10 +12,13 @@ import axios from 'axios';
 import {SnackbarProvider, enqueueSnackbar} from 'notistack'
 import {useForm} from 'react-hook-form'
 import { motion, AnimatePresence } from "motion/react"
+import useStore from './useStore';
 function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [adminId, setAdminId] = useState('');
     const [password, setPassword] = useState('');
+    const {adminDetails, setadminDetails} = useStore()
+
     const navigate = useNavigate()
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const {register, handleSubmit, formState: {errors}} = useForm()
@@ -44,6 +47,8 @@ function Login() {
             adminId: dta.admin_id, 
             password: dta.password,
         }).then(dt => {
+            const adminDt = dt.data
+            setAdminId(adminDt)
             navigate('/dashboard')
         }).catch(err => {
             console.error("CONSOLE ERROR ", err)

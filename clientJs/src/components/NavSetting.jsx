@@ -15,6 +15,7 @@ import BedtimeIcon from '@mui/icons-material/Bedtime';
 import LogoutIcon from '@mui/icons-material/Logout';
 import {NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import useStore from '../useStore';
 const StyledMenu = styled((props) => (
     <Menu
       elevation={0}
@@ -62,6 +63,7 @@ const StyledMenu = styled((props) => (
 function NavSetting() {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
+    const {adminDetails} = useStore()
     const handleClick = (event) => {
       setAnchorEl(event.currentTarget);
     };
@@ -73,7 +75,7 @@ function NavSetting() {
     return <Stack sx={{float:'none',  marginLeft:'32px', marginRight:'32px', fontFamily: 'Inter, sans-serif'}}>
     <Stack sx={{width:'100%', textAlign:'right'}} direction={'row'} alignItems="center">
       <Typography sx={{width:'100%', textAlign:'right'}}>
-        John Doe
+        {adminDetails.first_name || 'John'} {adminDetails.last_name || 'Doe'}
       </Typography>
       <IconButton
         aria-haspopup="true"

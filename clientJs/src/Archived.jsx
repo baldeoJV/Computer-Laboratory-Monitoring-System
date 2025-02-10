@@ -18,8 +18,8 @@ import palette from './assets/palette';
 import { useNavigate } from 'react-router-dom';
 const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
 
-function createData(report_id, computer_id, room, building_code, components, date_submitted, submittee,  comment, date_archived, status){
-    return {report_id, computer_id, room,  building_code, status, components, date_submitted, submittee,  comment, date_archived, }
+function createData(report_id, computer_id, room, building_code, components, date_submitted, submittee,  comment, date_archived, status, resolve_by, resolve_comment){
+    return {report_id, computer_id, room,  building_code, status, components, date_submitted, submittee,  comment, date_archived, resolve_by, resolve_comment}
 }
 function Archived() {
     const [archivedReportsData, setArchivedReportsData] = useState([]);
@@ -39,6 +39,8 @@ function Archived() {
                 rd.report_comment,
                 rd.date_resolve,
                 rd.report_status,
+                rd.resolve_by,
+                rd.resolve_comment,
             ))
             setArchivedReportsData(rows)
         }).catch(err => handleErrorFetch(err, navigate))
@@ -129,6 +131,10 @@ function Archived() {
             header: "Submittee",
 
         },
+        {
+            accessorKey: "resolve_by",
+            header: "Resolved By",
+        },
     ], []);
 
     return <div style={{display: 'flex', height:'100vh'}}>
@@ -144,7 +150,13 @@ function Archived() {
                     data={archivedReportsData} 
                     type={'archivedTable'} 
                     extraActionsTable={{
-                        initialState: { density: 'compact' },
+                        initialState: { 
+                            density: 'compact',
+                            columnVisibility: { 
+                                resolve_by: false,
+                                date_archived: false,
+                            }
+                        },
                         positionActionsColumn:'first',
                         // enableColumnOrdering: true,
                         muiTableContainerProps: { sx: { maxHeight: '600px', minHeight:'600px' } },
@@ -158,7 +170,8 @@ function Archived() {
                                     width: '100%',
                                 }}
                             >
-                                <Typography>{menuRow.comment}</Typography>    
+                                <Typography sx={{fontWeight: '700', fontFamily:'Inter', p:2}}>Report Comment: {menuRow.comment}</Typography>
+                                <Typography color={menuRow.status === 1 ? 'success' : 'error'} sx={{fontWeight: '700', fontFamily:'Inter', p:2}}>Archive Feedback: {menuRow.resolve_comment}</Typography>
                             </Box>
                         }),
                     }}

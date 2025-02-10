@@ -1475,6 +1475,24 @@ function Laboratory() {
                                 }}
                             />,
                             <MRT_ActionMenuItem
+                                key={"resolve"}
+                                label='Resolve all issue'
+                                table={table}
+                                onClick={() => {
+                                    // console.log(menuRow.computer_id)
+                                    // axios.post('/api/resolve/computer', {computer_id: menuRow.computer_id})
+                                    // .then(res => {
+                                    //     if (targetedRoomsUI.length > 0){
+                                    //         getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+                                    //     }
+                                    //     fetchLabRooms()
+                                    //     handleSnackBarClick('success', "Successfully updated the resolve the issue")
+                                    // }).catch(err => {
+                                    //     handleSnackBarClick('error', err.response.data || err)
+                                    // })
+                                }}
+                            />,
+                            <MRT_ActionMenuItem
                                 key={"activate"}
                                 label='Activate'
                                 table={table}
