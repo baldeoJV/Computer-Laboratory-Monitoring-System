@@ -109,6 +109,7 @@ async function getCrm(rows, table_name, isReportTable) {
 // RAINNAND
 // display reports
 export async function getReport(report_id=''){
+  
   const [rows] = await pool.query(
     report_id 
       ? `SELECT * FROM reports WHERE report_id = ?` 
@@ -121,6 +122,7 @@ export async function getReport(report_id=''){
   
   return report_id ? res[0] : res
 }
+
 
 export async function selectedReportAll(pcIds) {
   const [rows] = await pool.query(`SELECT COUNT(*) as total_report FROM REPORTS WHERE computer_id IN (${[...pcIds].join(', ')})`)
@@ -164,7 +166,7 @@ export async function getAdmin(admin_id=''){
   const [rows] = await pool.query(
     admin_id ? `SELECT admin_id, first_name, last_name FROM admin WHERE admin_id = ?` :
     `SELECT admin_id, first_name, last_name FROM admin`, [admin_id])
-  return admin_id ? rows[0] : rows
+    return admin_id ? rows[0] : rows
 }
 
 // display component condition
@@ -172,14 +174,14 @@ export async function getComponentCondition(computer_id){
   const [rows] = await pool.query(
     computer_id ? `SELECT * FROM components_condition WHERE computer_id = ?` :
     `SELECT * FROM components_condition`, [computer_id])
-  return computer_id ? rows[0] : rows
-}
-
-// [GET COMPONENTS FOR CREATING A COMPUTER]
-
-// get rooms list
-async function getRoomsArray(){
-  const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
+    return computer_id ? rows[0] : rows
+  }
+  
+  // [GET COMPONENTS FOR CREATING A COMPUTER]
+  
+  // get rooms list
+  async function getRoomsArray(){
+    const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
   return rooms.map(room => room.rooms)
 }
 
@@ -198,33 +200,33 @@ export async function getAvailableSystemUnit(){
   const monitor_query = `SELECT component_id FROM non_consumable_components WHERE ${placeholders}
    AND flagged = 0 AND reference_id = 1`; // 1 is the reference_id for system units
 
-  const [monitors] = await pool.query(monitor_query, rooms_list)
+   const [monitors] = await pool.query(monitor_query, rooms_list)
 
-  return monitors.map(monitor => monitor.component_id); // converted to array of component_id
-}
+   return monitors.map(monitor => monitor.component_id); // converted to array of component_id
+  }
 
-//get avaliable monitors
+  //get avaliable monitors
 export async function getAvailableMonitor(){
   const rooms_list = await getRoomsArray()
-
+  
   // if rooms_list is empty, return all available components
   if (rooms_list.length === 0) {
     const [monitors] = await pool.query(`SELECT component_id FROM non_consumable_components WHERE flagged = 0 AND reference_id = 2`) // 2 is the reference_id for monitors
     return monitors
   }
-
+  
   const placeholders = rooms_list.map(() => 'location NOT LIKE ?').join(' AND ');
   const monitor_query = `SELECT component_id FROM non_consumable_components WHERE ${placeholders}
    AND flagged = 0 AND reference_id = 2`; // 2 is the reference_id for monitors
 
-  const [monitors] = await pool.query(monitor_query, rooms_list)
+   const [monitors] = await pool.query(monitor_query, rooms_list)
 
-  return monitors.map(monitor => monitor.component_id); // converted to array of component_id
-}
-
-// get available consumable components
-export async function getAvailableConsumableComponents(){
-  const [consumable_components] = await pool.query(`
+   return monitors.map(monitor => monitor.component_id); // converted to array of component_id
+  }
+  
+  // get available consumable components
+  export async function getAvailableConsumableComponents(){
+    const [consumable_components] = await pool.query(`
     SELECT components_reference.component_name, consumable_components.stock_count
     FROM consumable_components 
     JOIN components_reference ON consumable_components.reference_id = components_reference.reference_id
@@ -238,6 +240,10 @@ export async function getAvailableConsumableComponents(){
   return result
 }
 
+export async function getAllReportId(computer_id){
+  const [rows] = await pool.query(`SELECT report_id FROM reports WHERE computer_id = ?`, [computer_id])
+  return rows
+}
 
 //[CREATE QUERY]
 
@@ -246,7 +252,7 @@ export async function createRoom(room, building_code){
   // get all existing rooms
   const room_concat = `${room}${building_code}`
   const [rooms] = await pool.query(`SELECT CONCAT(room, building_code) AS rooms FROM laboratories`)
-
+  
   if (rooms.some(r => r.rooms === room_concat)) {
     throw new Error(``); 
   }
@@ -272,27 +278,27 @@ export async function createComputer(room, building_code, system_unit, monitor){
 
   // Update the consumable components (decrement the stock count by 1 for each component)
   await pool.query(`UPDATE consumable_components SET stock_count = (stock_count - 1)`);
-
+  
   // proceed to create the computer
   const [result] = await pool.query(`
     INSERT INTO computers(room_id, system_unit, monitor, has_mouse, has_keyboard, has_internet, has_software, computer_status, condition_id)
     VALUES (IFNULL((SELECT room_id FROM laboratories WHERE room = ? AND building_code LIKE ?), -1), ?, ?, 1, 1, 1, 1, 1, 0)`,
     [room, building_code, system_unit, monitor])
-
-  // create the component condition
-  await createComponentCondition(result.insertId)
-
-  // update the non consumable components location
-  const location = `${room}${building_code}`;
-  await updateNonConsumableComponentLocation(location, system_unit, monitor);
-
-  //update the room data
-  await updateRoomData()
-}
-
-// create component condition
-async function createComponentCondition(computer_id){
-  const [result] = await pool.query(`
+    
+    // create the component condition
+    await createComponentCondition(result.insertId)
+    
+    // update the non consumable components location
+    const location = `${room}${building_code}`;
+    await updateNonConsumableComponentLocation(location, system_unit, monitor);
+    
+    //update the room data
+    await updateRoomData()
+  }
+  
+  // create component condition
+  async function createComponentCondition(computer_id){
+    const [result] = await pool.query(`
      INSERT INTO components_condition(computer_id, system_unit_condition, monitor_condition, mouse_condition, keyboard_condition, network_condition, software_condition)
       VALUES (?, 0, 0, 0, 0, 0, 0)`,
       [computer_id])
@@ -305,13 +311,10 @@ export async function createNonConsumableComponent(component_id, reference_id, l
     VALUES (?, ?, ?, ?, 0)`, 
     [component_id, reference_id, location, specs])
 
-  // //returns the created component
-  // const id = component_id
-  // return getNonConsumableComponent()
-}
-
-// create consumable component (just incase the client wants to add consumable components)
-export async function createConsumableComponent(reference_id, stock_count){
+  }
+  
+  // create consumable component (just incase the client wants to add consumable components)
+  export async function createConsumableComponent(reference_id, stock_count){
   /* 
     add a component in component reference
   */
@@ -322,12 +325,12 @@ export async function createConsumableComponent(reference_id, stock_count){
     VALUES (?, ?)`, 
     [reference_id, stock_count])
 
-  return getConsumableComponent()
-}
-
-// create report
-export async function createReport(room, building_code, computer_id, report_comment, date_submitted, submittee, reported_conditions){
-  const [result] = await pool.query(`
+    return getConsumableComponent()
+  }
+  
+  // create report
+  export async function createReport(room, building_code, computer_id, report_comment, date_submitted, submittee, reported_conditions){
+    const [result] = await pool.query(`
     INSERT INTO reports(room, building_code, computer_id, report_comment, date_submitted, submittee)
     VALUES (?, ?, ?, ?, ?, ?)`,
     [room, building_code, computer_id, report_comment, date_submitted, submittee])
@@ -344,41 +347,20 @@ export async function createReport(room, building_code, computer_id, report_comm
      reported_conditions.software === "Minor Issue" ? 1 : reported_conditions.software === "Major Issue" ? 2 : reported_conditions.software === "Bad Condition" ? 3 : null,
      reported_conditions.internet === "Minor Issue" ? 1 : reported_conditions.internet === "Major Issue" ? 2 : reported_conditions.internet === "Bad Condition" ? 3 : null,
      reported_conditions.other === "Minor Issue" ? 1 : reported_conditions.other === "Major Issue" ? 2 : reported_conditions.other === "Bad Condition" ? 3 : null])
-
-  // update the computer and components condition
-  await updateComponentsCondition()
-
-  // return getReport()
-}
-/*
-
-{
-	"pcId": 20,
-	"room": 408,
-	"building_code": "MB",
-	"reported_conditions": {
-		"mouse":"Bad Condition",
-		"keyboard":"Minor Issue",
-		"software":"Major Issue",
-		"internet":"",
-		"monitor":"Bad Condition",
-		"other" : "Minor Issue",
-	}
-	"comment": "not working",
-	"submittee":"2022-106672",
-}
-
-*/
+     
+     // update the computer and components condition
+     await updateComponentsCondition()
+     
+     // return getReport()
+    }
+ 
 // create building
 export async function createBuilding(building_code, building_name){
   const [result] = await pool.query(`
     INSERT INTO building_reference(building_code, building_name) 
     VALUES (? ,?)`,
-    [building_code, building_name])
+  [building_code, building_name])
 
-  // //check if successfully created a room
-  // const id = building_code
-  // return getBuilding(id)
 }
 
 // create account
@@ -387,28 +369,28 @@ export async function createAdmin(admin_id, password, first_name, last_name){
     INSERT INTO admin(admin_id, password, first_name, last_name) 
     VALUES (?, ?, ?, ?)`,
     [admin_id, password, first_name, last_name])
-}
+  }
 
-//[UPDATE QUERY]
-
-// update room (call this when any updates are made e.g. adding a computer, updating a computer, etc.)
-export async function updateRoomData(){
+  //[UPDATE QUERY]
   
-  //get the list of rooms
-  const [room_list] = await pool.query(`SELECT room, building_code FROM laboratories`)
-
-  for (const { room, building_code } of room_list) {
-    const [[room_data]] = await pool.query(`
+  // update room (call this when any updates are made e.g. adding a computer, updating a computer, etc.)
+  export async function updateRoomData(){
+    
+    //get the list of rooms
+    const [room_list] = await pool.query(`SELECT room, building_code FROM laboratories`)
+    
+    for (const { room, building_code } of room_list) {
+      const [[room_data]] = await pool.query(`
       SELECT 
         COUNT(*) AS total_pc,
         COUNT(CASE WHEN computers.computer_status = 1 THEN 1 END) AS total_active_pc,
         COUNT(CASE WHEN computers.computer_status = 0 THEN 1 END) AS total_inactive_pc,
         COUNT(CASE WHEN computers.condition_id = 2 THEN 1 END) AS total_major_issue,
         COUNT(CASE WHEN computers.condition_id = 1 THEN 1 END) AS total_minor_issue
-      FROM computers INNER JOIN laboratories ON computers.room_id = laboratories.room_id
-      WHERE room = ? AND building_code = ?`, [room, building_code])
+        FROM computers INNER JOIN laboratories ON computers.room_id = laboratories.room_id
+        WHERE room = ? AND building_code = ?`, [room, building_code])
 
-    const [[{ total_reports }]] = await pool.query(`
+        const [[{ total_reports }]] = await pool.query(`
       SELECT COUNT(*) AS total_reports
       FROM reports
       WHERE room = ? AND building_code = ?`, [room, building_code])
@@ -417,7 +399,7 @@ export async function updateRoomData(){
       UPDATE laboratories SET total_pc = ?, total_active_pc = ?, total_inactive_pc = ?, total_major_issue = ?, total_minor_issue = ?, total_reports = ?
       WHERE room = ? AND building_code = ?`,
       [room_data.total_pc, room_data.total_active_pc, room_data.total_inactive_pc, room_data.total_major_issue, room_data.total_minor_issue, total_reports, room, building_code])
-  }
+    }
 }
 
 // update room name
@@ -426,12 +408,8 @@ export async function updateRoomName(room, building_code, room_id){
     UPDATE laboratories
     SET room = ?, building_code = ?
     WHERE room_id = ?`, [room, building_code ,room_id])
-
-    /*
-     update the room and building code in the computer table or add constraints to the computer table
-    */
-
-  await updateRoomData()
+      
+    await updateRoomData()
 }
 
 // update non consumable component (this occurs when a computer is added or removed)
@@ -469,7 +447,7 @@ export async function updateNonConsumableComponentFlag(component_list, flag){
   for (let i = 1; i < component_list.length; i++){
     query += ` OR component_id LIKE ?`;
   }
-
+  
   await pool.query(query, [flag, ...component_list])
 }
 
@@ -478,7 +456,7 @@ async function updateComponentsCondition(){
   // Get distinct computer IDs from reports
   const [pcIds] = await pool.query(`SELECT DISTINCT computer_id FROM reports`);
   const pcIdList = pcIds.map(pc => pc.computer_id);
-
+  
   // Update component conditions and computer status for each computer
   for (const pcId of pcIdList) {
     // Get average condition of each component
@@ -494,10 +472,10 @@ async function updateComponentsCondition(){
       JOIN reports ON reported_components.report_id = reports.report_id
       WHERE reports.computer_id = ?`, [pcId]);
 
-    const conditions = reportedComponents[0];
-
-    // Update component conditions
-    await pool.query(`
+      const conditions = reportedComponents[0];
+      
+      // Update component conditions
+      await pool.query(`
       UPDATE components_condition
       SET
         system_unit_condition = IFNULL(?, 0),
@@ -519,7 +497,7 @@ async function updateComponentsCondition(){
       (conditions.network_condition * Math.pow(6, 2)) +  // coefficient for network: 6
       (conditions.software_condition * Math.pow(10, 2)) // coefficient for software: 10
     ) / 6;
-
+    
     await pool.query(`
       UPDATE computers SET condition_id = 
       CASE
@@ -527,30 +505,22 @@ async function updateComponentsCondition(){
         WHEN ? BETWEEN 1 AND 49 THEN 1
         WHEN ? BETWEEN 50 AND 99 THEN 2
         ELSE 3
-      END
-      WHERE computer_id = ?`,
+        END
+        WHERE computer_id = ?`,
       [avgCondition, avgCondition, avgCondition, pcId]);
-
-    // set the condition of the computer
-    // await pool.query(`
-    //   UPDATE computers SET computer_status = 
-    //   CASE
-    //     WHEN condition_id = 3 THEN 0
-    //     ELSE 1
-    //   END
-    //   WHERE computer_id = ?`, [pcId]);
+      
   }
 }
 
 // update computer
 export async function updateComputer(new_monitor, new_system_unit, room, building_code,
-   has_mouse, has_keyboard, has_internet, has_software, computer_id){
+  has_mouse, has_keyboard, has_internet, has_software, computer_id){
 
   // get the old system unit and monitor
   const [component_id] = await pool.query(`SELECT system_unit, monitor FROM computers WHERE computer_id = ?`, [computer_id])
   const old_system_unit = component_id[0].system_unit
   const old_monitor = component_id[0].monitor
-
+  
   // check if the computer has reports
   const [reports] = await pool.query(`SELECT report_id FROM reports WHERE computer_id = ?`, [computer_id])
   if (reports.length > 0) {
@@ -569,7 +539,7 @@ export async function updateComputer(new_monitor, new_system_unit, room, buildin
 
   // update the new non consumable components location
   await updateNonConsumableComponentLocation(`${room}${building_code}`, new_system_unit, new_monitor);
-
+  
   // update the room data
   await updateRoomData()
 }
@@ -580,17 +550,17 @@ export async function updateComputerStatus(computer_id, status){
     UPDATE computers
     SET computer_status = ?
     WHERE computer_id = ?`, [status, computer_id])
+    
+    // update the room data
+    await updateRoomData()
+  }
 
-  // update the room data
-  await updateRoomData()
-}
-
-//[DELETE QUERY]
-
-// delete non consumable component
-export async function deleteNonConsumableComponent(component_list){
-  let query = `DELETE FROM non_consumable_components WHERE component_id IN (${component_list.map((c)=>'?').join(', ')})`;
-
+  //[DELETE QUERY]
+  
+  // delete non consumable component
+  export async function deleteNonConsumableComponent(component_list){
+    let query = `DELETE FROM non_consumable_components WHERE component_id IN (${component_list.map((c)=>'?').join(', ')})`;
+    
   await pool.query(query, component_list)
 }
 
@@ -606,29 +576,75 @@ export async function deleteRoom(rooms) {
 export async function deleteComputer(computer_id){
   // check if the computer has reports
   const computerIdCondition = computer_id.map(() => 'computer_id = ?').join(' OR ');
-
+  
   let component_list = []
-
+  
   const [system_unit] = await pool.query(`SELECT system_unit FROM computers WHERE ${computerIdCondition}`, computer_id)
   const [monitor] = await pool.query(`SELECT monitor FROM computers WHERE ${computerIdCondition}`, computer_id)
-
+  
   // convert the object to array
   const system_unit_array = system_unit.map(su => su.system_unit)
   const monitor_array = monitor.map(m => m.monitor)
-
+  
   component_list.push(...system_unit_array)
   component_list.push(...monitor_array)
-
-  console.log(component_list)
-
+  
   // delete the computer
   await pool.query(`DELETE FROM computers WHERE ${computerIdCondition}`, computer_id)
-
+  
   // if component list is not empty, then update each non consumable components location
   if (component_list.length > 0) {
     await pool.query(`UPDATE non_consumable_components SET location = 'Storage Room' WHERE component_id IN (${component_list.map((c)=>'?').join(', ')})`, component_list)
   }
 
   // update the room data
+  await updateRoomData()
+}
+
+// delete report
+export async function deleteReport(report_id){
+    await pool.query(`DELETE FROM reported_components WHERE report_id = ?`, [report_id])
+    await pool.query(`DELETE FROM reports WHERE report_id = ?`, [report_id])
+
+  // update the data
+  await updateComponentsCondition()
+  await updateRoomData()
+}
+
+export async function archiveReport(report, archived_by, report_status, archive_comment, date_archived) {
+  const { report_id, room, building_code, computer_id, report_comment, date_submitted, submittee, components } = report;
+  // report_status: 1 - resolved, 0 - rejected
+
+  // archive the report
+  await pool.query(`
+    INSERT INTO archived_reports(report_id, room, building_code, computer_id, report_comment, resolve_comment, report_status, date_submitted, date_resolve, resolve_by, submittee)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [report_id, room, building_code, computer_id, report_comment, archive_comment, report_status, date_submitted, date_archived, archived_by, submittee])
+
+  // archive the reported components
+  await pool.query(`
+    INSERT INTO archived_reported_components(report_id, mouse, keyboard, system_unit, monitor, software, internet, other)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
+    [report_id, components.mouse, components.keyboard, components.system_unit, components.monitor, components.software, components.internet, components.other])
+
+  // update the components condition in the reported components if the report is resolved
+  if (report_status === 1) {
+    // get first the components condition  that was reported (columns that is not NULL)
+    const reported_components = Object.keys(components).filter(key => components[key] !== null);
+
+    // // update the components condition
+    for (const component of reported_components) {
+      await pool.query(`
+        UPDATE reported_components
+        JOIN reports ON reported_components.report_id = reports.report_id
+        SET ${component} = null
+        WHERE computer_id = ?`, [computer_id])
+    }
+  }
+
+  await deleteReport(report_id)
+
+  // update
+  await updateComponentsCondition()
   await updateRoomData()
 }

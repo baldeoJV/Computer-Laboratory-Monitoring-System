@@ -8,6 +8,7 @@ import {
     getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumableComponent,
     updateNonConsumableComponentFlag, updateNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
+    archiveReport, getAllReportId,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId,
     getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents
@@ -54,6 +55,8 @@ function formatDate(dateString) {
 // LOGIN
 app.post('/login', async (req, res) => {
     const { adminId, password } = req.body;
+    // const adminId = process.env.adminId;
+    // const password = process.env.password;
     
     try {
         const admins = await verifyAdminId(adminId);
@@ -364,7 +367,6 @@ app.post("/delete/non_consum_comp", checkAdminIdSession, async (req, res) => {
 // update non consumable component
 app.post("/update/non_consum_comp", checkAdminIdSession, async (req, res) => {
     const { old_component_id, new_component_id, location, specs } = req.body;
-    // console.log(req.body);
     
     try {
         await updateNonConsumableComponent(old_component_id, new_component_id, location, specs);
@@ -420,15 +422,23 @@ app.get("/available_consumables", checkAdminIdSession, async (req, res) => {
 app.get('/report', checkAdminIdSession, async (req, res) => {
     try {
         const get_report = await getReport();
-        const formatted_report = get_report.map(report => ({
-            ...report, date_submitted: formatDate(report.date_submitted)
-        }));
+
+        let formatted_report;
+        if (Array.isArray(get_report)) {
+            formatted_report = get_report.map(report => ({
+                ...report, date_submitted: formatDate(report.date_submitted)
+            }));
+        } else {
+            formatted_report = {...get_report, date_submitted: formatDate(get_report.date_submitted)};
+        }
+
         res.status(200).send(formatted_report);
     } catch (error) {
         console.error(error);
         res.status(500).send("An error occurred while fetching reports.");
     }
 });
+
 
 app.post('/report/selected', checkAdminIdSession, async (req, res) => {
     const { pcIds } = req.body;
@@ -440,18 +450,10 @@ app.post('/report/selected', checkAdminIdSession, async (req, res) => {
     res.send({ report_count: report_count });
 });
 
-app.get('/archived_report', checkAdminIdSession, async (req, res) => {
-    const get_report = await getArchivedReport();
-    const formatted_report = get_report.map(report => ({
-        ...report, date_submitted: formatDate(report.date_submitted), date_resolve: formatDate(report.date_resolve)
-    }));
-    res.status(200).send(formatted_report);
-});
 
 app.post("/create/report",  async (req, res) => {
     const { pcId, room, building_code, reported_conditions, report_comment, submittee } = req.body;
     //const { mouse, keyboard, software, internet, monitor, other } = req.body.reported_conditions;
-
 
     try {
         //get date
@@ -466,6 +468,75 @@ app.post("/create/report",  async (req, res) => {
             return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
         }
         return res.status(400).send(error);
+    }
+});
+
+// archive report (for resolved reports)
+app.post('/resolve/report', checkAdminIdSession, async (req, res) => {
+    try {
+        const { report_id, archived_by, report_status, archive_comment } = req.body;
+
+    // get first the report to be archived
+        const get_report = await getReport(report_id);
+        const date = new Date();
+        const date_submitted = formatDate(date);
+
+        let formatted_report;
+        if (Array.isArray(get_report)) {
+            formatted_report = get_report.map(report => ({
+                ...report, date_submitted: formatDate(report.date_submitted)
+            }));
+        } else {
+            formatted_report = {...get_report, date_submitted: formatDate(get_report.date_submitted)};
+        }
+
+    // then archive the report
+        const archive_report = archiveReport(formatted_report, archived_by, report_status, archive_comment, date_submitted);
+
+        res.status(200).send('Report archived successfully');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching reports.");
+    }
+});
+
+// resolve computer (archive all related reports)
+app.post('/resolve/computer', checkAdminIdSession, async (req, res) => {
+    try {
+        const { computer_id, archived_by } = req.body;
+        // get all reports related to the computer
+        const report_id = await getAllReportId(computer_id);
+        const report_id_list = report_id.map(report => report.report_id);
+
+        const report_status = 1;
+        const archive_comment = 'Manual resolve';
+
+    // for loop to resolve all reports
+    for (const id of report_id_list) {
+        // get first the report to be archived
+        const get_report = await getReport(id);
+        const date = new Date();
+        const date_submitted = formatDate(date);
+
+        let formatted_report;
+        if (Array.isArray(get_report)) {
+            formatted_report = get_report.map(report => ({
+                ...report, date_submitted: formatDate(report.date_submitted)
+            }));
+        } else {
+            formatted_report = { ...get_report, date_submitted: formatDate(get_report.date_submitted) };
+        }
+
+        // then archive the report
+        await archiveReport(formatted_report, archived_by, report_status, archive_comment, date_submitted);
+    }
+        // set computer status to available
+        await updateComputerStatus(computer_id, 1);
+
+        res.status(200).send('Computer resolved successfully. All related reports archived.');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching reports.");
     }
 });
 
