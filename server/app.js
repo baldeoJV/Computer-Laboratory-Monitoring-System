@@ -54,9 +54,9 @@ function formatDate(dateString) {
 
 // LOGIN
 app.post('/login', async (req, res) => {
-    const { adminId, password } = req.body;
-    // const adminId = process.env.adminId;
-    // const password = process.env.password;
+    // const { adminId, password } = req.body;
+    const adminId = process.env.adminId;
+    const password = process.env.password;
     
     try {
         const admins = await verifyAdminId(adminId);
@@ -453,7 +453,6 @@ app.post('/report/selected', checkAdminIdSession, async (req, res) => {
 
 app.post("/create/report",  async (req, res) => {
     const { pcId, room, building_code, reported_conditions, report_comment, submittee } = req.body;
-    //const { mouse, keyboard, software, internet, monitor, other } = req.body.reported_conditions;
 
     try {
         //get date
@@ -468,6 +467,33 @@ app.post("/create/report",  async (req, res) => {
             return res.status(404).send(`Submit report failed. Computer id '${computer_id}' doesn't exists.`);
         }
         return res.status(400).send(error);
+    }
+});
+
+// get archived reports
+app.get('/archived_report', checkAdminIdSession, async (req, res) => {
+    try {
+        const get_report = await getArchivedReport();
+
+        let formatted_report;
+        if (Array.isArray(get_report)) {
+            formatted_report = get_report.map(report => ({
+            ...report, 
+            date_submitted: formatDate(report.date_submitted),
+            date_resolve: formatDate(report.date_resolve)
+            }));
+        } else {
+            formatted_report = { 
+            ...get_report, 
+            date_submitted: formatDate(get_report.date_submitted),
+            date_resolve: formatDate(get_report.date_resolve)
+            };
+        }
+
+        res.status(200).send(formatted_report);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching reports.");
     }
 });
 
@@ -509,7 +535,7 @@ app.post('/resolve/computer', checkAdminIdSession, async (req, res) => {
         const report_id_list = report_id.map(report => report.report_id);
 
         const report_status = 1;
-        const archive_comment = 'Manual resolve';
+        const archive_comment = 'Auto resolve.';
 
     // for loop to resolve all reports
     for (const id of report_id_list) {

@@ -224,8 +224,8 @@ export async function getAvailableMonitor(){
    return monitors.map(monitor => monitor.component_id); // converted to array of component_id
   }
   
-  // get available consumable components
-  export async function getAvailableConsumableComponents(){
+// get available consumable components
+export async function getAvailableConsumableComponents(){
     const [consumable_components] = await pool.query(`
     SELECT components_reference.component_name, consumable_components.stock_count
     FROM consumable_components 
