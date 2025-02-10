@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Button, Grid2, Stack } from '@mui/material';
 import DrawerMenu from './components/DrawerMenu';
@@ -19,6 +19,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
 import palette from './assets/palette';
+import {SnackbarProvider, enqueueSnackbar} from 'notistack'
 const reports_condition_indication = ["Good", "Minor issue", "Major issue", "Bad"]
 function createData(report_id, computer_id, room,  building_code, components, date_submitted, submittee, comment){
     return {report_id, computer_id, room,  building_code, components, date_submitted, submittee,  comment}
@@ -27,7 +28,7 @@ function Reports() {
     const [reportsData, setReportsData] = useState([]);
     const navigate = useNavigate()
     const [reportModalOpen, setReportModalOpen] = useState(false);
-    useEffect(()=> {
+    const fetchReport = useCallback(()=>{
         axios.get('/api/report').then( res => {
             const data = res.data
             const rows = data.map((rd) => createData( 
@@ -43,6 +44,9 @@ function Reports() {
             setReportsData(rows)
         }).catch(err => handleErrorFetch(err, navigate))
     }, [navigate])
+    useEffect(()=> {
+        fetchReport()
+    }, [])
     const headCellsV2 = useMemo(() => [
         {
             accessorKey: "report_id",
@@ -106,6 +110,11 @@ function Reports() {
 
         },
     ], []);
+
+    const handleSnackBarClick = (variant, err_msg) => {
+        enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
+    } 
+
     return <div style={{display: 'flex', height:'100vh'}}>
         <DrawerMenu menuType={'reports'}/>
         <Stack width={'100vw'} overflow={'auto'}>
@@ -158,7 +167,20 @@ function Reports() {
                                 table={table}
                                 icon={<CheckIcon/>}
                                 onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
+                                    if (confirm(`Do you want to resolve Report ID: ${menuRow.report_id}`)){
+                                        console.log('resolve')
+                                        // axios.post('/api/resolve/report', {reportId: menuRow.report_id})
+                                        // .then(res => {
+                                        //     fetchReport()
+                                        //     handleSnackBarClick("success", "Successfully resolved the report")
+                                        // }).catch(err =>{
+                                        //     console.error("Error resolving: ", err)
+                                        //     handleSnackBarClick("error", err.response.data || err.response)
+
+                                        // })
+                                    }else {
+                                        console.log('not resolved')
+                                    }
                                 }}
                             />,
                             <MRT_ActionMenuItem
@@ -167,7 +189,20 @@ function Reports() {
                                 table={table}
                                 icon={<CloseIcon/>}
                                 onClick={() => {
-                                    // console.log(Object.entries(row), row.getValue)
+                                    if (confirm(`Do you want yo reject Report ID: ${menuRow.report_id}`)){
+                                        console.log('resolve')
+                                        // axios.post('/api/reject/report', {reportId: menuRow.report_id})
+                                        // .then(res => {
+                                        //     fetchReport()
+                                        //     handleSnackBarClick("success", "Successfully rejected the report")
+                                        // }).catch(err =>{
+                                        //     console.error("Error rejecting: ", err)
+                                        //     handleSnackBarClick("error", err.response.data || err.response)
+
+                                        // })
+                                    }else {
+                                        console.log('not rejected')
+                                    }
                                 }}
                             />
                         ]}
@@ -179,8 +214,10 @@ function Reports() {
             open={reportModalOpen}
             setOpen={setReportModalOpen}
             permissionType={"admin"}
+            toRefresh={true}
+            fetchReport={fetchReport}
         />
-
+        <SnackbarProvider maxSnack={2} autoHideDuration={2000}/>
     </div>;
 }
 

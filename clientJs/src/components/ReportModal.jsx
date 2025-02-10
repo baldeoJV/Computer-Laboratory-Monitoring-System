@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Modal, Box, Button, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Stack, IconButton, Grid2, Chip } from '@mui/material';
+import { Modal, Box, Button, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Stack, IconButton, Grid2, Chip, Tooltip } from '@mui/material';
 import { Typography as InterTypography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 // FAKE DATA
@@ -33,7 +33,7 @@ import useStore from '../useStore';
 import { getComputersByRoom, getRoomsByBuilding } from '../customMethods';
 import { NavLink } from 'react-router-dom';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 // PDF
 import { saveAs } from 'file-saver';
 import { pdf } from '@react-pdf/renderer';
@@ -42,6 +42,7 @@ import ReportDocument from './ReportDocument';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence, delay } from 'motion/react';
 import {SnackbarProvider, enqueueSnackbar} from 'notistack'
+import Zoom from '@mui/material/Zoom';
 
 
 function MaxHeightTextarea({textAreaValue, setTextAreaValue}) {
@@ -244,7 +245,7 @@ const smallButtonStyle = {
     textTransform: 'none'
 }
 
-const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) => {
+const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, toRefresh = false, fetchReport = null}) => {
     const [partsStatuses, setPartsStatuses] = useState({
         systemunit: { background: 'transparent', color: palette.txtStrong, condition: '', key:'System Unit',},
         monitor: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Monitor',},
@@ -315,6 +316,9 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                 
                 saveAs(blob, `${studentId}-report-form.pdf`);
             }
+            if (toRefresh){
+                fetchReport()
+            }
             handleSnackBarClick("success", "Report Submitted")
         } catch (err) {
             console.error("Error on report: ", err);            
@@ -325,18 +329,21 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
     }
     const getLocalStorageValue = (s) => localStorage.getItem(s);
     useEffect(()=> {
-        const savedDate = getLocalStorageValue("end_date")
-        // IF THERE IS EXISTING TIMER
-        if (savedDate != null && !isNaN(savedDate)){
-            const currentTime = Date.now()
-            // GET REMAINING TIME OF THE TIMER
-            const delta = parseInt(savedDate, 10) - currentTime
-
-            // IF THE SAVED TIMER ALREADY EXPIRED
-            if (delta > wantedDelay){
-
+        if (permissionType === "guest"){
+            const savedDate = getLocalStorageValue("end_date")
+            // IF THERE IS EXISTING TIMER
+            if (savedDate != null && !isNaN(savedDate)){
+                const currentTime = Date.now()
+                // GET REMAINING TIME OF THE TIMER
+                const delta = parseInt(savedDate, 10) - currentTime
+    
+                // IF THE SAVED TIMER ALREADY EXPIRED
+                if (delta > wantedDelay){
+                    true
+                }
             }
         }
+
     }, [])
     return (
         <div>
@@ -362,12 +369,52 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType}) 
                         borderTopLeftRadius:'16px',
                     }}
                 >
+                    
                     <FormControl fullWidth>
                         <Stack sx={{ marginTop: 2}}>
-                            
-                            <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mb={3} fontWeight={500}>
-                                Choose reporting area
-                            </InterTypography>
+                            <Stack direction={'row'} sx={{justifyContent: 'space-between'}}>
+                                <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mb={3} fontWeight={500}>
+                                    Choose reporting area
+                                </InterTypography>
+                                <Tooltip
+                                    sx={{ cursor: "pointer" }}
+                                    arrow
+                                    title={
+                                        <Stack>
+                                            <InterTypography>
+                                                <span style={{ color: palette.goodFont, fontWeight: "bold" }}>1. Good Condition:</span> No issues detected, fully functional, and operates smoothly.
+                                            </InterTypography>
+                                            <InterTypography>
+                                                <span style={{ color: palette.minorFont, fontWeight: "bold" }}>2. Minor Issue:</span> Slight wear and tear, but performance remains mostly unaffected.
+                                            </InterTypography>
+                                            <InterTypography>
+                                                <span style={{ color: palette.majorFont, fontWeight: "bold" }}>3. Major Issue:</span> Significant functional problems that may affect performance or usability.
+                                            </InterTypography>
+                                            <InterTypography>
+                                                <span style={{ color: palette.badFont, fontWeight: "bold" }}>4. Bad Condition:</span> Severe damage or malfunction, requiring immediate repair or replacement.
+                                            </InterTypography>
+                                        </Stack>
+                                    }
+                                    slots={{
+                                        transition: Zoom,
+                                    }}
+                                    slotProps={{
+                                        tooltip: {
+                                            sx: {
+                                                backgroundColor: "rgba(255, 255, 255, 0.8)", // Light background
+                                                color: "#000", // Dark text for contrast
+                                                boxShadow: 2, // Soft shadow effect
+                                                borderRadius: 1, // Slightly rounded corners
+                                                padding: "8px",
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <InfoOutlinedIcon sx={{color: palette.strongFill, cursor:'pointer'}}/>
+                                </Tooltip>
+
+                            </Stack>
+
                             <Grid2 container spacing={2}   
                                 sx={{
                                     gap: { xs: 1, sm: 2 },
