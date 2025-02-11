@@ -1479,17 +1479,20 @@ function Laboratory() {
                                 label='Resolve all issue'
                                 table={table}
                                 onClick={() => {
-                                    // console.log(menuRow.computer_id)
-                                    // axios.post('/api/resolve/computer', {computer_id: menuRow.computer_id})
-                                    // .then(res => {
-                                    //     if (targetedRoomsUI.length > 0){
-                                    //         getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
-                                    //     }
-                                    //     fetchLabRooms()
-                                    //     handleSnackBarClick('success', "Successfully updated the resolve the issue")
-                                    // }).catch(err => {
-                                    //     handleSnackBarClick('error', err.response.data || err)
-                                    // })
+                                    if (confirm("Do you want to resolve this computer?")){
+                                    console.log(menuRow.computer_id)
+                                    axios.post('/api/resolve/computer', {computer_id: menuRow.computer_id})
+                                    .then(res => {
+                                        if (targetedRoomsUI.length > 0){
+                                            getPcRows(typeTargetedRoomsUI, targetedRoomsUI)
+                                        }
+                                        fetchLabRooms()
+                                        handleSnackBarClick('success', "Successfully updated the resolve the issue")
+                                    }).catch(err => {
+                                        handleSnackBarClick('error', err.response.data || err)
+                                    })
+                                    }
+
                                 }}
                             />,
                             <MRT_ActionMenuItem
