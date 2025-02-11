@@ -260,7 +260,8 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
         reportedBuilding, setReportedBuilding,
         reportedPcID, setReportedPcID,
         targetedRooms, setTargetedRooms,
-        targetedComputerIDs, setTargetedComputerIDs
+        targetedComputerIDs, setTargetedComputerIDs,
+        adminDetails,
     } = useStore()
     const wantedDelay = 30000
     const [openConfirmModal, setopenConfirmModal] = useState(false);
@@ -301,7 +302,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                     system_unit : partsStatuses['systemunit'].condition,
                 },
                 report_comment: commentValue,
-                submittee: studentId
+                submittee: permissionType !== 'admin' ?studentId : `Admin - ${adminDetails.admin_id}`
             });
             if (toDownload || toDl) {
                 const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v);

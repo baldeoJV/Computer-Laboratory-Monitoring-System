@@ -70,10 +70,10 @@ app.post('/login', async (req, res) => {
         }
 
         req.session.adminId = adminData.admin_id;
-        const adminDetails = getAdmin(adminData.admin_id)
-        console.log(adminDetails);
+        const adminDetails = await getAdmin(adminData.admin_id)
+        // console.log(adminDetails);
         
-        res.status(200).send("Login Successful");
+        res.status(200).send(adminDetails);
     } catch (error) {
         res.status(500).send("There was an error on the server admin verification");
     }

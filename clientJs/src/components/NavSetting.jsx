@@ -63,7 +63,7 @@ const StyledMenu = styled((props) => (
 function NavSetting() {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
-    const {adminDetails} = useStore()
+    const {adminDetails, clearAdminDetails} = useStore()
     const handleClick = (event) => {
       setAnchorEl(event.currentTarget);
     };
@@ -75,7 +75,7 @@ function NavSetting() {
     return <Stack sx={{float:'none',  marginLeft:'32px', marginRight:'32px', fontFamily: 'Inter, sans-serif'}}>
     <Stack sx={{width:'100%', textAlign:'right'}} direction={'row'} alignItems="center">
       <Typography sx={{width:'100%', textAlign:'right'}}>
-        {adminDetails.first_name || 'John'} {adminDetails.last_name || 'Doe'}
+        {adminDetails.first_name || 'Unknown'} {adminDetails.last_name || 'Unknown'}
       </Typography>
       <IconButton
         aria-haspopup="true"
@@ -112,7 +112,8 @@ function NavSetting() {
           </div>
         </MenuItem>
         <MenuItem onClick={() => {
-          axios.post('/api/logout').then(navigate('/')).catch(err => console.error('Error: ', err))
+            clearAdminDetails()
+            axios.post('/api/logout').then(navigate('/')).catch(err => console.error('Error: ', err))
         }}>
           <div className="py-1" style={{ fontSize: '14px' }}>
             <LogoutIcon />

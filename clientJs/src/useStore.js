@@ -2,8 +2,16 @@
 import {create} from 'zustand'
 
 const useStore = create((set) => ({
-    adminDetails: {admin_id: '', first_name: '', last_name: ''},
-    setadminDetails: (ad) => set({adminDetails: {admin_id: ad.admin_id, first_name: ad.first_name, last_name: ad.last_name}}),
+    adminDetails: JSON.parse(localStorage.getItem('adminDetails')) || { admin_id: '', first_name: '', last_name: '' },
+    setadminDetails: (ad) => {
+        const newDetails = { admin_id: ad.admin_id, first_name: ad.first_name, last_name: ad.last_name };
+        localStorage.setItem('adminDetails', JSON.stringify(newDetails));
+        set({ adminDetails: newDetails });
+    },
+    clearAdminDetails: () => {
+        localStorage.removeItem('adminDetails');
+        set({ adminDetails: { admin_id: '', first_name: '', last_name: '' } });
+    },
     // ITABLE
     order: 'asc',
     setOrder: (o) => set({order: o}),

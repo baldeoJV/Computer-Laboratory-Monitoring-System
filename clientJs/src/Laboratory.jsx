@@ -1058,7 +1058,8 @@ function Laboratory() {
         reportedBuilding, setReportedBuilding,
         reportedPcID, setReportedPcID,
         targetedRooms, setTargetedRooms,
-        targetedComputerIDs, setTargetedComputerIDs
+        targetedComputerIDs, setTargetedComputerIDs,
+        adminDetails
     }= useStore()
     const mapRoomCards = (roomsData) => {
         const roomCards_data = roomsData.map((rd) => getRoomData(
@@ -1481,7 +1482,7 @@ function Laboratory() {
                                 onClick={() => {
                                     if (confirm("Do you want to resolve this computer?")){
                                     console.log(menuRow.computer_id)
-                                    axios.post('/api/resolve/computer', {computer_id: menuRow.computer_id})
+                                    axios.post('/api/resolve/computer', {computer_id: menuRow.computer_id, archived_by: `${adminDetails.admin_id} `})
                                     .then(res => {
                                         if (targetedRoomsUI.length > 0){
                                             getPcRows(typeTargetedRoomsUI, targetedRoomsUI)

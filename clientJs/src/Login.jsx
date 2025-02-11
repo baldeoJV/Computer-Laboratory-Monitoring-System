@@ -48,7 +48,7 @@ function Login() {
             password: dta.password,
         }).then(dt => {
             const adminDt = dt.data
-            setAdminId(adminDt)
+            setadminDetails(adminDt)
             navigate('/dashboard')
         }).catch(err => {
             console.error("CONSOLE ERROR ", err)
