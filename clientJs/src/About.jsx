@@ -1,43 +1,87 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import '@fontsource/inter/700.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/inter';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css'
-import { Stack, Typography } from '@mui/material';
-const style_about = {
-    alignContent:'center', 
-    justifyContent:'center', 
-    fontFamily:'Inter', 
-    fontWeight:'600', 
-    textAlign:'center', 
-    alignItems:'center', 
-    top:50, 
-    left:50
-}
-export default function About() {
-    
+/* eslint-disable react/prop-types */
+import React from 'react';
+import { Modal, Box, Typography, Stack, Paper, Container, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import useStore from './useStore';
 
-    return <div style={{display: 'flex', height:'100vh', width:'100vw'}}>
-    <Stack>
-        <Typography variant='h1' sx={style_about}
-        >
-            NATIONAL UNIVERSITY ITSO CLMS Version 2.0
-        </Typography>
-        <Typography variant='h2' sx={{...style_about, mb:5}}
-        >
-            MEMBERS:
-        </Typography>
-        <Typography variant='h3' sx={{...style_about, fontWeight:'400'}}
-        >
-            BALDEO, JOHN VERNON B. <br/>
-            BALTAR, NEIL ADRIAN B. <br/>
-            BERMUDEZ, FORTUNE C. <br/>
-            HIPOLITO, CARL ARVIN C. <br/>
-            MONTANIEL, RAINNAND P. <br/>
-        </Typography>
-    </Stack>
+export default function AboutModal({ open, setOpen }) {
+  const mode = useStore((state) => state.mode);
 
-    </div>
+  const isDarkMode = mode === 'dark';
+
+  return (
+    <Modal open={open} onClose={() => setOpen(false)}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          backdropFilter: 'blur(6px)',
+          backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.4)',
+        }}
+      >
+        <Container maxWidth="sm">
+          <Paper
+            elevation={10}
+            sx={{
+              position: 'relative',
+              padding: 5,
+              borderRadius: 3,
+              textAlign: 'center',
+              backgroundColor: isDarkMode ? '#121212' : 'rgba(255, 255, 255, 0.95)',
+              boxShadow: isDarkMode
+                ? '0px 10px 30px rgba(255, 255, 255, 0.1)'
+                : '0px 10px 30px rgba(0,0,0,0.2)',
+              color: isDarkMode ? '#f5f5f5' : '#333',
+              transition: 'all 0.3s ease-in-out',
+            }}
+          >
+            {/* Close Button */}
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                color: isDarkMode ? 'grey.400' : 'grey.700',
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            {/* Modal Content */}
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              color={isDarkMode ? 'primary.light' : 'primary'}
+              gutterBottom
+            >
+              NATIONAL UNIVERSITY ITSO CLMS v2.0
+            </Typography>
+
+            <Typography variant="h6" fontWeight={600} color="text.secondary" gutterBottom>
+              MEMBERS
+            </Typography>
+
+            <Stack spacing={1.5} sx={{ mt: 2 }}>
+              {[
+                'BALDEO, JOHN VERNON B.',
+                'BALTAR, NEIL ADRIAN B.',
+                'BERMUDEZ, FORTUNE C.',
+                'HIPOLITO, CARL ARVIN C.',
+                'MONTANIEL, RAINNAND P.',
+              ].map((member, index) => (
+                <Typography key={index} variant="body1" fontWeight={500}>
+                  {member}
+                </Typography>
+              ))}
+            </Stack>
+          </Paper>
+        </Container>
+      </Box>
+    </Modal>
+  );
 }
+

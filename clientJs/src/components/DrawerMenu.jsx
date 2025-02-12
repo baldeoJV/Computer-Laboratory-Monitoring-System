@@ -16,6 +16,7 @@ import { IconButton } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css'
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import AboutModal from '../About';
 
 function DesignBox(){
 
@@ -28,6 +29,7 @@ function DesignBox(){
 export default function DrawerMenu({menuType}) {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const handleCollapseChange = () => setIsCollapsed(!isCollapsed)
+    const [aboutOpen, setAboutOpen] = useState();
     const navigate = useNavigate()
     return (
         <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
@@ -136,13 +138,14 @@ export default function DrawerMenu({menuType}) {
                 style={{color:'black'}}
                     icon={<img src={about_pic} alt='about_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/about"/>}
+                    onClick={()=> setAboutOpen(true)}
                 > 
                     {menuType === 'itable' && <DesignBox/>}
                     About
                 </MenuItem>
             </Menu>
           </Sidebar>
+          <AboutModal open = {aboutOpen} setOpen={setAboutOpen}/>
         </div>
       );
 }

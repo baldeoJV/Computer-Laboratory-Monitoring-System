@@ -32,7 +32,7 @@ const ModalMotion = ({ alertComponent }) => <motion.div
     >
     {alertComponent}
 </motion.div>
-function AccountPasswordField() {
+function AccountPasswordField({handleSnackBarClick, navigate}) {
     const { register, handleSubmit, formState: { errors }, reset } = useForm();
     const [openAdminRePassword, setopenAdminRePassword] = useState(false);
 
@@ -42,6 +42,19 @@ function AccountPasswordField() {
             onSubmit={handleSubmit((data) => {
                 console.log("Submitted Password Data:", data);
                 // Handle password update logic here
+                if(confirm("Are you sure you want to change password?")){
+                    axios.post('/api/change/password', {
+                    old_password: data.old_password,
+                    new_password: data.new_password,
+                }).then(res => {
+                    handleSnackBarClick("success", "Successful, you will be automatically logged out")
+                    reset()
+                    axios.post('/api/logout').then(()=>navigate('/')).catch(err => console.error('Error: ', err))
+                }).catch( err => {
+                    console.error("ERROR: ", err.response.data)
+                    handleSnackBarClick("error", err.response.data)
+                })
+                }
             })}
         >
             <Grid2 container spacing={4}>
@@ -127,7 +140,7 @@ function AccountPasswordField() {
 }
 
 
-function AccountNameField() {
+function AccountNameField({handleSnackBarClick, navigate}) {
     const { register, handleSubmit, formState: { errors }, reset } = useForm();
     const [openAdminConfig, setopenAdminConfig] = useState(false);
 
@@ -137,8 +150,21 @@ function AccountNameField() {
                 noValidate 
                 className="mb-4"
                 onSubmit={handleSubmit((data) => {
-                    console.log("Submitted Data:", data);
-                    // Handle form submission
+                    console.log("Submitted Name Data:", data);
+                    // Handle password update logic here
+                    if(confirm("Are you sure you want to change admin name?")){
+                        axios.post('/api/change/name', {
+                            first_name: data.first_name,
+                            last_name: data.last_name,
+                        }).then(res => {
+                            handleSnackBarClick("success", "Successful username change, you will be automatically logged out")
+                            reset()
+                            axios.post('/api/logout').then(()=>navigate('/')).catch(err => console.error('Error: ', err))
+                        }).catch( err => {
+                            console.error("ERROR: ", err.response.data)
+                            handleSnackBarClick("error", err.response.data)
+                        })
+                    }
                 })}
             >
                 <Grid2 container spacing={4}>
@@ -226,7 +252,9 @@ function AccountNameField() {
 function DatabaseSettings() {
     const { register, handleSubmit, formState: { errors }, reset } = useForm();
     const [openDbConfig, setOpenDbConfig] = useState(false);
-
+    const handleSnackBarClick = (variant, err_msg) => {
+        enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
+    } 
     return (
         <div className="p-4">
             <div className="label mb-4">
@@ -417,8 +445,8 @@ function Settings() {
                             </div>
                         </div>
                         <Stack>
-                            <AccountNameField/>
-                            <AccountPasswordField/>
+                            <AccountNameField handleSnackBarClick={handleSnackBarClick} navigate={navigate}/>
+                            <AccountPasswordField handleSnackBarClick={handleSnackBarClick} navigate={navigate}/>
                         </Stack>
                     </div>
                 ) : (

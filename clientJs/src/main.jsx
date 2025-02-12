@@ -13,7 +13,6 @@ import Consumable from './Consumable.jsx'
 import Login from './Login.jsx'
 import GuestPage from './GuestPage.jsx'
 import Settings from './Settings.jsx'
-import About from './About.jsx'
 import ThemeWrapper from './ThemeWrapper.jsx'
 
 const router = createBrowserRouter(
@@ -54,10 +53,6 @@ const router = createBrowserRouter(
       path:'/settings',
       element:<Settings/>
     },
-    {
-      path:'/about',
-      element:<About/>
-    }
   ],
   
   // DISABLE FUTURE ERROR WARNINGS
