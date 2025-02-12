@@ -308,12 +308,10 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                     reportedPcID={reportedPcID}
                     reportedRoom={reportedRoom}
                     comment={commentValue}
-                    submittee={studentId}
+                    submittee={permissionType === "admin" ? `Admin - ${adminDetails.admin_id}` : studentId}
                     partsCondition={partConArray}
-                />).toBlob();
-                console.log("Doiwnload");
-                
-                saveAs(blob, `${studentId}-report-form.pdf`);
+                />).toBlob();                
+                saveAs(blob, `${permissionType === "admin" ? `Admin - ${adminDetails.admin_id}` : studentId}-report-form.pdf`);
             }
             if (toRefresh){
                 fetchReport()

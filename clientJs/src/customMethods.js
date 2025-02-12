@@ -93,7 +93,7 @@ export const handleExportRows = (rows, columns, name, downloadType, optionalIndi
                             .map(([k, v], i) => {
                                 const res = k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1) + ": " + optionalIndications[v]
                                 return res
-                            }).join(" / ")
+                            }).join("\n")
             }
             return rowVal
         })

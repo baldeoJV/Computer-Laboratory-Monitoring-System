@@ -1,88 +1,157 @@
-/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
+/* eslint-disable react/prop-types */
+import React from "react";
+import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
-    body: {
-      paddingTop: 35,
-      paddingBottom: 65,
-      paddingHorizontal: 35,
-    },
-    title: {
-      fontSize: 24,
-      textAlign: 'center',
-      fontFamily: 'Times-Roman'
-    },
-    author: {
-      fontSize: 12,
-      textAlign: 'center',
-      marginBottom: 40,
-    },
-    subtitle: {
-      fontSize: 18,
-      margin: 12,
-      fontFamily: 'Times-Roman'
-    },
-    text: {
-      margin: 12,
-      fontSize: 16,
-      textAlign: 'justify',
-      fontFamily: 'Times-Roman',
-    },
-    text2: {
-        marginLeft:12,
-        marginRight:12,
-        marginTop:4,
-        fontSize: 15,
-        textAlign: 'justify',
-        fontFamily: 'Times-Roman',
-      },
-    image: {
-      marginVertical: 15,
-      marginHorizontal: 100,
-    },
-    header: {
-      fontSize: 12,
-      marginBottom: 20,
-      textAlign: 'left',
-      color: 'grey',
-    },
-    pageNumber: {
-      position: 'absolute',
-      fontSize: 12,
-      bottom: 30,
-      left: 0,
-      right: 0,
-      textAlign: 'center',
-      color: 'grey',
-    },
-    bold: {
-        fontWeight:'600'
-    }
-  });
-export default function ReportDocument({reportedBuilding, reportedRoom, reportedPcID, comment, submittee, reportId = "12000", partsCondition}){
-    return   <Document>
-    <Page size="A4" style={styles.body}>
-        <Text style={styles.header}>Report ID: {reportId}</Text>
-        <Text style={styles.title}>National University - ITSO</Text>
-        <Text style={styles.author}>Computer Laboratory Management System</Text>
-        <Text style={styles.subtitle}>Submittee ID: {submittee}</Text>
-        <Text style={styles.subtitle}>Location</Text>
-        <Text style={styles.text2}>Building: {reportedBuilding}</Text>
-        <Text style={styles.text2}>Room: {reportedRoom}</Text>
-        <Text style={styles.text2}>Computer ID: {reportedPcID}</Text>
-        <Text style={styles.subtitle}>Reported Components: </Text>
-        {partsCondition.filter(pc => pc.condition).map((pc, i) => {
-            return <Text key={`${pc.key} - ${i}`} style={styles.text2}>
-                {`${pc.key}: `}
-                <Text style={styles.bold}>{pc.condition}</Text>
-            </Text>
-        })}
-        <Text style={styles.subtitle}>Comment and Feedback:</Text>
-        <Text style={styles.text2}>{comment}</Text>
-        
+  body: {
+    paddingTop: 40,
+    paddingBottom: 40,
+    paddingHorizontal: 50,
+    fontFamily: "Helvetica",
+  },
+  header: {
+    fontSize: 14,
+    textAlign: "right",
+    marginBottom: 30,
+    color: "#555",
+  },
+  title: {
+    fontSize: 26,
+    textAlign: "center",
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 25,
+    marginBottom: 8,
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  boldText: {
+    fontWeight: "bold",
+    fontSize: 17, 
+  },
+  italicText: {
+    fontSize: 16,
+    fontStyle: "italic",
+    color: "#333", // Darker to stand out
+  },
+  section: {
+    marginBottom: 18,
+  },
+  table: {
+    display: "flex",
+    flexDirection: "column",
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#000",
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    paddingVertical: 6,
+  },
+  tableCell: {
+    fontSize: 16, 
+    flex: 1,
+    textAlign: "center",
+    paddingVertical: 4,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    fontSize: 13,
+    color: "#888",
+  },
+});
 
-    </Page>
-  </Document>
+export default function ReportDocument({
+  reportedBuilding,
+  reportedRoom,
+  reportedPcID,
+  comment,
+  submittee,
+  reportId = "12000",
+  partsCondition,
+}) {
+  return (
+    <Document>
+      <Page size="A4" style={styles.body}>
+        {/* Header */}
+        <Text style={styles.header}>Report Type: {"Physical Copy"}</Text>
+
+        {/* Title */}
+        <Text style={styles.title}>National University - ITSO</Text>
+        <Text style={{ ...styles.text, textAlign: "center", marginBottom: 20 }}>
+          Computer Laboratory Management System
+        </Text>
+
+        {/* Submittee Information */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Submittee</Text>
+          <Text style={styles.boldText}>{submittee}</Text>
+        </View>
+
+        {/* Location Details */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Location</Text>
+          <Text style={styles.text}>
+            <Text style={styles.boldText}>Building: </Text>
+            <Text style={styles.boldText}>{reportedBuilding}</Text>
+          </Text>
+          <Text style={styles.text}>
+            <Text style={styles.boldText}>Room: </Text>
+            <Text style={styles.boldText}>{reportedRoom}</Text>
+          </Text>
+          <Text style={styles.text}>
+            <Text style={styles.boldText}>Computer ID: </Text>
+            <Text style={styles.boldText}>{reportedPcID}</Text>
+          </Text>
+        </View>
+
+        {/* Reported Components (Tabular Format) */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Reported Components</Text>
+          <View style={styles.table}>
+            <View style={[styles.tableRow, { backgroundColor: "#ddd" }]}>
+              <Text style={styles.tableCell}>
+                <Text style={styles.boldText}>Component</Text>
+              </Text>
+              <Text style={styles.tableCell}>
+                <Text style={styles.boldText}>Condition</Text>
+              </Text>
+            </View>
+            {partsCondition
+              .filter((pc) => pc.condition)
+              .map((pc, i) => (
+                <View key={i} style={styles.tableRow}>
+                  <Text style={styles.tableCell}>{pc.key}</Text>
+                  <Text style={styles.tableCell}>
+                    <Text style={styles.boldText}>{pc.condition}</Text>
+                  </Text>
+                </View>
+              ))}
+          </View>
+        </View>
+
+        {/* Comments & Feedback */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Comment & Feedback</Text>
+          <Text style={styles.italicText}>&quot;{comment}&quot;</Text> 
+        </View>
+
+        {/* Footer */}
+        <Text style={styles.footer}>Generated by ITSO CLMS v2.0</Text>
+      </Page>
+    </Document>
+  );
 }
