@@ -122,43 +122,38 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 const ReportIconButton = ({ icon: Icon, label, partsStatuses, setPartsStatuses }) => {
+    const { mode } = useStore(); 
     const partKey = label.toLowerCase().replaceAll(" ", "");
     const partStatus = partsStatuses[partKey].background;
-    const partLabel = partStatus === palette.minorBg ? "Minor Issue"
-                    : partStatus === palette.majorBg ? "Major Issue"
-                    : partStatus === palette.badBg ? "Bad Condition"
-                    : "Condition";
+
+    const conditionMap = {
+        [palette.minorBg]: "Minor Issue",
+        [palette.majorBg]: "Major Issue",
+        [palette.badBg]: "Bad Condition"
+    };
+    
+    const partLabel = conditionMap[partStatus] || "Condition";
+
     const handleClick = () => {
         setPartsStatuses(prevStatuses => {
             const currentCondition = partsStatuses[partKey].condition;
-            let newBackground = null;
-            let newColor = null;
-            let newCondition = ''
-            if (currentCondition === '') {
-                newBackground = palette.minorBg;
-                newColor = palette.minorFont;
-                newCondition = 'Minor Issue'
-            } else if (currentCondition === 'Minor Issue') {
-                newBackground = palette.majorBg;
-                newColor = palette.majorFont;
-                newCondition = 'Major Issue'
-            } else if (currentCondition === 'Major Issue') {
-                newBackground = palette.badBg;
-                newColor = palette.badFont;
-                newCondition = 'Bad Condition'
-            } else {
-                newBackground = 'transparent';
-                newColor = palette.txtStrong;
-                newCondition = ''
-            }
+            const conditionCycle = [
+                { bg: palette.minorBg, font: palette.minorFont, condition: 'Minor Issue' },
+                { bg: palette.majorBg, font: palette.majorFont, condition: 'Major Issue' },
+                { bg: palette.badBg, font: palette.badFont, condition: 'Bad Condition' },
+                { bg: 'transparent', font: mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '' }
+            ];
+
+            const nextIndex = (conditionCycle.findIndex(c => c.condition === currentCondition) + 1) % conditionCycle.length;
+            const { bg, font, condition } = conditionCycle[nextIndex];
 
             return {
                 ...prevStatuses,
                 [partKey]: {
                     ...prevStatuses[partKey],
-                    background: newBackground,
-                    color: newColor,
-                    condition: newCondition,
+                    background: bg,
+                    color: font,
+                    condition
                 }
             };
         });
@@ -174,21 +169,22 @@ const ReportIconButton = ({ icon: Icon, label, partsStatuses, setPartsStatuses }
                 padding: '8px',
                 width: '110px', 
                 height: '80px',
-                border: `1px solid ${palette.strokeMain}`, 
+                border: `1px solid ${mode === 'dark' ? '#333333' : palette.strokeMain}`, 
                 borderRadius: '8px',
                 backgroundColor: partsStatuses[partKey].background,
-                color: partsStatuses[partKey].color
+                color: partsStatuses[partKey].color,
+                boxShadow: mode === 'dark' ? 'rgba(0, 0, 0, 0.6) 0px 4px 12px' : 'rgba(149, 157, 165, 0.2) 0px 8px 24px',
             }}
             disableRipple
             onClick={handleClick}
         >
-            <Icon style={{ fontSize: '1.9rem' }} />
+            <Icon style={{ fontSize: '1.9rem' }}/>
             <InterTypography 
                 variant='caption'
                 sx={{
                     color: partsStatuses[partKey].color,
                     marginTop: 0.5,
-                    fontWeight:'600',
+                    fontWeight: '600',
                 }}
             >
                 {partLabel}
@@ -246,14 +242,15 @@ const smallButtonStyle = {
 }
 
 const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, toRefresh = false, fetchReport = null, toRefreshPc = false, fetchLaboratoryData = null}) => {
+    const {mode} = useStore()
     const [partsStatuses, setPartsStatuses] = useState({
-        systemunit: { background: 'transparent', color: palette.txtStrong, condition: '', key:'System Unit',},
-        monitor: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Monitor',},
-        software: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Software',},
-        internet: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Internet',},
-        keyboard: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Keyboard',},
-        mouse: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Mouse',},
-        other: { background: 'transparent', color: palette.txtStrong, condition: '', key:'Others',},
+        systemunit: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'System Unit',},
+        monitor: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'Monitor',},
+        software: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'Software',},
+        internet: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'Internet',},
+        keyboard: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'Keyboard',},
+        mouse: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'Mouse',},
+        other: { background: 'transparent', color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong, condition: '', key:'Others',},
     });
     const {
         reportedRoom, setReportedRoom,
@@ -387,7 +384,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                     <FormControl fullWidth>
                         <Stack sx={{ marginTop: 2}}>
                             <Stack direction={'row'} sx={{justifyContent: 'space-between'}}>
-                                <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mb={3} fontWeight={500}>
+                                <InterTypography variant='h5' fontFamily={'Inter'} color={ mode === 'dark' ? '#D9D9D9' : palette.txtStrong} mb={3} fontWeight={500}>
                                     Choose reporting area
                                 </InterTypography>
                                 <Tooltip
@@ -459,7 +456,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                         />
                     </>}
 
-                    <InterTypography variant='h5' fontFamily={'Inter'} color={palette.textWeak} mt={2} fontWeight={500}>
+                    <InterTypography variant='h5' fontFamily={'Inter'} color={ mode === 'dark' ? '#D9D9D9' : palette.txtStrong} mt={2} fontWeight={500}>
                         Select Location
                     </InterTypography>
 
@@ -600,7 +597,7 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                             <Button onClick={() => isClosable ? setOpen(false) : null} color="default" variant='outlined' 
                                 sx={{ 
                                     borderColor: '#5F5F5F',
-                                    color: '#4F4F4F',
+                                    color:  mode === 'dark' ? '#D9D9D9' : palette.txtStrong,
                                     textTransform: 'none',
                                     '&:hover': {
                                         borderColor: '#3C3C3C',

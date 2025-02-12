@@ -34,19 +34,7 @@ function LabelTop() {
   </div>
 }
 
-const clickableStyle = {
-  borderRadius: '16px', 
-  border: `0.5px solid ${palette.strokeMain}`,
-  color: '#000626',
-  backgroundColor: 'white',
-  width: '100%',
-  padding: '14px',
-  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  alignContent:'center',
-  mt:2,
-  cursor:'pointer',
-  minHeight:'110px'
-}
+
 const statboxStyle = {
   width:'500px',
   height:'25vh',
@@ -62,9 +50,21 @@ function App()  {
   const [reportsData, setReportsData] = useState([]);
   const [showUi, setShowUi] = useState(false);
   const navigate = useNavigate()
-  const {errorMessage} = useStore()
+  const {errorMessage, mode} = useStore()
   
-
+  const clickableStyle = {
+    borderRadius: '16px', 
+    color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C',
+    border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'transparent',
+    width: '100%',
+    padding: '14px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    alignContent:'center',
+    mt:2,
+    cursor:'pointer',
+    minHeight:'110px'
+  }
 
   useEffect(() => {
     axios.get('/api/dashboard').then(res => {
@@ -193,7 +193,7 @@ function App()  {
     let rd = roomsData[i]
     let mr = rd.total_reports > 0
     let iconsx= {
-      color: mr? palette.badFont : palette.darkBlueFont, 
+      color: mr? (mode === 'light' ? palette.badFont : palette.badBg) : (mode === 'light' ? palette.darkBlueFont : palette.fillUnlisted), 
       borderRadius:'16px', 
     }
     let reportLabel = mr ? rd.total_reports+" pending reports" : "No pending reports"
@@ -208,10 +208,19 @@ function App()  {
       }}
       style={{ textDecoration: 'none' }}
       >
-      <Card  sx={{border:'1px solid '+palette.strokeMain , m:0, p:1.5, borderRadius: '12px', width:'136px', cursor:'pointer'}}>
+        <Card  
+            sx={{
+                border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '0.5px solid rgba(255, 255, 255, 0.12)', 
+                m:0, p:1.5, 
+                borderRadius: '12px', 
+                width:'136px', 
+                cursor:'pointer',
+                color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C'
+                }}
+        >
         <Stack direction={'row'} width={'100%'}>
         <Stack mb={0.4}>
-        <Typography sx={{color: 'text.secondary', fontSize:'12px',fontFamily:'Inter'}}>
+        <Typography sx={{color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C', fontSize:'12px',fontFamily:'Inter'}}>
           {bdLabel}
         </Typography>
         <Typography variant='h6' component='div' sx={{fontFamily:'Inter'}} >
@@ -225,7 +234,7 @@ function App()  {
         </Stack>
 
 
-        <Typography fontSize={'11px'} sx={{color:mr? palette.badFont : palette.darkBlueFont,fontFamily:'Inter'}}>
+        <Typography fontSize={'11px'} sx={{color:mr? (mode === 'light' ? palette.badFont : palette.badBg) : (mode === 'light' ? palette.darkBlueFont : palette.fillUnlisted),fontFamily:'Inter'}}>
         {reportLabel}
         </Typography>
       </Card>
@@ -239,7 +248,7 @@ function App()  {
   return (
     <div style={{display: 'flex', height:'100vh',}}>
       <DrawerMenu menuType={'dashboard'}/>
-      <Stack width={'100vw'} overflow={'auto'}>
+      <Stack width={'100vw'} overflow={'auto'} >
         <NavSetting/>
         <div className='mx-4'>
           <LabelTop/>
@@ -274,16 +283,15 @@ function App()  {
               <Box 
                 style={{
                   borderRadius: '16px', 
-                  border: `0.5px solid ${palette.strokeMain}`,
-                  color: '#000626',
-                  backgroundColor: 'white',
+                  border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)',
+                  backgroundColor: 'transparent',
                   width: '100%',
                   padding: '16px',
                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
                 }}
               > 
                 <Box width={'100%'} display={'flex'} justifyContent={'space-between'}>
-                  <Typography variant='h6' sx={{fontWeight:700, fontFamily:'Inter'}}>
+                  <Typography variant='h6' sx={{fontWeight:700, fontFamily:'Inter', color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C'}}>
                     Rooms - <b>{totalRooms}</b>
                   </Typography>
                   
@@ -313,7 +321,7 @@ function App()  {
                     <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Total pending reports</Typography>
                     <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} >                    {totalReports === 0 
                     ? "There are currently no pending reports. Click here to submit a report" 
-                    : <>The system detected <b style={{color:palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
+                    : <>The system detected <b style={{color:mode === 'dark' ? palette.badBg : palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
                     }</Typography>
                   </Box>
                 </Stack>

@@ -12,6 +12,13 @@ const useStore = create((set) => ({
         localStorage.removeItem('adminDetails');
         set({ adminDetails: { admin_id: '', first_name: '', last_name: '' } });
     },
+
+    // DARK MODE
+    mode: JSON.parse(localStorage.getItem('mode')) || 'light',
+    setmode: (m) => {
+        localStorage.setItem('mode', JSON.stringify(m))
+        set({mode: m})   
+    },
     // ITABLE
     order: 'asc',
     setOrder: (o) => set({order: o}),

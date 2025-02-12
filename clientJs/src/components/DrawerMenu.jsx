@@ -31,8 +31,10 @@ export default function DrawerMenu({menuType}) {
     const navigate = useNavigate()
     return (
         <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
-          <Sidebar className="sidebr" collapsed={isCollapsed}
+          <Sidebar collapsed={isCollapsed}
             width='248px' style={{overflow:'hidden', height:'100%',}}
+            backgroundColor={'white'}
+            
           >
             <Menu>
                 {isCollapsed 
@@ -44,9 +46,9 @@ export default function DrawerMenu({menuType}) {
                             icon={ 
                                 <IconButton 
                                     onClick={handleCollapseChange}
-                                    sx={{'& :focus': {outline:'none'}}}
+                                    sx={{'& :focus': {outline:'none'}, color:'black'}}
                                 >
-                                    <KeyboardDoubleArrowRightOutlinedIcon/> 
+                                    <KeyboardDoubleArrowRightOutlinedIcon sx={{color:'black'}}/> 
                                 </IconButton>}                        
                         >
                         
@@ -55,13 +57,12 @@ export default function DrawerMenu({menuType}) {
                         <MenuItem
                             className='menuHead'
                             style={{color: 'black'}}
-                            
                             icon={ 
                                 <IconButton 
                                     onClick={handleCollapseChange}
-                                    sx={{'&:focus': {outline:'none'}}}
+                                    sx={{'&:focus': {outline:'none', color:'black'}}}
                                 >
-                                    <KeyboardDoubleArrowLeftOutlinedIcon/> 
+                                    <KeyboardDoubleArrowLeftOutlinedIcon sx={{color:'black'}}/> 
                                 </IconButton>}
                         >
                         </MenuItem>
@@ -80,16 +81,19 @@ export default function DrawerMenu({menuType}) {
                     }
                 }}
             >
-                <MenuItem 
+                <MenuItem
+                    style={{color:'black'}}
                     icon={<img src={dashboard_pic} alt='dashboard_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/dashboard"/>}
+                    
                 >  
                     {menuType === 'dashboard' && <DesignBox/>}
                     Dashboard
                 </MenuItem>
 
                 <MenuItem
+                style={{color:'black'}}
                     onClick={()=>{
                         navigate('/laboratory')
                         window.location.reload()
@@ -102,6 +106,7 @@ export default function DrawerMenu({menuType}) {
                 </MenuItem>
 
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={reports_pic} alt='reports_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/report"/>}
@@ -110,6 +115,7 @@ export default function DrawerMenu({menuType}) {
                     Reports 
                 </MenuItem>
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={inventory_pic} alt='inventory_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/inventory"/>}
@@ -118,6 +124,7 @@ export default function DrawerMenu({menuType}) {
                     Inventory 
                 </MenuItem>
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={settings1_pic} alt='settings1_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/settings"/>}
@@ -126,6 +133,7 @@ export default function DrawerMenu({menuType}) {
                     Settings
                 </MenuItem>
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={about_pic} alt='about_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/about"/>}

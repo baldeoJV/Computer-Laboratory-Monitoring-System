@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import { Box, Link, Stack, Typography } from '@mui/material';
+import { Box, Link, Stack, Typography, useTheme } from '@mui/material';
 import PropTypes from 'prop-types'
 import '@fontsource/inter/700.css';
 import palette from "../assets/palette";
@@ -8,16 +8,19 @@ import * as React from 'react';
 import {ResponsiveBar} from '@nivo/bar'
 import { IoIosArrowForward } from "react-icons/io";
 import { NavLink } from 'react-router-dom';
+import useStore from '../useStore';
 function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
+    const theme = useTheme();
+    const {mode} = useStore()
     const conditionColors = [palette.good, '#FBD148', palette.major, '#FF6363']; // Colors for good, minor, major, bad
     const statusColors = ['#FF6363', '#0079FF']; // Colors for active, inactive
     return (
         <Box sx={{
             ...sx, 
             borderRadius: '16px', 
-            border: `0.5px solid ${palette.strokeMain}`,
-            color: '#000626',
-            backgroundColor: 'white',
+            border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)',
+            color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C',
+            backgroundColor: 'transparent',
             width: '100%',
             padding: '16px',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
@@ -36,7 +39,6 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
 
             <div style={{padding:'16px', width:'100%', height:'100%'}}>
                 <ResponsiveBar
-                    
                     data={data}
                     keys={keys}
                     layout='horizontal'
@@ -84,6 +86,25 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
                                 1.6
                             ]
                         ]
+                    }}
+                    theme={{
+                        axis: {
+                            ticks: {
+                                text: {
+                                    fill: theme.palette.text.primary,
+                                },
+                            },
+                        },
+                        legends: {
+                            text: {
+                                fill: theme.palette.text.primary,
+                            },
+                        },
+                        labels: {
+                            text: {
+                                fill: theme.palette.text.primary,
+                            },
+                        },
                     }}
                     legends={[
                         {

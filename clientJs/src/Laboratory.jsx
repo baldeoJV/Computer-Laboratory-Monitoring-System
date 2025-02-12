@@ -56,7 +56,7 @@ function LabelTop() {
     </div>
 }
 function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms, getPcRows, onContextMenu, setIsCompTableOpen, setComputersData, setPcDCond, setPcDStat}) {
-
+    const {mode} = useStore()
     const handleCheckRoomBox = (e, r)=> {
         // console.log(r);
         
@@ -80,7 +80,7 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
         transition: 'background-color 0.15s ease-in-out', 
     }
     const typographysx = {
-        color: palette.txtStrong, 
+        color:  mode=== 'light' ? palette.txtStrong : 'white',
         fontFamily: 'Inter, sans-serif', 
         fontWeight: 600, 
         width: '100%',
@@ -191,15 +191,15 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
                             <Stack>
                                 <Stack direction={'row'} width={1} textAlign={'center'} paddingBottom={1}>
                                     <Stack width={1/3}>
-                                        <Typography variant='caption' sx={{color: palette.txtStrong, fontFamily: 'Inter, sans-serif' }}>Active</Typography>
+                                        <Typography variant='caption' sx={{color:  mode=== 'light' ? palette.txtStrong : 'white', fontFamily: 'Inter, sans-serif' }}>Active</Typography>
                                         <Typography variant='h6'>{r.total_active_pc}</Typography>
                                     </Stack>
                                     <Stack width={1/3}>
-                                        <Typography variant='caption' sx={{color: palette.txtStrong, fontFamily: 'Inter, sans-serif' }}>Inactive</Typography>
+                                        <Typography variant='caption' sx={{color:  mode=== 'light' ? palette.txtStrong : 'white', fontFamily: 'Inter, sans-serif' }}>Inactive</Typography>
                                         <Typography variant='h6'>{r.total_inactive_pc}</Typography>
                                     </Stack>
                                     <Stack width={1/3}>
-                                        <Typography variant='caption' sx={{color: palette.txtStrong, fontFamily: 'Inter, sans-serif' }}>Reports</Typography>
+                                        <Typography variant='caption' sx={{color:  mode=== 'light' ? palette.txtStrong : 'white', fontFamily: 'Inter, sans-serif' }}>Reports</Typography>
                                         <Typography variant='h6' sx={{color: palette.bad}} >{r.total_reports}</Typography>
                                     </Stack>
                                 </Stack>

@@ -7,7 +7,7 @@ const palette = {
     weakHi: '#4488BF',
     wFtext: '#AOABCO',
     textLight: '#9EA3A2',
-    fillUnlisted: '#DCD0D0',
+    fillUnlisted: '#3A8DFF',
     minor: '#FCE5A7',
     strongFill: '#4488BF',
     wFhead: '#717D96',

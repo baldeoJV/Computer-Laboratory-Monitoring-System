@@ -17,7 +17,7 @@ function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [adminId, setAdminId] = useState('');
     const [password, setPassword] = useState('');
-    const {adminDetails, setadminDetails} = useStore()
+    const {adminDetails, setadminDetails, mode} = useStore()
 
     const navigate = useNavigate()
     const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -87,7 +87,17 @@ function Login() {
             justifyContent:'center',
         }}
     >
-        <div style={{border:'1px solid '+palette.strokeMain, padding:'32px', textAlign:'center', boxShadow:'rgba(149, 157, 165, 0.2) 0px 8px 24px', backgroundColor:'#f9f9f9'}}>
+        <div
+        style={{
+            border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : palette.strokeMain, 
+            padding: '32px',
+            textAlign: 'center',
+            boxShadow: mode === 'dark' 
+            ? 'rgba(0, 0, 0, 0.6) 0px 4px 12px' // Dark mode shadow
+            : 'rgba(149, 157, 165, 0.2) 0px 8px 24px', // Light mode shadow
+            backgroundColor: 'transparent'
+        }}
+        >
             <div className='pt-3 pb-4 mx-3' style={{width:'275px'}}>
                 <img src={NUArtworkItsoBlue2} alt='nulogo' className='imageNu' />
             </div>

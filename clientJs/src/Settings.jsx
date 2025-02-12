@@ -379,7 +379,8 @@ function Settings() {
         <Stack width={'100vw'} overflow={'auto'} direction={'row'}>
             <div style={{ display: 'fixed', height: '100vh', alignItems: 'center' }}>
                 <Sidebar className="sidebr"
-                    style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                    backgroundColor='white'>
                     <Menu
                         style={{
                             marginTop: '20%'
@@ -390,11 +391,11 @@ function Settings() {
                             }
                         }}
                     >
-                        <MenuItem className='menuItem py-2' style={{ width: '100%' }} onClick={() => setisAccountClicked(true)}>{isAccountClicked && <DesignBox />} Account Settings </MenuItem>
-                        <MenuItem className='menuItem py-2' onClick={() => setisAccountClicked(false)}> {!isAccountClicked && <DesignBox />} Database Settings </MenuItem>
+                        <MenuItem className='menuItem py-2' style={{ width: '100%',color:'black' }} onClick={() => setisAccountClicked(true)}>{isAccountClicked && <DesignBox />} Account Settings </MenuItem>
+                        <MenuItem className='menuItem py-2' style={{color:'black'}} onClick={() => setisAccountClicked(false)}> {!isAccountClicked && <DesignBox />} Database Settings </MenuItem>
 
                         <MenuItem className='menuItem py-2'>
-                            <Button color='primary' variant='outlined' sx={{ height: '100%', width: '100%' }}
+                            <Button color='primary' variant='contained' sx={{ height: '100%', width: '100%', textTransform:'none' }}
                             
                             onClick={() => {
                                 axios.post('/api/logout').then(navigate('/')).catch(err => console.error('Error: ', err))

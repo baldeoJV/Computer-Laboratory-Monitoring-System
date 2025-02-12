@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
@@ -13,6 +14,7 @@ import Login from './Login.jsx'
 import GuestPage from './GuestPage.jsx'
 import Settings from './Settings.jsx'
 import About from './About.jsx'
+import ThemeWrapper from './ThemeWrapper.jsx'
 
 const router = createBrowserRouter(
   [
@@ -73,6 +75,8 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router}/>
+    <ThemeWrapper >
+        <RouterProvider router={router}/>
+    </ThemeWrapper>
   </StrictMode>,
 )

@@ -51,8 +51,6 @@
 }
 .sidebr{
   display: flex;
-  border: 1px solid !important;
-  border-color: #d4d4d4 !important;
   gap:40px !important;
   /* background-color: aqua; */
 }
@@ -87,7 +85,6 @@
 
 
 .label .text-wrapper {
-  color: #000626e6;
   font-family: "Inter-Regular", Helvetica;
   font-size: 40px;
   font-weight: 400;

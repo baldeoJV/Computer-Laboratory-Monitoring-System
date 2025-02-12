@@ -88,6 +88,7 @@ export default function ITableV2({columns, data, type, extraActionsTable}) {
         setAnchorEl_DownloadMenu(event.currentTarget);
         setDownloadTargetTableMode(tMode)
     };
+    const {mode}= useStore()
     const handleExecute_DownloadMenu = (dtype) => {
         try {
             const optionalIndication = (type === "reportTable" || type === "archivedTable" || type=== "dashboardTable") ? reports_condition_indication : null
@@ -164,14 +165,26 @@ export default function ITableV2({columns, data, type, extraActionsTable}) {
     })
 
     return (
-    <Box sx={{border:'1px solid #DADADA', marginTop:'24px'}}>
+    <Box sx={{border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)', marginTop:'24px' }}>
         {(type==='reportTable' || type==='archivedTable' || type==='non_consumableTable' || type==='consumableTable') && <Box>
             <Tabs value={tabValue} onChange={handleTabChange}>
                 {tabLabel}
             </Tabs>
         </Box>
         }
-        <MaterialReactTable table={table}/>
+        <MaterialReactTable 
+            table={table}
+            muiTableBodyCellProps={{
+                sx: {
+                    color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C',
+                }
+            }}
+            muiTableHeadCellProps={{
+                sx: {
+                    color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C',
+                }
+            }}
+        />
         <StyledMenu
         open={open}
         onClose={handleClose_DownloadMenu}
