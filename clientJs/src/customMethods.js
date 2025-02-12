@@ -85,13 +85,15 @@ export const handleExportRows = (rows, columns, name, downloadType, optionalIndi
             // if a column of a row is an object, join all the value of that object.
             let rowVal = row.original[col.accessorKey || col.id]
             
+            
             if ((typeof rowVal) === "object"){
+                
                 rowVal = Object.entries(rowVal)
                             .filter(([k, v])=> v)
                             .map(([k, v], i) => {
                                 const res = k.charAt(0).toUpperCase() + k.replace("_", " ").slice(1) + ": " + optionalIndications[v]
                                 return res
-                            })
+                            }).join(" / ")
             }
             return rowVal
         })

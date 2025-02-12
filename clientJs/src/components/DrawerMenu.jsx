@@ -29,7 +29,7 @@ function DesignBox(){
 export default function DrawerMenu({menuType}) {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const handleCollapseChange = () => setIsCollapsed(!isCollapsed)
-    const [aboutOpen, setAboutOpen] = useState();
+    const [aboutOpen, setAboutOpen] = useState(false);
     const navigate = useNavigate()
     return (
         <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>

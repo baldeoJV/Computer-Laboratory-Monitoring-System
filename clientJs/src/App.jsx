@@ -91,6 +91,8 @@ function App()  {
       setShowUi(true)
       setRoomsData(data.rooms)
       setComputersData(data.computers)
+    //   console.log(reportRows);
+      
       setReportsData(reportRows)
       setTotalReports(totalrep);
       setTotalRooms(roomcount)
@@ -337,7 +339,7 @@ function App()  {
                   <Box sx={{fontFamily:'Inter',textAlign:'left'}} width={'100%'}>
                     <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Downloads available</Typography>
                     <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'left'}} >
-                      Components, computers, and reports summary are available for download 
+                        Components, computers, and reports summary are available for download 
                     </Typography>
 
                   </Box>
