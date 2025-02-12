@@ -613,12 +613,18 @@ app.post("/register/admin", checkAdminIdSession, async (req, res) => {
 });
 
 app.post("/update/admin_password", checkAdminIdSession, async (req, res) => {
-    const { admin_id, password } = req.body;
+    const { admin_id, old_password, new_password } = req.body;
 
     try {
-        await updatePassword(admin_id, password);
+        await updatePassword(admin_id, old_password, new_password);
         res.status(201).send("Successfully updated");
     } catch (error) {
+        if (error.message === 'Invalid account') {
+            return res.status(404).send("Invalid account");
+        }
+        if (error.message === 'Password is the same') {
+            return res.status(409).send("Password is the same");
+        }
         return res.status(400).send(error);
     }
 });

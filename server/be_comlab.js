@@ -588,11 +588,23 @@ export async function updateComputerStatus(computer_id, status){
   }
 
 // update password
-export async function updatePassword(admin_id, password){
+export async function updatePassword(admin_id, old_password, new_password){
+  // account validation
+  const [admin] = await pool.query(`SELECT * FROM admin WHERE admin_id = ? AND password = ?`, [admin_id, old_password])
+
+  if (admin.length === 0) {
+    throw new Error('Invalid account');
+  }
+
+  // validation if the new password is the same as the old password
+  if (old_password === new_password) {
+    throw new Error('Password is the same');
+  }
+
   await pool.query(`
-    UPDATE admin
-    SET password = ?
-    WHERE admin_id = ?`, [password, admin_id])
+    UPDATE admin SET password = ? 
+    WHERE admin_id = ? AND password = ?
+    `, [new_password, admin_id, old_password])
 }
 
 // update name
