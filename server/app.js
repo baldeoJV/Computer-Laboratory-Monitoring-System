@@ -8,10 +8,11 @@ import {
     getNonConsumableComponent, createNonConsumableComponent, deleteNonConsumableComponent,
     updateNonConsumableComponentFlag, updateNonConsumableComponent,
     getReport, createReport, getReportCount, getArchivedReport, selectedReportAll,
-    archiveReport, getAllReportId,
+    archiveReport,
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
-    getAdmin, createAdmin, verifyAdminId,
-    getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents
+    getAdmin, createAdmin, verifyAdminId, updatePassword, updateName,
+    getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents,
+    resolveComputer
 } from './be_comlab.js';
 
 import dotenv from 'dotenv';
@@ -529,38 +530,13 @@ app.post('/resolve/report', checkAdminIdSession, async (req, res) => {
     }
 });
 
-// resolve computer (archive all related reports)
+// resolve computer (archive all related reports) [WILL MAKE A SEPERATE FUNCTION FOR THIS]
 app.post('/resolve/computer', checkAdminIdSession, async (req, res) => {
     try {
         const { computer_id, archived_by } = req.body;
-        // get all reports related to the computer
-        const report_id = await getAllReportId(computer_id);
-        const report_id_list = report_id.map(report => report.report_id);
 
-        const report_status = 1;
-        const archive_comment = 'Auto resolve.';
-
-    // for loop to resolve all reports
-    for (const id of report_id_list) {
-        // get first the report to be archived
-        const get_report = await getReport(id);
-        const date = new Date();
-        const date_submitted = formatDate(date);
-
-        let formatted_report;
-        if (Array.isArray(get_report)) {
-            formatted_report = get_report.map(report => ({
-                ...report, date_submitted: formatDate(report.date_submitted)
-            }));
-        } else {
-            formatted_report = { ...get_report, date_submitted: formatDate(get_report.date_submitted) };
-        }
-
-        // then archive the report
-        await archiveReport(formatted_report, archived_by, report_status, archive_comment, date_submitted);
-    }
         // set computer status to available
-        await updateComputerStatus(computer_id, 1);
+        await resolveComputer(computer_id, archived_by);
 
         res.status(200).send('Computer resolved successfully. All related reports archived.');
     } catch (error) {
@@ -632,6 +608,28 @@ app.post("/register/admin", checkAdminIdSession, async (req, res) => {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Admin id '${admin_id}' already exist`);
         }
+        return res.status(400).send(error);
+    }
+});
+
+app.post("/update/admin_password", checkAdminIdSession, async (req, res) => {
+    const { admin_id, password } = req.body;
+
+    try {
+        await updatePassword(admin_id, password);
+        res.status(201).send("Successfully updated");
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+});
+
+app.post("/update/admin_name", checkAdminIdSession, async (req, res) => {
+    const { admin_id, first_name, last_name } = req.body;
+
+    try {
+        await updateName(admin_id, first_name, last_name);
+        res.status(201).send("Successfully updated");
+    } catch (error) {
         return res.status(400).send(error);
     }
 });
