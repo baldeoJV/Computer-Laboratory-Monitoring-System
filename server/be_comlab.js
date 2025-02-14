@@ -369,7 +369,34 @@ export async function createAdmin(admin_id, password, first_name, last_name){
     INSERT INTO admin(admin_id, password, first_name, last_name) 
     VALUES (?, ?, ?, ?)`,
     [admin_id, password, first_name, last_name])
+}
+
+// create activation code (encryption)
+export async function createActivationCode(code){
+  const [result] = await pool.query(`
+    INSERT INTO verification(activation_code) 
+    VALUES (?)`, [code])
+}
+
+// verify code
+export async function verifyActivationCode(code){
+  const [rows] = await pool.query(`SELECT activation_code FROM verification`)
+
+  if (rows.length === 0) {
+    throw new Error('Incorrect activation code');
   }
+
+  // return the activation code
+  return 'Activation code is correct';
+}
+
+// get validation code
+export async function getActivationCode(){
+  const [rows] = await pool.query(`SELECT activation_code FROM verification`)
+  console.log(rows[0].activation_code);
+
+  return rows[0].activation_code;
+}
 
 //[UPDATE QUERY]
 

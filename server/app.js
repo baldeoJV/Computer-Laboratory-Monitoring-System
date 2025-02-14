@@ -12,7 +12,7 @@ import {
     getBuilding, createBuilding, getConsumableComponent, updateConsumableComponent,
     getAdmin, createAdmin, verifyAdminId, updatePassword, updateName,
     getAvailableMonitor, getAvailableSystemUnit, getAvailableConsumableComponents,
-    resolveComputer
+    resolveComputer, createActivationCode, verifyActivationCode, getActivationCode
 } from './be_comlab.js';
 
 import dotenv from 'dotenv';
@@ -22,6 +22,38 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+// for encryption
+import crypto from 'crypto';
+import 'dotenv/config';
+
+const algorithm = 'aes-256-cbc';
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex'); // Must be 32 bytes
+const iv = Buffer.from(process.env.IV_KEY, 'hex'); // Must be 16 bytes
+
+// Encrypt Function
+function encrypt(text) {
+    let cipher = crypto.createCipheriv(algorithm, key, iv);
+    let encrypted = cipher.update(text, 'utf-8', 'hex');
+    encrypted += cipher.final('hex');
+    return encrypted;
+}
+
+// Decrypt Function
+function decrypt(encryptedText) {
+    let decipher = crypto.createDecipheriv(algorithm, key, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf-8');
+    decrypted += decipher.final('utf-8');
+    return decrypted;
+}
+
+// // Example Usage
+// const encryptedEmail = encrypt("john@example.com");
+// console.log("Encrypted Email:", encryptedEmail);
+
+// const decryptedEmail = decrypt(encryptedEmail);
+// console.log("Decrypted Email:", decryptedEmail);
+
 
 // AUTHENTICATION LIBRARY
 app.use(cookieParser());
@@ -599,16 +631,42 @@ app.get("/admin/:id", checkAdminIdSession, async (req, res) => {
 });
 
 app.post("/register/admin", checkAdminIdSession, async (req, res) => {
-    const { admin_id, password, first_name, last_name } = req.body;
+
+    const { admin_id, password, activation_key, first_name, last_name } = req.body;
 
     try {
+        // first verify activation key
+        const decrypted_activation_key = decrypt(activation_key);
+        const validate_activation_code = await verifyActivationCode(decrypted_activation_key);
+
+        if (!validate_activation_code) {
+            return res.status(404).send("Invalid activation key");
+        }
+
         const create_admin = await createAdmin(admin_id, password, first_name, last_name);
-        res.status(201).send(create_admin);
+        res.status(201).send('Admin created successfully');
     } catch (error) {
+        // console.error(error);
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).send(`Admin id '${admin_id}' already exist`);
+        } else if (error.message === 'Incorrect activation code') {
+            return res.status(404).send("The activation code is incorrect.");
+        } else if (error.code === "ERR_OSSL_BAD_DECRYPT"
+             || error.code === "ERR_INVALID_ARG_VALUE"
+             || error.code === "ERR_INVALID_ARG_TYPE") {
+            return res.status(400).send("Invalid activation code.");
+        } else if (error.code === 'ERR_OSSL_EVP_BAD_DECRYPT') {
+            return res.status(400).send("Decryption failed: Incorrect key, IV, or corrupted data.");
+        } else if (error.code === 'ERR_CRYPTO_INVALID_IV') {
+            return res.status(400).send("Decryption failed: Invalid IV length.");
+        } else if (error.code === 'ERR_CRYPTO_INVALID_KEYLEN') {
+            return res.status(400).send("Decryption failed: Invalid key length.");
+        } else if (error.code === 'ERR_BUFFER_TOO_SMALL') {
+            return res.status(400).send("Decryption failed: Buffer too small.");
+        } else {
+            return res.status(500).send("An error occurred while fetching activation code.");
         }
-        return res.status(400).send(error);
+        // return res.status(400).send(error);
     }
 });
 
@@ -671,6 +729,72 @@ app.post("/update/room_name", checkAdminIdSession, async (req, res) => {
         res.status(201).send("Successfully updated");
     }catch(error){
         res.status(400).send(error);
+    }
+});
+
+// get activation code
+app.post('/activation_code', checkAdminIdSession, async (req, res) => {
+    try {
+        const get_activation_code = await getActivationCode();
+        // encrypt activation code
+        const encrypted_activation_code = encrypt(get_activation_code);
+
+        res.status(200).send(`Activation code for ${get_activation_code}: ${encrypted_activation_code}`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching activation code.");
+    }
+});
+
+// verify activation code
+app.post('/verify/activation_code', async (req, res) => {
+    const { activation_code } = req.body;
+
+    try {
+        // decrypt activation code
+        const decrypted_activation_code = decrypt(activation_code);
+
+        const validate_activation_code = await verifyActivationCode(decrypted_activation_code);
+        
+        res.status(200).send(validate_activation_code);
+    } catch (error) {
+        console.error(error);
+        if (error.message === 'Incorrect activation code') {
+            return res.status(404).send("The activation code is incorrect.");
+        } else if (error.code === "ERR_OSSL_BAD_DECRYPT" || error.code === "ERR_INVALID_ARG_VALUE") {
+            return res.status(400).send("Invalid activation code.");
+        } else if (error.code === 'ERR_OSSL_EVP_BAD_DECRYPT') {
+            res.status(400).send("Decryption failed: Incorrect key, IV, or corrupted data.");
+        } else if (error.code === 'ERR_CRYPTO_INVALID_IV') {
+            res.status(400).send("Decryption failed: Invalid IV length.");
+        } else if (error.code === 'ERR_CRYPTO_INVALID_KEYLEN') {
+            res.status(400).send("Decryption failed: Invalid key length.");
+        } else if (error.code === 'ERR_BUFFER_TOO_SMALL') {
+            res.status(400).send("Decryption failed: Buffer too small.");
+        } else {
+            res.status(500).send("An error occurred while fetching activation code.");
+        }
+    }
+});
+
+// create activation code
+app.post('/create/activation_code', checkAdminIdSession, async (req, res) => {
+    const { activation_code } = req.body;
+
+    // encrypt activation code
+    console.log(activation_code);
+    console.log('encrypting...');
+    const encrypted_activation_code = encrypt(activation_code);
+    console.log('done encrypting...');
+    console.log(encrypted_activation_code);
+
+    try {
+        await createActivationCode(encrypted_activation_code);
+        res.status(201).send('Activation code created successfully');
+    } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).send(`Activation code '${activation_code}' already exist`);
+        }
     }
 });
 
