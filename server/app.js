@@ -47,14 +47,6 @@ function decrypt(encryptedText) {
     return decrypted;
 }
 
-// // Example Usage
-// const encryptedEmail = encrypt("john@example.com");
-// console.log("Encrypted Email:", encryptedEmail);
-
-// const decryptedEmail = decrypt(encryptedEmail);
-// console.log("Decrypted Email:", decryptedEmail);
-
-
 // AUTHENTICATION LIBRARY
 app.use(cookieParser());
 app.use(session({
@@ -87,9 +79,9 @@ function formatDate(dateString) {
 
 // LOGIN
 app.post('/login', async (req, res) => {
-    // const { adminId, password } = req.body;
-    const adminId = process.env.adminId;
-    const password = process.env.password;
+    const { adminId, password } = req.body;
+    // const adminId = process.env.adminId;
+    // const password = process.env.password;
     
     try {
         const admins = await verifyAdminId(adminId);
