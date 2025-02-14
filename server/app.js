@@ -87,7 +87,9 @@ function formatDate(dateString) {
 
 // LOGIN
 app.post('/login', async (req, res) => {
-    const { adminId, password } = req.body;
+    // const { adminId, password } = req.body;
+    const adminId = process.env.adminId;
+    const password = process.env.password;
     
     try {
         const admins = await verifyAdminId(adminId);
@@ -671,8 +673,11 @@ app.post("/register/admin", checkAdminIdSession, async (req, res) => {
 app.post("/update/admin_password", checkAdminIdSession, async (req, res) => {
     const { admin_id, old_password, new_password } = req.body;
 
+    const encrypted_old_password = encrypt(old_password);
+    const encrypted_new_password = encrypt(new_password);
+
     try {
-        await updatePassword(admin_id, old_password, new_password);
+        await updatePassword(admin_id, encrypted_old_password, encrypted_new_password);
         res.status(201).send("Successfully updated");
     } catch (error) {
         if (error.message === 'Invalid account') {
