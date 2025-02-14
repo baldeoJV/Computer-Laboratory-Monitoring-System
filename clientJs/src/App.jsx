@@ -321,10 +321,15 @@ function App()  {
                   
                   <Box sx={{fontFamily:'Inter',textAlign:'left'}} width={'100%'}>
                     <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Total pending reports</Typography>
-                    <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} >                    {totalReports === 0 
-                    ? "There are currently no pending reports. Click here to submit a report" 
-                    : <>The system detected <b style={{color:mode === 'dark' ? palette.badBg : palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
-                    }</Typography>
+                    <NavLink style={{ textDecoration: 'none', color:'inherit' }} to={'/report'}>
+                        <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify', color:'inherit'}} >                    
+                            {totalReports === 0 
+                            ? "There are currently no pending reports. Click here to submit a report" 
+                            : <>The system detected <b style={{color:mode === 'dark' ? palette.badBg : palette.badFont}}>{totalReports} pending report/s</b>. To submit a report, please click here or instead go to the reports section </>
+                            }
+                        </Typography>
+                    </NavLink>
+
                   </Box>
                 </Stack>
 

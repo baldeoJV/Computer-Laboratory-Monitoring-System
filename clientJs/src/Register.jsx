@@ -1,6 +1,5 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-
 import React, { useState, useEffect } from 'react';
 import NUArtworkItsoBlue2 from "./assets/images/NU_ARTWORK_ITSO_BLUE2.svg";
 import { Alert, Button, Divider, FormControl, IconButton, InputAdornment, InputLabel, Link, OutlinedInput, Stack, TextField } from '@mui/material';
@@ -13,15 +12,26 @@ import {SnackbarProvider, enqueueSnackbar} from 'notistack'
 import {useForm} from 'react-hook-form'
 import { motion, AnimatePresence } from "motion/react"
 import useStore from './useStore';
-function Login() {
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css'
+const ModalMotion = ({alertComponent}) => <motion.div
+        key={"modal"} 
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+    >
+        {alertComponent}
+    </motion.div>
+export default function RegisterAdmin(){
+    const {mode} = useStore()
     const [showPassword, setShowPassword] = useState(false);
-    const [adminId, setAdminId] = useState('');
-    const [password, setPassword] = useState('');
-    const {adminDetails, setadminDetails, mode} = useStore()
-
     const navigate = useNavigate()
-    const handleClickShowPassword = () => setShowPassword((show) => !show);
+    
     const {register, handleSubmit, formState: {errors}} = useForm()
+    const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => {
         event.preventDefault();
     };
@@ -29,27 +39,18 @@ function Login() {
     const handleMouseUpPassword = (event) => {
         event.preventDefault();
     };
-
-    const handleAdminIdChange = (event) => {
-        setAdminId(event.target.value);
-    };
-
-    const handlePasswordChange = (event) => {
-        setPassword(event.target.value);
-    };
     const handleSnackBarClick = (variant, err_msg) => {
         enqueueSnackbar(err_msg, {variant: variant, anchorOrigin:{ vertical: 'bottom', horizontal: 'center' }})
     }
-
-    const handleLoginSubmit = (dta)=>{
+    const handleRegisterSubmit = (dta)=>{
         // console.log(dta);
-        axios.post('/api/login', {
+        axios.post('/api/register', {
             adminId: dta.admin_id, 
             password: dta.password,
+            activation_code: dta.activation_code,
         }).then(dt => {
-            const adminDt = dt.data
-            setadminDetails(adminDt)
-            navigate('/dashboard')
+            alert('Successfully registered, please proceed to the login page')
+            navigate('/')
         }).catch(err => {
             console.error("CONSOLE ERROR ", err)
             handleSnackBarClick('error', err.response.data)
@@ -57,27 +58,6 @@ function Login() {
         })
 
     }
-
-    const ModalMotion = ({alertComponent}) => <motion.div
-            key={"modal"} 
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-        >
-            {alertComponent}
-        </motion.div>
-    useEffect(() => {
-        axios.post('/api/logout')
-            .then(response => {
-                console.log("Session cleared");
-            })
-            .catch(error => {
-                
-                console.error("Error clearing session", error);
-                // enqueueSnackBar(error)
-            });
-    }, []);
-
     return <div 
         style={{
             display:'flex', 
@@ -86,7 +66,7 @@ function Login() {
             alignItems:'center',
             justifyContent:'center',
         }}
-    >
+    >   
         <div
         style={{
             border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : palette.strokeMain, 
@@ -101,27 +81,29 @@ function Login() {
             <div className='pt-3 pb-4 mx-3' style={{width:'275px'}}>
                 <img src={NUArtworkItsoBlue2} alt='nulogo' className='imageNu' />
             </div>
-            <NavLink to={'/reportguest'}>
-                <Button
-                    sx={{
-                        color: 'white',
-                        textTransform:'none',
-                        fontFamily:'Inter',
-                        minWidth:'250px',
-                        p:1.3,
-                        mt:2,
-                        bgcolor:'#323e8a',
-                    }}
-
-                >
-                    Report as guest
-                </Button>
-            </NavLink>
-
-            <Divider sx={{m:0,mt:2, width: '100%'}} variant="middle">or</Divider>
-            <form noValidate onSubmit={handleSubmit(handleLoginSubmit)}>
+            <form noValidate onSubmit={handleSubmit(handleRegisterSubmit)}>
                 <Stack>
-                
+                    {/* admin id */}
+                    <TextField
+                        // inputRef={register}
+                        required
+                        label={'Activation Code'}
+                        {...register("activation_code", {
+                                required: true,
+                        })}
+                        fullWidth
+                        // value={adminId}
+                        // onChange={handleAdminIdChange}
+                        sx={{
+                            my:1, 
+                            mt:2,
+                        }}
+                    />
+                    <AnimatePresence>
+                        {errors.activation_code?.type === 'required' && 
+                            <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate the activation code</Alert>}/>
+                        }
+                    </AnimatePresence>
                     {/* admin id */}
                     <TextField
                         // inputRef={register}
@@ -196,15 +178,14 @@ function Login() {
                             bgcolor:'#323e8a',
                         }}
                     >
-                        Login
+                        Register
                     </Button>
             </form>
-            <Link sx={{cursor:'pointer', fontSize:'small'}} onClick={()=> navigate('/register')}>
-                Request admin account here
+            <Link sx={{cursor:'pointer', fontSize:'small'}} onClick={()=> navigate('/')}>
+                Login instead
             </Link>
         </div>
         <SnackbarProvider maxSnack={2} autoHideDuration={800}/>
+        
     </div>
 }
-
-export default Login;

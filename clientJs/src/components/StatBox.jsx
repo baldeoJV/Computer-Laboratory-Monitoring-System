@@ -14,6 +14,25 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
     const {mode} = useStore()
     const conditionColors = [palette.good, '#FBD148', palette.major, '#FF6363']; // Colors for good, minor, major, bad
     const statusColors = ['#FF6363', '#0079FF']; // Colors for active, inactive
+    // console.log(data);
+    // just get the total sum
+    const total_count = data.reduce((sum, cur) => sum + keys.reduce((keysum, key)=> keysum + (cur[key] || 0), 0), 0)
+
+    // get either the good or active of the data
+    const targetKey = type === 'condition' ? 'good' : 'active';
+    const target_count = data.reduce((sum, cur) => sum + (cur[targetKey] || 0), 0)
+    
+    
+
+    // percentage, toFixed for only two decimal places
+    const percentage = total_count ? ((target_count/total_count)*100).toFixed(2) : 0
+    // console.log(`${type} `, data)
+    // console.log(`${type} total_count: `, total_count);
+    // console.log(`${type}target_count: `, target_count);
+    // console.log(`${type}percentage: `, percentage);
+    // console.log('\n')
+
+    
     return (
         <Box sx={{
             ...sx, 
@@ -25,10 +44,17 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
             padding: '16px',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
         }}>
-            <Stack direction={'row'} justifyContent={'space-between'}>
-            <Typography variant="h6" sx={{fontWeight: 700 }}>
-                {head}
+            <Stack direction={'row'} >
+            <span style={{width:'75%', display:'flex'}}>
+            <Typography variant="h6" sx={{fontWeight: 700}} alignContent={'center'}>
+                {head} 
             </Typography>
+            <Typography variant='caption' sx={{ml:2, fontWeight:'600'}} alignContent={'center'} color={type === 'condition' ? 'success' : 'primary'}>
+            {`(${percentage}%) ${type === 'condition' ? 'Good' : 'Active'}`}
+            </Typography>
+            </span>
+
+
             <NavLink to={'/laboratory'}>
                 <Link component={'button'} variant='body2'>
                     Go to laboratory <IoIosArrowForward />
@@ -36,7 +62,6 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
             </NavLink>
 
             </Stack>
-
             <div style={{padding:'16px', width:'100%', height:'100%'}}>
                 <ResponsiveBar
                     data={data}
@@ -66,7 +91,7 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
                         legendPosition: 'middle',
                         legendOffset: 32,
                         truncateTickAt: 0,
-                        tickValues:4
+                        tickValues:4,
                     }}
                     axisLeft={{
                         tickSize: 5 ,
@@ -74,7 +99,8 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
                         legend: 'Building',
                         legendPosition: 'middle',
                         legendOffset: -40,
-                        truncateTickAt: 0
+                        truncateTickAt: 0,
+                        
                     }}
                     labelSkipWidth={12}
                     labelSkipHeight={12}
@@ -135,7 +161,6 @@ function StatBox({head, sx = {height :'70%'}, data, type, keys}) {
                     barAriaLabel={e => e.id + ": " + e.formattedValue + " in building: " + e.indexValue}
                 />
             </div>
-
         </Box>
     );
 }

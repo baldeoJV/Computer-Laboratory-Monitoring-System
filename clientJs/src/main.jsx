@@ -14,6 +14,7 @@ import Login from './Login.jsx'
 import GuestPage from './GuestPage.jsx'
 import Settings from './Settings.jsx'
 import ThemeWrapper from './ThemeWrapper.jsx'
+import RegisterAdmin from './Register.jsx'
 
 const router = createBrowserRouter(
   [
@@ -53,6 +54,10 @@ const router = createBrowserRouter(
       path:'/settings',
       element:<Settings/>
     },
+    {
+        path:'/register',
+        element:<RegisterAdmin/>
+    }
   ],
   
   // DISABLE FUTURE ERROR WARNINGS

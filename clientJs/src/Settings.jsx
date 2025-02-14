@@ -15,10 +15,12 @@ import { AnimatePresence, motion } from 'motion/react';
 import { enqueueSnackbar, SnackbarProvider } from 'notistack';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
-import { Alert, Button, FormControl, Grid2, InputLabel, Modal, Select, Stack, TextField } from '@mui/material';
+import { Alert, Button, FormControl, Grid2, IconButton, InputAdornment, InputLabel, Modal, Select, Stack, TextField } from '@mui/material';
 import { Accordion, AccordionDetails, CardContent, Paper, Typography, Box, Chip, ListItemIcon } from '@mui/material';
 import { Navigate, useNavigate } from 'react-router-dom';
-
+import useStore from './useStore';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 function DesignBox() {
     return <div className="box">
         <div className="rectangle" />
@@ -32,28 +34,31 @@ const ModalMotion = ({ alertComponent }) => <motion.div
     >
     {alertComponent}
 </motion.div>
-function AccountPasswordField({handleSnackBarClick, navigate}) {
+function AccountPasswordField({ handleSnackBarClick, navigate }) {
     const { register, handleSubmit, formState: { errors }, reset } = useForm();
     const [openAdminRePassword, setopenAdminRePassword] = useState(false);
+    const { adminDetails } = useStore();
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
 
     return (
         <form 
             noValidate
-            onSubmit={handleSubmit((data) => {
-                console.log("Submitted Password Data:", data);
-                // Handle password update logic here
-                if(confirm("Are you sure you want to change password?")){
-                    axios.post('/api/change/password', {
-                    old_password: data.old_password,
-                    new_password: data.new_password,
-                }).then(res => {
-                    handleSnackBarClick("success", "Successful, you will be automatically logged out")
-                    reset()
-                    axios.post('/api/logout').then(()=>navigate('/')).catch(err => console.error('Error: ', err))
-                }).catch( err => {
-                    console.error("ERROR: ", err.response.data)
-                    handleSnackBarClick("error", err.response.data)
-                })
+            onSubmit={handleSubmit(async (data) => {
+                if (confirm("Are you sure you want to change password?")) {
+                    try {
+                        await axios.post('/api/update/admin_password', {
+                            admin_id: adminDetails.admin_id,
+                            old_password: data.old_password,
+                            new_password: data.new_password,
+                        });
+                        alert('Change password successful, you will be automatically logged out');
+                        reset();
+                        await axios.post('/api/logout').then(() => navigate('/')).catch(err => console.error('Error: ', err));
+                    } catch (err) {
+                        console.error("ERROR: ", err.response.data);
+                        handleSnackBarClick("error", err.response.data);
+                    }
                 }
             })}
         >
@@ -63,11 +68,20 @@ function AccountPasswordField({handleSnackBarClick, navigate}) {
                     <TextField
                         disabled={!openAdminRePassword}
                         required
-                        type="password"
+                        type={showOldPassword ? "text" : "password"}
                         label="Old password"
                         {...register("old_password", { required: true })}
                         fullWidth
                         sx={{ my: 1, mt: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={() => setShowOldPassword(!showOldPassword)}>
+                                        {showOldPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                     />
                     <AnimatePresence>
                         {errors.old_password?.type === "required" && (
@@ -81,11 +95,20 @@ function AccountPasswordField({handleSnackBarClick, navigate}) {
                     <TextField
                         disabled={!openAdminRePassword}
                         required
-                        type="password"
+                        type={showNewPassword ? "text" : "password"}
                         label="New password"
                         {...register("new_password", { required: true })}
                         fullWidth
                         sx={{ my: 1, mt: 2 }}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={() => setShowNewPassword(!showNewPassword)}>
+                                        {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                     />
                     <AnimatePresence>
                         {errors.new_password?.type === "required" && (
@@ -99,8 +122,8 @@ function AccountPasswordField({handleSnackBarClick, navigate}) {
                     <Button
                         variant="outlined"
                         onClick={() => {
-                            reset()
-                            setopenAdminRePassword(!openAdminRePassword)
+                            reset();
+                            setopenAdminRePassword(!openAdminRePassword);
                         }}
                         sx={{
                             textTransform: "none",
@@ -140,30 +163,33 @@ function AccountPasswordField({handleSnackBarClick, navigate}) {
 }
 
 
+
 function AccountNameField({handleSnackBarClick, navigate}) {
     const { register, handleSubmit, formState: { errors }, reset } = useForm();
     const [openAdminConfig, setopenAdminConfig] = useState(false);
-
+    const {adminDetails} = useStore()
     return (
         <>
             <form 
                 noValidate 
                 className="mb-4"
-                onSubmit={handleSubmit((data) => {
-                    console.log("Submitted Name Data:", data);
+                onSubmit={handleSubmit(async (data) => {
                     // Handle password update logic here
                     if(confirm("Are you sure you want to change admin name?")){
-                        axios.post('/api/change/name', {
-                            first_name: data.first_name,
-                            last_name: data.last_name,
-                        }).then(res => {
-                            handleSnackBarClick("success", "Successful username change, you will be automatically logged out")
+                        try {
+                            await axios.post('/api/update/admin_name', {
+                                admin_id: adminDetails.admin_id,
+                                first_name: data.first_name,
+                                last_name: data.last_name,
+                            })
+                            alert('Success, you will be logged out for now')
                             reset()
-                            axios.post('/api/logout').then(()=>navigate('/')).catch(err => console.error('Error: ', err))
-                        }).catch( err => {
+                            await axios.post('/api/logout').then(()=>navigate('/')).catch(err => console.error('Error: ', err))
+
+                        }catch (err){
                             console.error("ERROR: ", err.response.data)
                             handleSnackBarClick("error", err.response.data)
-                        })
+                        }
                     }
                 })}
             >
