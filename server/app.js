@@ -82,6 +82,7 @@ app.post('/login', async (req, res) => {
     const { adminId, password } = req.body;
     // const adminId = process.env.adminId;
     // const password = process.env.password;
+    const encrypted_password = encrypt(password);
     
     try {
         const admins = await verifyAdminId(adminId);
@@ -90,7 +91,7 @@ app.post('/login', async (req, res) => {
         }
         const adminData = admins[0];
 
-        if (adminData.password !== password) {
+        if (adminData.password !== encrypted_password) {
             return res.status(401).send("Incorrect Password");
         }
 
@@ -777,11 +778,7 @@ app.post('/create/activation_code', checkAdminIdSession, async (req, res) => {
     const { activation_code } = req.body;
 
     // encrypt activation code
-    console.log(activation_code);
-    console.log('encrypting...');
     const encrypted_activation_code = encrypt(activation_code);
-    console.log('done encrypting...');
-    console.log(encrypted_activation_code);
 
     try {
         await createActivationCode(encrypted_activation_code);

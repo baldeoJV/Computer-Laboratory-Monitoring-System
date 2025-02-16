@@ -89,16 +89,17 @@ export async function getConsumableComponent(component_id = '') {
 async function getCrm(rows, table_name, isReportTable) {
   const uniqueReportsID = new Set()
   rows.forEach(r => uniqueReportsID.add(r.report_id))
+  
+  if (uniqueReportsID.size === 0) return new Map() // added this condition to prevent the error
+
   let [component_rows] = await pool.query(
     `SELECT * FROM ${table_name} WHERE report_id IN (${[...uniqueReportsID].join(', ')})`
   )
   let crm = new Map()
 
-  // yes
   component_rows.forEach(cr => {
     crm.set(cr.report_id, { ...cr })
 
-    // delete things
     delete crm.get(cr.report_id).report_id
     if (isReportTable) delete crm.get(cr.report_id).reported_components_id
     else delete crm.get(cr.report_id).archived_reported_components_id
@@ -335,6 +336,7 @@ export async function createNonConsumableComponent(component_id, reference_id, l
     VALUES (?, ?, ?, ?, ?, ?)`,
     [room, building_code, computer_id, report_comment, date_submitted, submittee])
 
+    // insert the original conditions of the components
     await pool.query(`
       INSERT INTO reported_components(report_id, mouse, keyboard, system_unit, monitor, software, internet, other)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -348,6 +350,20 @@ export async function createNonConsumableComponent(component_id, reference_id, l
       reported_conditions.internet === "Minor Issue" ? 1 : reported_conditions.internet === "Major Issue" ? 2 : reported_conditions.internet === "Bad Condition" ? 3 : null,
       reported_conditions.other === "Minor Issue" ? 1 : reported_conditions.other === "Major Issue" ? 2 : reported_conditions.other === "Bad Condition" ? 3 : null])
       
+      // insert a copy of the original conditions of the components
+      await pool.query(`
+        INSERT INTO current_reported_components(report_id, mouse, keyboard, system_unit, monitor, software, internet, other)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        //if the conversion is made in the front end, remove the conversion here
+        [result.insertId, 
+        reported_conditions.mouse === "Minor Issue" ? 1 : reported_conditions.mouse === "Major Issue" ? 2 : reported_conditions.mouse === "Bad Condition" ? 3 : null,
+        reported_conditions.keyboard === "Minor Issue" ? 1 : reported_conditions.keyboard === "Major Issue" ? 2 : reported_conditions.keyboard === "Bad Condition" ? 3 : null,
+        reported_conditions.system_unit === "Minor Issue" ? 1 : reported_conditions.system_unit === "Major Issue" ? 2 : reported_conditions.system_unit === "Bad Condition" ? 3 : null,
+        reported_conditions.monitor === "Minor Issue" ? 1 : reported_conditions.monitor === "Major Issue" ? 2 : reported_conditions.monitor === "Bad Condition" ? 3 : null,
+        reported_conditions.software === "Minor Issue" ? 1 : reported_conditions.software === "Major Issue" ? 2 : reported_conditions.software === "Bad Condition" ? 3 : null,
+        reported_conditions.internet === "Minor Issue" ? 1 : reported_conditions.internet === "Major Issue" ? 2 : reported_conditions.internet === "Bad Condition" ? 3 : null,
+        reported_conditions.other === "Minor Issue" ? 1 : reported_conditions.other === "Major Issue" ? 2 : reported_conditions.other === "Bad Condition" ? 3 : null])
+
       // update the computer and components condition
       await updateComponentsCondition()
       
@@ -393,7 +409,6 @@ export async function verifyActivationCode(code){
 // get validation code
 export async function getActivationCode(){
   const [rows] = await pool.query(`SELECT activation_code FROM verification`)
-  console.log(rows[0].activation_code);
 
   return rows[0].activation_code;
 }
@@ -494,7 +509,6 @@ export async function updateNonConsumableComponentFlag(component_list, flag){
 
 // update computer based on reports
 async function updateComponentsCondition(){
-  console.log('Updating components condition and computer status...');
   // Get distinct computer IDs from reports
   const [pcIds] = await pool.query(`SELECT computer_id FROM computers`);
   const pcIdList = pcIds.map(pc => pc.computer_id);
@@ -505,7 +519,6 @@ async function updateComponentsCondition(){
     const [reports] = await pool.query(`SELECT report_id FROM reports WHERE computer_id = ?`, [pcId]);
 
     if (reports.length === 0) {
-      console.log(`Computer ${pcId} No reports`);
       await resetComponentsCondition(pcId);
       await updateComputerStatus(pcId, 1);
 
@@ -515,20 +528,19 @@ async function updateComponentsCondition(){
 
       continue;
     }
-    console.log(`Computer ${pcId} has reports`);
 
 
     // Get average condition of each component
     const [reportedComponents] = await pool.query(`
       SELECT
-        ROUND(AVG(system_unit)) AS system_unit_condition,
-        ROUND(AVG(monitor)) AS monitor_condition,
-        ROUND(AVG(mouse)) AS mouse_condition,
-        ROUND(AVG(keyboard)) AS keyboard_condition,
-        ROUND(AVG(internet)) AS network_condition,
-        ROUND(AVG(software)) AS software_condition
-      FROM reported_components
-      JOIN reports ON reported_components.report_id = reports.report_id
+        ROUND(AVG(current_reported_components.system_unit)) AS system_unit_condition,
+        ROUND(AVG(current_reported_components.monitor)) AS monitor_condition,
+        ROUND(AVG(current_reported_components.mouse)) AS mouse_condition,
+        ROUND(AVG(current_reported_components.keyboard)) AS keyboard_condition,
+        ROUND(AVG(current_reported_components.internet)) AS network_condition,
+        ROUND(AVG(current_reported_components.software)) AS software_condition
+      FROM current_reported_components
+      JOIN reports ON current_reported_components.report_id = reports.report_id
       WHERE reports.computer_id = ?`, [pcId]);
 
       const conditions = reportedComponents[0];
@@ -714,16 +726,16 @@ export async function archiveReport(report, archived_by, report_status, archive_
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
     [report_id, components.mouse, components.keyboard, components.system_unit, components.monitor, components.software, components.internet, components.other])
 
-  // update the components condition in the reported components if the report is resolved
+  // update the components condition in the (current) reported components if the report is resolved
   if (report_status === 1) {
     // get first the components condition  that was reported (columns that is not NULL)
     const reported_components = Object.keys(components).filter(key => components[key] !== null);
 
-    // // update the components condition
+    // update the components condition
     for (const component of reported_components) {
       await pool.query(`
-        UPDATE reported_components
-        JOIN reports ON reported_components.report_id = reports.report_id
+        UPDATE current_reported_components
+        JOIN reports ON current_reported_components.report_id = reports.report_id
         SET ${component} = null
         WHERE computer_id = ?`, [computer_id])
     }
