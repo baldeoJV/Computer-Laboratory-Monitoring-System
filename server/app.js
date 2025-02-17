@@ -623,20 +623,20 @@ app.get("/admin/:id", checkAdminIdSession, async (req, res) => {
     res.send(get_admin);
 });
 
-app.post("/register/admin", checkAdminIdSession, async (req, res) => {
+app.post("/register/admin", async (req, res) => {
 
     const { admin_id, password, activation_key, first_name, last_name } = req.body;
 
     try {
         // first verify activation key
-        const decrypted_activation_key = decrypt(activation_key);
-        const validate_activation_code = await verifyActivationCode(decrypted_activation_key);
+        // const decrypted_activation_key = decrypt(activation_key);
+        const validate_activation_code = await verifyActivationCode(activation_key);
 
         if (!validate_activation_code) {
             return res.status(404).send("Invalid activation key");
         }
-
-        const create_admin = await createAdmin(admin_id, password, first_name, last_name);
+        const descrypted_password = encrypt(password)
+        const create_admin = await createAdmin(admin_id, descrypted_password, first_name, last_name);
         res.status(201).send('Admin created successfully');
     } catch (error) {
         // console.error(error);

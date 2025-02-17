@@ -44,10 +44,12 @@ export default function RegisterAdmin(){
     }
     const handleRegisterSubmit = (dta)=>{
         // console.log(dta);
-        axios.post('/api/register', {
-            adminId: dta.admin_id, 
+        axios.post('/api/register/admin', {
+            admin_id: dta.admin_id, 
             password: dta.password,
-            activation_code: dta.activation_code,
+            activation_key: dta.activation_key,
+            first_name:dta.first_name,
+            last_name: dta.last_name
         }).then(dt => {
             alert('Successfully registered, please proceed to the login page')
             navigate('/')
@@ -87,8 +89,8 @@ export default function RegisterAdmin(){
                     <TextField
                         // inputRef={register}
                         required
-                        label={'Activation Code'}
-                        {...register("activation_code", {
+                        label={'Activation Key'}
+                        {...register("activation_key", {
                                 required: true,
                         })}
                         fullWidth
@@ -100,10 +102,53 @@ export default function RegisterAdmin(){
                         }}
                     />
                     <AnimatePresence>
-                        {errors.activation_code?.type === 'required' && 
-                            <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate the activation code</Alert>}/>
+                        {errors.activation_key?.type === 'required' && 
+                            <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate the activation key</Alert>}/>
                         }
                     </AnimatePresence>
+
+                    <TextField
+                        // inputRef={register}
+                        required
+                        label={'First Name'}
+                        {...register("first_name", {
+                                required: true,
+                        })}
+                        fullWidth
+                        // value={adminId}
+                        // onChange={handleAdminIdChange}
+                        sx={{
+                            my:1, 
+                            mt:2,
+                        }}
+                    />
+                    <AnimatePresence>
+                        {errors.first_name?.type === 'required' && 
+                            <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate your first name</Alert>}/>
+                        }
+                    </AnimatePresence>
+
+                    <TextField
+                        // inputRef={register}
+                        required
+                        label={'Last Name'}
+                        {...register("last_name", {
+                                required: true,
+                        })}
+                        fullWidth
+                        // value={adminId}
+                        // onChange={handleAdminIdChange}
+                        sx={{
+                            my:1, 
+                            mt:2,
+                        }}
+                    />
+                    <AnimatePresence>
+                        {errors.last_name?.type === 'required' && 
+                            <ModalMotion alertComponent={ <Alert severity="error" sx={{p:0.3, px:1, m:0}}>Please indicate your last name</Alert>}/>
+                        }
+                    </AnimatePresence>
+
                     {/* admin id */}
                     <TextField
                         // inputRef={register}

@@ -27,7 +27,7 @@ import CircleIcon from '@mui/icons-material/Circle';
 function createData(component_id, reference_id, location, specs, flagged){
     return {component_id, reference_id, location, specs, flagged}
 }
-function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen, handleSnackBarClick, setNonConsumData}) {
+function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen, handleSnackBarClick, fetchNonConsumableComponents}) {
     const {register, handleSubmit, formState: {errors}, reset} = useForm()
     const ModalMotion = ({alertComponent}) => <motion.div
         key={"modal"} 
@@ -51,15 +51,7 @@ function Forms_Create_NonConsumable({createComponentOpen, setcreateComponentOpen
                     location: dta.location,
                     specs: dta.specs,
                 }).then(res=> {
-                    const data = res.data
-                    const rows = data.map((ncd) => createData( 
-                        ncd.component_id,
-                        ncd.component_name,
-                        ncd.location,
-                        ncd.specs,
-                        ncd.flagged,
-                    ))
-                    setNonConsumData(rows)
+                    fetchNonConsumableComponents()
                     handleSnackBarClick('success', "Successfully Added Component")
                     setcreateComponentOpen(false)
                     reset()
@@ -514,6 +506,7 @@ function Non_Consumable() {
         setcreateComponentOpen = {setcreateComponentOpen}
         handleSnackBarClick = {handleSnackBarClick}
         setNonConsumData = {setNonConsumData}
+        fetchNonConsumableComponents={fetchNonConsumableComponents}
     />
     <Forms_Update_NonConsumable
         updateComponentOpen= {updateComponentOpen} 

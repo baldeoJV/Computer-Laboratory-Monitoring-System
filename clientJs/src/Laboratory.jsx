@@ -95,7 +95,7 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
                         onContextMenu={(e)=>onContextMenu(e, r)}
                         key={r.room} 
                         sx={{
-                            border: `1.5px solid ${palette.strokeMain}`, 
+                            border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)',
                             borderRadius: '16px',
                             width: '270px', 
                             padding:0,
@@ -105,7 +105,8 @@ function RoomBox({setcreateRoomModalOpen,rooms, setSelectedRooms, selectedRooms,
                             onChange={(e) => handleCheckRoomBox(e, r)}
                             disableRipple
                             sx={{ 
-                                borderBottom: `1px solid ${palette.strokeMain}`,
+                                borderBottom: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)',
+
                                 borderRadius: 0,
                                 padding: 0,
                                 margin: 0,
@@ -409,7 +410,7 @@ function Form_Create_Computer({createComputerModalOpen, setcreateComputerModalOp
     </>
 
 }
-function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomCards, handleSnackBarClick, }){
+function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomCards, handleSnackBarClick, fetchLabRooms}){
 
 
     // FORM SUBMISSION 
@@ -433,7 +434,7 @@ function Form_Create_Room({createRoomModalOpen, setcreateRoomModalOpen, mapRoomC
                     room: dta.room, 
                     building_code: dta.building_code,
                 }).then(res=> {
-                    mapRoomCards(res.data)
+                    fetchLabRooms()
                     handleSnackBarClick('success', "Successfully Created a Room")
                     setcreateRoomModalOpen(false)
                     reset()
@@ -1058,7 +1059,7 @@ function Laboratory() {
         reportedBuilding, setReportedBuilding,
         reportedPcID, setReportedPcID,
         targetedRooms, setTargetedRooms,
-        targetedComputerIDs, setTargetedComputerIDs,
+        targetedComputerIDs, setTargetedComputerIDs,mode,
         adminDetails
     }= useStore()
     const mapRoomCards = (roomsData) => {
@@ -1346,7 +1347,7 @@ function Laboratory() {
                 Add Computer
             </Button>
             {isCompTableOpen && <>
-                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor:'black', color:'black'}} 
+                <Button variant='outlined' style={{marginLeft:12, borderRadius:'24px',fontSize:'14px', textTransform: 'inherit', borderColor: mode === 'dark' ? '#D9D9D9' : '#1C1C1C', color: mode === 'dark' ? '#D9D9D9' : '#1C1C1C',}} 
                     onClick={()=> {
                         setIsCompTableOpen(false) 
                         setSelectedRooms([])
@@ -1514,7 +1515,8 @@ function Laboratory() {
             </Grid2>
             <Grid2 container spacing={2} size={{xs: 12, md:12, lg:12}} >
                 <Grid2 size={{xs: 12, md:12, lg:12}} >
-                    <Box sx={{fontFamily:'Inter',textAlign:'left', border: '1px solid '+palette.strokeWeak, p:2, borderRadius:'16px'}} width={'100%'} height={'100px'}>
+                    <Box sx={{fontFamily:'Inter',textAlign:'left',     border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)'
+, p:2, borderRadius:'16px'}} width={'100%'} height={'100px'}>
                         <Typography sx={{fontSize:'16px', fontWeight:600, fontFamily:'Inter'}}>Total pending reports</Typography>
                         <Typography sx={{fontSize:'14px', fontWeight:400, fontFamily:'Inter', textAlign:'justify'}} > 
                             {totalReports === 0 
@@ -1536,8 +1538,9 @@ function Laboratory() {
         <Stack sx={{marginTop:2}}>
             {buildings.map((bdt, i) => {
                 const filtered_rooms = roomcards.filter((rc) => rc.building_code === bdt.building_code)
-                return <div key={`${bdt.building_code}-${i}`} style={{marginBottom: '4px', border:'1px solid #CCCCCC', borderRadius:'2px'}}>
-                    <Accordion sx={{paddingTop:1, paddingBottom:2}} defaultExpanded={(i === 0) ? true : false}>
+                return <div key={`${bdt.building_code}-${i}`} style={{marginBottom: '4px',     border: mode === 'light' ? `0.5px solid ${palette.strokeMain}` : '1px solid rgba(255, 255, 255, 0.12)',
+ borderRadius:'2px'}}>
+                    <Accordion sx={{paddingTop:1, paddingBottom:2,}} defaultExpanded={(i === 0) ? true : false}>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}
                             aria-controls="panel1-content"
@@ -1642,6 +1645,7 @@ function Laboratory() {
             setcreateRoomModalOpen={setcreateRoomModalOpen}
             mapRoomCards={mapRoomCards}
             handleSnackBarClick={handleSnackBarClick}
+            fetchLabRooms={fetchLabRooms}
         />
         {/* UPDATE ROOM */}
         <Form_Update_Room
