@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import {Sidebar, Menu, MenuItem,  } from 'react-pro-sidebar';
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
@@ -14,7 +15,8 @@ import KeyboardDoubleArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardDou
 import { IconButton } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css'
-import { Link } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import AboutModal from '../About';
 
 function DesignBox(){
 
@@ -24,17 +26,19 @@ function DesignBox(){
 }
 
 
-export default function DrawerMenu() {
+export default function DrawerMenu({menuType}) {
     const [isCollapsed, setIsCollapsed] = useState(true);
     const handleCollapseChange = () => setIsCollapsed(!isCollapsed)
+    const [aboutOpen, setAboutOpen] = useState(false);
+    const navigate = useNavigate()
     return (
-        
-          <Sidebar className="sidebr" collapsed={isCollapsed}
-            width='248px' style={{overflow:'hidden', height:'100%'}}
+        <div style={{display:'fixed', height:'100vh', alignItems:'center'}}>
+          <Sidebar collapsed={isCollapsed}
+            width='248px' style={{overflow:'hidden', height:'100%',}}
+            backgroundColor={'white'}
+            
           >
-            <Menu
-
-            >
+            <Menu>
                 {isCollapsed 
                     ? (
                         <MenuItem
@@ -44,9 +48,9 @@ export default function DrawerMenu() {
                             icon={ 
                                 <IconButton 
                                     onClick={handleCollapseChange}
-                                    sx={{'& :focus': {outline:'none'}}}
+                                    sx={{'& :focus': {outline:'none'}, color:'black'}}
                                 >
-                                    <KeyboardDoubleArrowRightOutlinedIcon/> 
+                                    <KeyboardDoubleArrowRightOutlinedIcon sx={{color:'black'}}/> 
                                 </IconButton>}                        
                         >
                         
@@ -55,13 +59,12 @@ export default function DrawerMenu() {
                         <MenuItem
                             className='menuHead'
                             style={{color: 'black'}}
-                            
                             icon={ 
                                 <IconButton 
                                     onClick={handleCollapseChange}
-                                    sx={{'&:focus': {outline:'none'}}}
+                                    sx={{'&:focus': {outline:'none', color:'black'}}}
                                 >
-                                    <KeyboardDoubleArrowLeftOutlinedIcon/> 
+                                    <KeyboardDoubleArrowLeftOutlinedIcon sx={{color:'black'}}/> 
                                 </IconButton>}
                         >
                         </MenuItem>
@@ -80,41 +83,69 @@ export default function DrawerMenu() {
                     }
                 }}
             >
-                <MenuItem 
-                    icon={<img src={dashboard_pic} alt='dashboard_pic' className='imgIcon'/>} 
-                    className='menuItem py-2 hello'
+                <MenuItem
+                    style={{color:'black'}}
+                    icon={<img src={dashboard_pic} alt='dashboard_pic'/>} 
+                    className='menuItem py-2'
                     component={<a href="/dashboard"/>}
-                > 
-                    <DesignBox/>
-                    <span>Dashboard </span>
+                    
+                >  
+                    {menuType === 'dashboard' && <DesignBox/>}
+                    Dashboard
                 </MenuItem>
-                <MenuItem 
+
+                <MenuItem
+                style={{color:'black'}}
+                    onClick={()=>{
+                        navigate('/laboratory')
+                        window.location.reload()
+                    }}
                     icon={<img src={laboratory_pic} alt='laboratory_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/laboratory"/>}
-                > Laboratory </MenuItem>
+                > 
+                {menuType === 'laboratory' && <DesignBox/>}
+                Laboratory 
+                </MenuItem>
+
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={reports_pic} alt='reports_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/report"/>}
-                > Reports </MenuItem>
+                > 
+                    {menuType === 'reports' && <DesignBox/>}
+                    Reports 
+                </MenuItem>
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={inventory_pic} alt='inventory_pic'/>} 
                     className='menuItem py-2'
                     component={<a href="/inventory"/>}
-                > Inventory </MenuItem>
+                > 
+                    {menuType === 'inventory' && <DesignBox/>}
+                    Inventory 
+                </MenuItem>
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={settings1_pic} alt='settings1_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/reports"/>}
-                > ReportModal </MenuItem>
+                    component={<a href="/settings"/>}
+                > 
+                    {menuType === 'settings' && <DesignBox/>}
+                    Settings
+                </MenuItem>
                 <MenuItem 
+                style={{color:'black'}}
                     icon={<img src={about_pic} alt='about_pic'/>} 
                     className='menuItem py-2'
-                    component={<a href="/itable"/>}
-                > Itable</MenuItem>
+                    onClick={()=> setAboutOpen(true)}
+                > 
+                    {menuType === 'itable' && <DesignBox/>}
+                    About
+                </MenuItem>
             </Menu>
           </Sidebar>
-
+          <AboutModal open = {aboutOpen} setOpen={setAboutOpen}/>
+        </div>
       );
 }

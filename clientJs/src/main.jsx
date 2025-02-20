@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
@@ -5,12 +6,15 @@ import App from './App.jsx'
 import {createBrowserRouter, RouterProvider} from 'react-router-dom'
 import Laboratory from './Laboratory.jsx'
 import '@fontsource/inter'; 
-import ReportModal from './components/ReportModal.jsx'
 import Reports from './Reports.jsx'
 import Archived from './Archived.jsx'
 import Non_Consumable from './Non_Consumable.jsx'
 import Consumable from './Consumable.jsx'
 import Login from './Login.jsx'
+import GuestPage from './GuestPage.jsx'
+import Settings from './Settings.jsx'
+import ThemeWrapper from './ThemeWrapper.jsx'
+import RegisterAdmin from './Register.jsx'
 
 const router = createBrowserRouter(
   [
@@ -43,10 +47,19 @@ const router = createBrowserRouter(
       element: <Consumable/>
     },
     {
-      path:'/try',
-      element:<ReportModal/>
+      path:'/reportGuest',
+      element:<GuestPage/>
+    },
+    {
+      path:'/settings',
+      element:<Settings/>
+    },
+    {
+        path:'/register',
+        element:<RegisterAdmin/>
     }
   ],
+  
   // DISABLE FUTURE ERROR WARNINGS
   {
     future: {
@@ -62,6 +75,8 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router}/>
+    <ThemeWrapper >
+        <RouterProvider router={router}/>
+    </ThemeWrapper>
   </StrictMode>,
 )
