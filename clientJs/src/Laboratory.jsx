@@ -1080,6 +1080,7 @@ function Laboratory() {
         
         setAllRooms(allr)
     }
+    // backend request
     const fetchLabRooms = useCallback(() => {
         axios.get('/api/laboratories').then(res => {
             mapRoomCards(res.data)
