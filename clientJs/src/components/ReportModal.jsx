@@ -301,6 +301,8 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
                 report_comment: commentValue,
                 submittee: permissionType !== 'admin' ?studentId : `Admin - ${adminDetails.admin_id}`
             });
+            setopenConfirmModal(false)
+            settoDownload(false)
             if (toDownload || toDl) {
                 const partConArray = Object.entries(partsStatuses).filter(([k, v]) => v.condition).map(([k,v]) => v);
                 const blob = await pdf(<ReportDocument 
@@ -325,11 +327,12 @@ const ReportModal = ({open = true, setOpen, isClosable = true, permissionType, t
             }
             handleSnackBarClick("success", "Report Submitted")
         } catch (err) {
+            setopenConfirmModal(false)
+            settoDownload(false)
             console.error("Error on report: ", err);            
             handleSnackBarClick("error", err.response.data || err.message)
         }
-        setopenConfirmModal(false)
-        settoDownload(false)
+
     }
     const getLocalStorageValue = (s) => localStorage.getItem(s);
     useEffect(()=> {
