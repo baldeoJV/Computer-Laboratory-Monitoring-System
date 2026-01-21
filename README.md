@@ -1,4 +1,5 @@
 # National University Computer Laboratory Monitoring System
+![ComLabMonitoringSys](https://github.com/user-attachments/assets/8604abd8-1fe4-4705-8a81-e012d3332d97)
 Hello, this is a monitoring system application developed by the group **Barkadista**
 
 ## Overview
