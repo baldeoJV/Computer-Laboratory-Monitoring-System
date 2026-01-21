@@ -1,2 +1,2 @@
 # Computer-Laboratory-Monitoring-System
-Project for SoftEn2
+![ComLabMonitoringSys](https://github.com/user-attachments/assets/722af787-38bd-4775-adaa-0a5650a1e70a)
